@@ -341,16 +341,24 @@ def main():
         json.dump(out, f, separators=(",", ":"))
     print(f"wrote {OUT}: {len(rows)} teams, {out['gamesPlayed']} games, slate {slate_label} ({len(slate)} games), HFA {hfa:.2f}")
     from build_teams import build_team_files
+    # play-by-play for every completed game: loaded once, shared by the advanced stats and the
+    # snap estimates (ESPN core API, cached forever once final)
+    from build_pbp import load_plays
+    from build_advanced import team_advanced, rank_teams
+    plays = load_plays(get, fbs_games)
+    team_adv = rank_teams(team_advanced(fbs_games, plays, teams))
+    print(f"advanced: {len(team_adv)} teams from {sum(1 for v in plays.values() if v)} games of play-by-play")
+
     rosters = build_team_files({
         "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "public", "data", "teams"), "season": season, "built": out["built"],
         "teams": teams, "rows": rows, "games": fbs_games, "rat": rat, "hfa": hfa, "mu": mu, "prior": prior,
         "solve": solve, "win_prob": win_prob, "compress": compress,
-        "rating_sd": rating_sd, "margin_sd": MARGIN_SD,
+        "rating_sd": rating_sd, "margin_sd": MARGIN_SD, "team_adv": team_adv,
     })
     from build_players import build_player_files
     build_player_files({
         "root": ROOT, "season": season, "teams": teams, "rows": rows, "rosters": rosters, "cfbd_get": cfbd_get,
-        "games": fbs_games, "get": get,
+        "games": fbs_games, "get": get, "plays": plays,
     })
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
     # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).

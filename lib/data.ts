@@ -38,7 +38,7 @@ export type SchedGame = {
   line?: number; win?: number; total?: number; detail?: string;
 };
 export type RecordRow = { w: number; l: number; p: number };
-export type TeamStat = { k: string; l: string; hi: boolean; adv?: boolean; off: number | null; offRk: number | null; def: number | null; defRk: number | null };
+export type TeamStat = { k: string; l: string; hi: boolean; adv?: boolean; grp?: "pbp"; tip?: string; off: number | null; offRk: number | null; def: number | null; defRk: number | null };
 export type RosterPlayer = { id: string; name: string; no: string | null; pos: string | null; unit: string; cls: string | null; ht: string | null; wt: string | null; home: string | null };
 export type TeamFile = {
   season: number; fbsTeams: number; hfa: number;
@@ -86,7 +86,15 @@ export type PlayLogRow = {
 };
 export type PPA = { all: number | null; pass: number | null; rush: number | null; firstDown: number | null; secondDown: number | null; thirdDown: number | null; standardDowns: number | null; passingDowns: number | null };
 export type Usage = { overall: number | null; pass: number | null; rush: number | null; firstDown: number | null; secondDown: number | null; thirdDown: number | null; standardDowns: number | null; passingDowns: number | null };
+type Rk = { rk?: Record<string, [number, number]> };
+export type PlayerAdv = {
+  rush?: { car: number; sr: number | null; expl: number | null; stuff: number | null; fd: number; rz: number; gl: number } & Rk;
+  recv?: { tgt: number; catch: number | null; sr: number | null; expl: number | null; deep: number | null; ypt: number | null; share: number | null; third: number; rz: number } & Rk;
+  pass?: { db: number; sr: number | null; expl: number | null; sackRate: number | null; deep: number | null; intRate: number | null; third: number | null } & Rk;
+  def?: { tkl: number; tfl: number; sacks: number; pd: number; ints: number; ff: number; stops: number; havoc: number } & Rk;
+};
 export type PlayerFull = PlayerLite & {
+  adv?: PlayerAdv;
   onRoster?: boolean; unit?: string; ht?: string | null; wt?: string | null; home?: string | null;
   ppa?: { avg: PPA; tot: number; plays: number };
   use?: Usage;

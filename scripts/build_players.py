@@ -21,6 +21,7 @@ being dropped.
 import json, os
 from build_pbp import build_plays_involved
 from build_starters import build_starters, OL_POS
+from build_advanced import player_advanced, rank_players
 import snap_model
 
 # ranked stats: (category, stat, label, min per team game to qualify, higher is better)
@@ -218,7 +219,7 @@ def estimate_snaps(P, team_plays, game_info):
 
 def build_player_files(ctx):
     root, season, teams, rows, rosters, cfbd_get = (ctx[k] for k in ("root", "season", "teams", "rows", "rosters", "cfbd_get"))
-    games_list, get = ctx["games"], ctx["get"]
+    games_list, get, pbp_plays = ctx["games"], ctx["get"], ctx.get("plays")
     outdir = os.path.join(root, "public", "data", "players")
     os.makedirs(outdir, exist_ok=True)
     by_name = {info["name"]: tid for tid, info in teams.items()}
@@ -315,7 +316,7 @@ def build_player_files(ctx):
 
     # --- plays involved + estimated QB snaps from ESPN play-by-play (free, keyless) ---
     qb_ids = {pid for pid, p in P.items() if p["pos"] == "QB"}
-    pi, team_plays = build_plays_involved(get, games_list, qb_ids)
+    pi, team_plays = build_plays_involved(get, games_list, qb_ids, pbp_plays)
     game_info = {g["id"]: g for g in games_list}
     for pid, rec in pi.items():
         if pid not in P:
@@ -365,6 +366,14 @@ def build_player_files(ctx):
             p["pi"]["gs"] = sum(1 for r in p["pi"]["log"] if r.get("gs"))
 
     estimate_snaps(P, team_plays, game_info)
+
+    # --- our own advanced stats from the same play-by-play (success, explosive, havoc ...) ---
+    if pbp_plays:
+        adv = {pid: a for pid, a in player_advanced(games_list, pbp_plays).items() if pid in P}
+        rank_players(adv, lambda pid: (P[pid].get("pi") or {}).get("g", 1))
+        for pid, a in adv.items():
+            P[pid]["adv"] = a
+        print(f"advanced: {len(adv)} FBS players with play-by-play advanced stats")
 
     # --- FBS ranks for the headline stats ---
     for cat, stat, _, (qc, qs, per_g), _hi in RANKED:

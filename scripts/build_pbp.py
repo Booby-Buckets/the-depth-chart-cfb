@@ -22,7 +22,7 @@ CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-foot
 SCRIMMAGE = {
     "Rush", "Rushing Touchdown", "Pass Reception", "Pass Incompletion", "Passing Touchdown", "Pass",
     "Sack", "Pass Interception Return", "Interception Return Touchdown", "Fumble Recovery (Own)",
-    "Fumble Recovery (Opponent)", "Fumble Return Touchdown", "Fumble", "Safety",
+    "Fumble Recovery (Opponent)", "Fumble Return Touchdown", "Fumble", "Safety", "Interception",
 }
 OFF_ROLES = {"passer", "rusher", "receiver"}
 DEF_ROLES = {"tackler", "assistedBy", "sackedBy", "passDefender", "interceptor", "forcedBy"}
@@ -33,11 +33,8 @@ def _ref_id(ref):
     return ref.rsplit("/", 1)[-1].split("?", 1)[0]
 
 
-def build_plays_involved(get, games, qb_ids):
-    """games: completed FBS game dicts from build_hub. qb_ids: set of athlete ids rostered at QB.
-    Returns (players, team_plays):
-      players[pid] = {"off","qb","def","st","pen","g", "games": {gid: {...}}}
-      team_plays[(gid, team_id)] = offensive scrimmage plays"""
+def load_plays(get, games):
+    """{game_id: [play, ...]} for every completed game (ESPN core API, cached forever once final)."""
     done = [g for g in games if g["completed"]]
 
     def fetch(g):
@@ -46,16 +43,26 @@ def build_plays_involved(get, games, qb_ids):
             d = get(url, f"plays_{g['id']}.json", max_age=None)
         except Exception as e:
             print(f"pbp: game {g['id']} unavailable ({e})")
-            return g, []
+            return g["id"], []
         items = d.get("items", [])
         page, pages = 1, d.get("pageCount", 1)
         while page < pages:  # rare: games with more than 500 plays
             page += 1
             items += get(url + f"&page={page}", f"plays_{g['id']}_p{page}.json", max_age=None).get("items", [])
-        return g, items
+        return g["id"], sorted(items, key=lambda p: int(p.get("sequenceNumber") or 0))
 
     with ThreadPoolExecutor(8) as ex:
-        results = list(ex.map(fetch, done))
+        return dict(ex.map(fetch, done))
+
+
+def build_plays_involved(get, games, qb_ids, plays=None):
+    """games: completed FBS game dicts from build_hub. qb_ids: set of athlete ids rostered at QB.
+    Returns (players, team_plays):
+      players[pid] = {"off","qb","def","st","pen","g", "games": {gid: {...}}}
+      team_plays[(gid, team_id)] = offensive scrimmage plays"""
+    plays = plays if plays is not None else load_plays(get, games)
+    results = [(g, plays.get(g["id"], [])) for g in games if g["completed"]]
+    done = [g for g in games if g["completed"]]
 
     players, team_plays = {}, {}
 
@@ -67,7 +74,6 @@ def build_plays_involved(get, games, qb_ids):
 
     for g, items in results:
         gid = g["id"]
-        items = sorted(items, key=lambda p: int(p.get("sequenceNumber") or 0))
         current_qb = {}   # offense team id -> qb id
         pending = {}      # offense team id -> plays seen before any QB was identified
         for p in items:

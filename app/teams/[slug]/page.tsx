@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
-import { getTeamIndex, getTeam, getTeamPlayers, type TeamFile, type PlayerLite, type SchedGame } from "@/lib/data";
+import { getTeamIndex, getTeam, getTeamPlayers, type TeamFile, type TeamStat, type PlayerLite, type SchedGame } from "@/lib/data";
 import { fmt, pct, ord, etStamp } from "@/lib/format";
 import { teamColors } from "@/lib/teamColor";
 import { playerHref } from "@/lib/slug";
@@ -230,12 +230,20 @@ const ADV_TIP: Record<string, string> = {
 };
 function sfmt(k: string, v: number | null) {
   if (v == null) return "—";
+  if (k === "pbp_lineYds") return v.toFixed(2);
+  if (k.startsWith("pbp_")) return (v * 100).toFixed(1) + "%";
   if (k === "sr") return (v * 100).toFixed(1) + "%";
   if (k === "epa" || k === "expl") return (k === "epa" && v > 0 ? "+" : "") + v.toFixed(3);
   if (k === "cmp" || k === "third") return v.toFixed(1) + "%";
   if (k === "ppg" || /ypg$/.test(k) || k === "pen") return v.toFixed(1);
   return v.toFixed(2);
 }
+const GROUP_LABEL: Record<string, string> = {
+  adv: "EPA · per play, garbage time excluded (CollegeFootballData.com)",
+  pbp: "Play-by-play advanced · garbage time excluded (computed from every play)",
+  box: "Box score · season totals",
+};
+const groupOf = (x: TeamStat) => (x.adv ? "adv" : x.grp === "pbp" ? "pbp" : "box");
 function Stats({ D, rankHeat }: { D: TeamFile; rankHeat: (r: number | null) => string }) {
   const label = (k: string, l: string) =>
     k === "sk" ? <>Sacks / game <span className={s.muted}>(allowed · made)</span></> :
@@ -246,12 +254,11 @@ function Stats({ D, rankHeat }: { D: TeamFile; rankHeat: (r: number | null) => s
         <thead><tr><th className="l">Stat</th><th>Offense</th><th>FBS rank</th><th>Defense (allowed)</th><th>FBS rank</th></tr></thead>
         <tbody>
           {D.stats.map((x, i) => {
-            const prev = D.stats[i - 1];
+            const g = groupOf(x), prev = D.stats[i - 1];
             return [
-              x.adv && i === 0 ? <tr key="h-adv" className={s.groupRow}><td className="l" colSpan={5}>Advanced · per play, garbage time excluded</td></tr> : null,
-              !x.adv && prev?.adv ? <tr key="h-box" className={s.groupRow}><td className="l" colSpan={5}>Box score · season totals</td></tr> : null,
+              !prev || groupOf(prev) !== g ? <tr key={`h-${g}`} className={s.groupRow}><td className="l" colSpan={5}>{GROUP_LABEL[g]}</td></tr> : null,
               <tr key={x.k}>
-                <td className="l strong" title={x.adv ? ADV_TIP[x.k] : undefined}>{label(x.k, x.l)}</td>
+                <td className="l strong" title={x.adv ? ADV_TIP[x.k] : x.tip}>{label(x.k, x.l)}</td>
                 <td>{sfmt(x.k, x.off)}</td><td className={rankHeat(x.offRk)}>{x.offRk ? ord(x.offRk) : "—"}</td>
                 <td>{sfmt(x.k, x.def)}</td><td className={rankHeat(x.defRk)}>{x.defRk ? ord(x.defRk) : "—"}</td>
               </tr>,

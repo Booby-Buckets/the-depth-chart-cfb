@@ -13,6 +13,7 @@ Each file holds:
   roster    ESPN roster
 """
 import json, os
+from build_advanced import TEAM_METRICS
 from concurrent.futures import ThreadPoolExecutor
 
 # key, label, category, stat, divide-by-games, offense higher-is-better (defense is the reverse)
@@ -236,6 +237,13 @@ def build_team_files(ctx):
             stats.append({"k": key, "l": label, "hi": True, "adv": True,
                           "off": row.get(o_k), "offRk": adv_ranks[o_k].get(tid),
                           "def": row.get(d_k), "defRk": adv_ranks[d_k].get(tid)})
+        # our own play-by-play advanced stats (garbage time excluded), ranked across FBS
+        ta = (ctx.get("team_adv") or {}).get(tid)
+        if ta and "off" in ta and "def" in ta:
+            for key, label, hi, tip in TEAM_METRICS:
+                stats.append({"k": f"pbp_{key}", "l": label, "hi": hi, "grp": "pbp", "tip": tip,
+                              "off": ta["off"].get(key), "offRk": ta["off"].get(key + "Rk"),
+                              "def": ta["def"].get(key), "defRk": ta["def"].get(key + "Rk")})
         for key, label, _, _, _, hi in METRICS:
             stats.append({"k": key, "l": label, "hi": hi,
                           "off": _r(off_m[tid][key]), "offRk": stat_ranks[("off", key)].get(tid),

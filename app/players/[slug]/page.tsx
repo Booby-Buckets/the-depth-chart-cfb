@@ -114,6 +114,8 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
         </section>
       )}
 
+      {P.adv && <AdvancedTables P={P} />}
+
       <section className={s.section}>
         <div className="sec-h"><h2>{PL.season} Season Stats</h2><p>FBS rank among qualifying players</p></div>
         <StatTables P={P} season={PL.season} />
@@ -274,6 +276,72 @@ function PositionRoom({ P, PL, teamName }: { P: PlayerFull; PL: PlayersFile; tea
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- our own play-by-play advanced stats ---------- */
+type AdvRow = [key: string, label: string, kind: "pct" | "n" | "dec", tip: string];
+const ADV_GROUPS: [keyof NonNullable<PlayerFull["adv"]>, string, string, AdvRow[]][] = [
+  ["pass", "Passing", "dropbacks", [
+    ["db", "Dropbacks", "n", "Pass attempts plus sacks"], ["sr", "Success rate", "pct", "Dropbacks that kept the offense on schedule"],
+    ["expl", "Explosive pass rate", "pct", "Completions of 20+ yards per attempt"], ["deep", "Deep-throw rate", "pct", "Attempts the play-by-play marks as deep"],
+    ["sackRate", "Sack rate", "pct", "Sacks per dropback"], ["intRate", "Interception rate", "pct", "Interceptions per attempt"],
+    ["third", "3rd-down conversion", "pct", "3rd-down dropbacks that moved the chains"]]],
+  ["rush", "Rushing", "carries", [
+    ["car", "Carries", "n", "Carries outside garbage time"], ["sr", "Success rate", "pct", "Carries that kept the offense on schedule"],
+    ["expl", "Explosive run rate", "pct", "Runs of 10+ yards"], ["stuff", "Stuffed at the line", "pct", "Runs stopped at or behind the line (lower is better)"],
+    ["fd", "First downs", "n", "Carries that moved the chains or scored"], ["rz", "Red-zone carries", "n", "Carries inside the opponent's 20"],
+    ["gl", "Goal-line carries", "n", "Carries inside the opponent's 5"]]],
+  ["recv", "Receiving", "targets", [
+    ["tgt", "Targets", "n", "Passes thrown to this player"], ["share", "Target share", "pct", "Share of the team's pass attempts in games played"],
+    ["catch", "Catch rate", "pct", "Catches per target"], ["sr", "Success rate per target", "pct", "Targets that kept the offense on schedule"],
+    ["ypt", "Yards per target", "dec", "Receiving yards per target"], ["expl", "Explosive catches", "pct", "Catches of 20+ yards per target"],
+    ["deep", "Deep-target rate", "pct", "Targets the play-by-play marks as deep"], ["third", "3rd-down targets", "n", "Targets on 3rd down"],
+    ["rz", "Red-zone targets", "n", "Targets inside the opponent's 20"]]],
+  ["def", "Defense", "plays", [
+    ["havoc", "Havoc plays", "n", "Tackles for loss, sacks, pass breakups, interceptions and forced fumbles"],
+    ["tfl", "Tackles for loss", "n", "Tackles behind the line, sacks included"], ["stops", "Run stops", "n", "Tackles on runs that failed to stay on schedule"],
+    ["sacks", "Sacks", "n", "Sacks"], ["pd", "Pass breakups", "n", "Passes defended"], ["ints", "Interceptions", "n", "Interceptions"],
+    ["ff", "Forced fumbles", "n", "Forced fumbles"], ["tkl", "Tackles", "n", "Solo and assisted tackles outside garbage time"]]],
+];
+function AdvancedTables({ P }: { P: PlayerFull }) {
+  const A = P.adv!;
+  const fmtV = (kind: string, v: number | null | undefined) => (v == null ? "—" : kind === "pct" ? (v * 100).toFixed(1) + "%" : kind === "dec" ? v.toFixed(1) : String(v));
+  const groups = ADV_GROUPS.filter(([g]) => {
+    const a = A[g] as Record<string, number> | undefined;
+    if (!a) return false;
+    return g === "def" ? (a.tkl ?? 0) + (a.havoc ?? 0) >= 3 : (a.db ?? a.car ?? a.tgt ?? 0) >= 5;
+  });
+  if (!groups.length) return null;
+  return (
+    <section className={s.section}>
+      <div className="sec-h"><h2>Advanced</h2><p>Computed from every play, garbage time excluded. FBS rank among players with enough volume</p></div>
+      <div className={s.statgrid}>
+        {groups.map(([g, label, , rows]) => {
+          const grp = A[g] as unknown as { rk?: Record<string, [number, number]> } & Record<string, unknown>;
+          const a = grp as Record<string, number | null>;
+          return (
+            <div key={g} className="sheet-wrap">
+              <table className="sheet dense" style={{ width: "100%" }}>
+                <thead><tr><th className="l">{label}</th><th>Value</th><th>FBS rank</th></tr></thead>
+                <tbody>
+                  {rows.filter(([k]) => a[k] != null).map(([k, l, kind, tip]) => {
+                    const r = grp.rk?.[k];
+                    return (
+                      <tr key={k}>
+                        <td className="l" title={tip}>{l}</td>
+                        <td className="strong">{fmtV(kind, a[k])}</td>
+                        <td className={heat(r)}>{r ? <>{ord(r[0])} <span className={s.muted}>/ {r[1]}</span></> : <span className={s.muted}>—</span>}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
