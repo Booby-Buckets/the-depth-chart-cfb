@@ -1,7 +1,7 @@
 name: Rebuild power rankings
 
-# Re-runs scripts/build_hub.py so the ratings, records and "This Week" slate pick up
-# finished games, then commits data/hub.json. The push triggers a Vercel deploy, so
+# Re-runs scripts/build_hub.py so the ratings, records, "This Week" slate and every team
+# page (data/teams/*.json) pick up finished games, then commits data/. The push triggers a Vercel deploy, so
 # the live site refreshes on its own.
 #
 # Schedule (UTC, Aug–Jan only):
@@ -51,19 +51,20 @@ jobs:
 
       - name: Commit if the ratings changed
         run: |
-          # ignore the "built" timestamp so an idle day doesn't make an empty deploy
-          if git show HEAD:data/hub.json > /tmp/old.json 2>/dev/null && python3 - <<'EOF'
+          git add data
+          # hub.json's "built" timestamp changes every run; ignore it so an idle day doesn't deploy
+          others=$(git diff --cached --name-only | grep -v '^data/hub.json$' || true)
+          if [ -z "$others" ] && git show HEAD:data/hub.json > /tmp/old.json 2>/dev/null && python3 - <<'EOF'
           import json, sys
           a, b = json.load(open('/tmp/old.json')), json.load(open('data/hub.json'))
           a.pop('built', None); b.pop('built', None)
           sys.exit(0 if a == b else 1)
           EOF
           then
-            echo "No rating or slate changes."
+            echo "No rating, schedule or roster changes."
             exit 0
           fi
           git config user.name "tdc-cfb-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/hub.json
-          git commit -m "Auto: rebuild power rankings"
+          git commit -m "Auto: rebuild power rankings + team pages"
           git push

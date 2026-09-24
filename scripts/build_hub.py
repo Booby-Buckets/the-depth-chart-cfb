@@ -31,6 +31,8 @@ MARGIN_SD = 14.0        # CFB game margin sd around the spread -> win prob
 BLOWOUT_AT, BLOWOUT_KEEP = 24, 0.35
 PRIOR_REGRESS = 0.40
 PRIOR_GAMES = 3.0       # prior is worth ~this many games of evidence
+RATING_SD0 = 6.0        # preseason rating error (pts); shrinks as sqrt(PRIOR_GAMES / (PRIOR_GAMES + games))
+FCS_SD = 9.0            # pooled FCS "team" hides a wide spread of opponents
 CONF_SHORT = {"acc": "ACC", "sec": "SEC", "big10": "Big Ten", "big12": "Big 12", "American": "American",
               "usa": "CUSA", "midam": "MAC", "mwest": "Mountain West", "pac12": "Pac-12", "belt": "Sun Belt",
               "ind": "Independent"}
@@ -104,12 +106,12 @@ def season_games(season, finished_season):
     now = datetime.datetime.now(datetime.timezone.utc)
     for w in weeks:
         start = datetime.datetime.fromisoformat(w["start"].replace("Z", "+00:00"))
-        if start > now + datetime.timedelta(days=8):
-            continue  # no need to fetch far-future weeks
         end = datetime.datetime.fromisoformat(w["end"].replace("Z", "+00:00"))
         done = finished_season or end < now - datetime.timedelta(days=2)
+        soon = start < now + datetime.timedelta(days=8)
+        # finished weeks never change; this week's scores refresh fast; far-future schedules twice a day
         d = get(f"{ESPN}/scoreboard?groups=80&seasontype={w['type']}&week={w['week']}&dates={season}&limit=400",
-                f"sb_{season}_{w['type']}_{w['week']}.json", max_age=None if done else 1800)
+                f"sb_{season}_{w['type']}_{w['week']}.json", max_age=None if done else 1800 if soon else 12 * 3600)
         for ev in d.get("events", []):
             c = ev["competitions"][0]
             side = {x["homeAway"]: x for x in c["competitors"]}
@@ -125,6 +127,8 @@ def season_games(season, finished_season):
                 "hs": int(side["home"]["score"]) if st.get("completed") else None,
                 "as": int(side["away"]["score"]) if st.get("completed") else None,
                 "tv": ((c.get("broadcasts") or [{}])[0].get("names") or [None])[0],
+                "conf": bool(c.get("conferenceCompetition")),
+                "venue": (c.get("venue") or {}).get("fullName"),
             })
     return games, weeks
 
@@ -183,8 +187,17 @@ def solve(games, teams, prior=None):
     return out, float(beta[2 * n]), float(beta[2 * n + 1])
 
 
-def win_prob(spread):
-    return 0.5 * (1 + math.erf(spread / (MARGIN_SD * math.sqrt(2))))
+def rating_sd(r, tid):
+    return FCS_SD if tid == "FCS" else RATING_SD0 * math.sqrt(PRIOR_GAMES / (PRIOR_GAMES + r["gp"]))
+
+
+def win_prob(spread, sd=MARGIN_SD):
+    return 0.5 * (1 + math.erf(spread / (sd * math.sqrt(2))))
+
+
+def game_sd(rat, a, b):
+    """Game-margin sd: on-field noise plus both teams' rating uncertainty."""
+    return math.sqrt(MARGIN_SD ** 2 + rating_sd(rat[a], a) ** 2 + rating_sd(rat[b], b) ** 2)
 
 
 # ---------- CFBD advanced (optional) ----------
@@ -247,7 +260,7 @@ def main():
             r = rec[me]
             win = ms > os_
             r["w" if win else "l"] += 1
-            if op in teams and teams[op]["conf"] == teams[me]["conf"] and teams[me]["confAbbr"] != "ind":
+            if g["conf"]:
                 r["cw" if win else "cl"] += 1
             r["opp"].append(rat.get(op if op in teams else "FCS")["net"])
 
@@ -274,14 +287,15 @@ def main():
         wk = (first["type"], first["week"])
         slate_label = first["weekLabel"]
         for g in sorted([g for g in fbs_games if (g["type"], g["week"]) == wk], key=lambda g: g["date"]):
-            h, a = rat.get(g["home"] if g["home"] in teams else "FCS"), rat.get(g["away"] if g["away"] in teams else "FCS")
+            hk, ak = (g["home"] if g["home"] in teams else "FCS"), (g["away"] if g["away"] in teams else "FCS")
+            h, a = rat[hk], rat[ak]
             spread = h["net"] - a["net"] + (0 if g["neutral"] else hfa)
             slate.append({
                 "id": g["id"], "date": g["date"], "neutral": g["neutral"], "completed": g["completed"], "detail": g["detail"],
                 "tv": g["tv"], "home": g["home"], "away": g["away"], "homeName": g["homeName"], "awayName": g["awayName"],
                 "homeRank": rank_of.get(g["home"]), "awayRank": rank_of.get(g["away"]),
                 "hs": g["hs"], "as": g["as"],
-                "spread": round(spread, 1), "homeWin": round(win_prob(spread), 3),
+                "spread": round(spread, 1), "homeWin": round(win_prob(spread, game_sd(rat, hk, ak)), 3),
                 "total": round(2 * mu + h["off"] - a["def"] + a["off"] - h["def"], 1),
             })
 
@@ -298,6 +312,13 @@ def main():
     with open(OUT, "w") as f:
         json.dump(out, f, separators=(",", ":"))
     print(f"wrote {OUT}: {len(rows)} teams, {out['gamesPlayed']} games, slate {slate_label} ({len(slate)} games), HFA {hfa:.2f}")
+    from build_teams import build_team_files
+    build_team_files({
+        "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "data", "teams"), "season": season, "built": out["built"],
+        "teams": teams, "rows": rows, "games": fbs_games, "rat": rat, "hfa": hfa, "mu": mu, "prior": prior,
+        "solve": solve, "win_prob": win_prob, "compress": compress,
+        "rating_sd": rating_sd, "margin_sd": MARGIN_SD,
+    })
     for r in rows[:15]:
         print(f"{r['rank']:>3} {r['name']:<22} {r['w']}-{r['l']}  net {r['net']:+.1f}  off {r['off']:+.1f}  def {r['def']:+.1f}  prior {r['prior']}")
 
