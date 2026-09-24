@@ -19,6 +19,7 @@ being dropped.
 """
 import json, os
 from build_pbp import build_plays_involved
+import snap_model
 
 # ranked stats: (category, stat, label, min per team game to qualify, higher is better)
 RANKED = [
@@ -100,16 +101,14 @@ def depth_chart(plist, tgames):
     last = tgames[-1]["id"] if tgames else None
 
     def recent(p, key):
-        return next((g[key] for g in (p.get("pi") or {}).get("log", []) if g["id"] == last), 0)
+        return next((g.get(key, 0) for g in (p.get("pi") or {}).get("log", []) if g["id"] == last), 0)
 
     def score(p, slot):
         pi = p.get("pi") or {}
         if slot == "QB":
             return pi.get("qb", 0) + recent(p, "qb")
-        if slot in ("RB", "WR", "TE"):
-            return pi.get("off", 0) + recent(p, "off")
-        if slot in ("DL", "LB", "CB", "S"):
-            return pi.get("def", 0) + 2 * pi.get("g", 0) + recent(p, "def")
+        if slot in ("RB", "WR", "TE", "DL", "LB", "CB", "S"):
+            return pi.get("es", 0) + recent(p, "es")
         if slot in ("K", "P"):
             return pi.get("st", 0)
         return 0
@@ -128,14 +127,70 @@ def depth_chart(plist, tgames):
         starters = pool[:n]
         if slot in ("CB", "S"):
             used.update(p["id"] for p in starters)  # a generic DB can start at CB or S, not both
-        pi_key = {"QB": "qb", "K": "st", "P": "st"}.get(slot, "off" if unit == "offense" else "def")
+        pi_key = {"QB": "qb", "K": "st", "P": "st", "OL": "off", "LS": "st"}.get(slot, "es")
         out.setdefault(unit, []).append({
             "slot": slot, "starters": n, "basis": "production" if by_production and slot not in ("OL", "LS") else "roster",
             "players": [{"id": p["id"], "name": p["name"], "no": p.get("no"), "pos": p.get("pos"), "cls": p.get("cls"),
                          "val": (p.get("pi") or {}).get(pi_key, 0), "g": (p.get("pi") or {}).get("g", 0),
-                         "last": recent(p, pi_key)} for p in pool[:max(n * 2 + 1, 4)]],
+                         "last": recent(p, pi_key), "tp": (p.get("pi") or {}).get("esTP", 0),
+                         "inv": (p.get("pi") or {}).get("off" if unit == "offense" else "def", 0)}
+                        for p in pool[:max(n * 2 + 1, 4)]],
         })
     return out
+
+
+# snap estimator groups (see calibrate_snaps.py) and the most any group can plausibly have on
+# the field per play in college; if a group's estimates add up past that, they're scaled down
+SNAP_GROUPS = {"RB": ("RB", "FB"), "WR": ("WR",), "TE": ("TE",), "DL": ("DL", "DE", "DT", "NT", "EDGE"),
+               "LB": ("LB", "OLB", "ILB", "MLB"), "DB": ("CB", "S", "FS", "SS", "DB")}
+ON_FIELD_MAX = {"RB": 1.3, "WR": 3.6, "TE": 1.8, "DL": 4.3, "LB": 3.6, "DB": 5.8}
+
+
+def snap_group(pos):
+    return next((g for g, ps in SNAP_GROUPS.items() if pos in ps), None)
+
+
+def estimate_snaps(P, team_plays, game_info):
+    """ESTIMATED snaps per player-game ("es" on each log row, season total on pi).
+    QB: the play-by-play estimate (every offensive play credited to the QB on the field).
+    RB/WR/TE/DL/LB/DB: the NFL-calibrated model in snap_model.json, from the player's share of
+    his group's involvement that game. Linemen on offense: not estimable (no trace)."""
+    games = {}  # (gid, tid, group) -> [(player, log row)]
+    for p in P.values():
+        pi = p.get("pi")
+        if not pi:
+            continue
+        grp = snap_group(p.get("pos"))
+        for row in pi["log"]:
+            if p.get("pos") == "QB":
+                row["es"] = row["qb"]
+            elif grp:
+                x = row["off"] if grp in ("RB", "WR", "TE") else row["def"]
+                if x > 0:
+                    games.setdefault((row["id"], p["tid"], grp), []).append((p, row, x))
+    for (gid, tid, grp), members in games.items():
+        g = game_info.get(gid)
+        if not g:
+            continue
+        opp = g["away"] if g["home"] == tid else g["home"]
+        plays = team_plays.get((gid, tid if grp in ("RB", "WR", "TE") else opp), 0)
+        if plays < 20:
+            continue
+        X = sum(x for _, _, x in members)
+        ranked = sorted(members, key=lambda m: -m[2])
+        pcts = [snap_model.snap_pct(grp, x / X, x / plays, len(members), rk + 1) for rk, (_, _, x) in enumerate(ranked)]
+        scale = min(1.0, ON_FIELD_MAX[grp] / max(sum(pcts), 1e-9))
+        for (p, row, _), pct in zip(ranked, pcts):
+            row["es"] = round(pct * scale * plays)
+            row["esTP"] = plays
+    for p in P.values():
+        pi = p.get("pi")
+        if pi and any("es" in r for r in pi["log"]):
+            pi["es"] = sum(r.get("es", 0) for r in pi["log"])
+            pi["esTP"] = sum(r.get("esTP", r.get("tp", 0)) for r in pi["log"] if "es" in r)
+            grp = "QB" if p.get("pos") == "QB" else snap_group(p.get("pos"))
+            if grp and grp != "QB":
+                pi["esErr"] = snap_model.error(grp)[0]
 
 
 def build_player_files(ctx):
@@ -256,6 +311,8 @@ def build_player_files(ctx):
         log.sort(key=lambda x: x["date"])
         p["pi"] = {k: rec[k] for k in ("off", "qb", "def", "st", "pen")} | {"g": len(log), "log": log}
 
+    estimate_snaps(P, team_plays, game_info)
+
     # --- FBS ranks for the headline stats ---
     for cat, stat, _, (qc, qs, per_g), _hi in RANKED:
         pairs = []
@@ -299,7 +356,8 @@ def build_player_files(ctx):
                    "opp": g["away"] if g["home"] == tid else g["home"],
                    "oppName": g["awayName"] if g["home"] == tid else g["homeName"],
                    "site": "N" if g["neutral"] else ("H" if g["home"] == tid else "A"),
-                   "tp": team_plays.get((g["id"], tid), 0)}
+                   "tp": team_plays.get((g["id"], tid), 0),
+                   "otp": team_plays.get((g["id"], g["away"] if g["home"] == tid else g["home"]), 0)}
                   for g in sorted(games_list, key=lambda g: g["date"]) if g["completed"] and tid in (g["home"], g["away"])]
         with open(os.path.join(outdir, f"{tid}.json"), "w") as f:
             json.dump({"season": season, "tid": tid, "groupAvg": group_avg, "games": tgames,

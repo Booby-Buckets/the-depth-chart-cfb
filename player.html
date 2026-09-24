@@ -158,7 +158,7 @@
       </div>
     </section>
     <section id="stats"><div class="sec-h"><h2>${PL.season} Season Stats</h2><p>FBS rank among qualifying players</p></div><div class="statgrid" id="statGrid"></div></section>
-    <section id="plays" hidden><div class="sec-h"><h2>Plays by Game</h2><p id="playsSub"></p></div><div class="sheet-wrap"><table class="sheet dense" id="playsTbl"></table></div></section>
+    <section id="plays" hidden><div class="sec-h"><h2>Snaps by Game</h2><p id="playsSub"></p></div><div class="sheet-wrap"><table class="sheet dense" id="playsTbl"></table></div></section>
     <section id="room"><div class="sec-h"><h2>Position Room</h2><p id="roomSub"></p></div><div class="sheet-wrap"><table class="sheet dense" id="roomTbl"></table></div></section>
     <p class="note">Stats, EPA and usage come from CollegeFootballData.com and refresh daily. FBS ranks only count players with enough volume for the stat to mean something. Qualifying for EPA takes ${(PL.groupAvg[group] || {}).minPerGame || '—'}+ plays per team game.</p>`;
 
@@ -216,14 +216,17 @@
   /* ---------- plays by game (ESPN play-by-play) ---------- */
   if (P.pi && P.pi.log.length) {
     const isQB = P.pos === 'QB' && P.pi.qb > 0;
-    const cols = [isQB ? ['qb', 'Est. snaps'] : null, ['off', 'Plays involved'], ['def', 'Plays made'], ['st', 'Special teams'], ['pen', 'Penalties']]
+    const hasEs = P.pi.es > 0;
+    const cols = [hasEs ? ['es', isQB ? 'Est. snaps' : 'Est. snaps'] : null, ['off', 'Plays involved'], ['def', 'Plays made'], ['st', 'Special teams'], ['pen', 'Penalties']]
       .filter(c => c && P.pi[c[0]] > 0);
-    const shareKey = isQB ? 'qb' : (P.pi.off ? 'off' : null);
-    $('#playsTbl').innerHTML = `<thead><tr><th class="l">Game</th><th>Team plays</th>${cols.map(c => `<th>${c[1]}</th>`).join('')}${shareKey ? '<th>Share</th>' : ''}</tr></thead><tbody>${
-      P.pi.log.map(g => `<tr><td class="l">${g.wk.replace('Week ', 'Wk ')} · ${g.oppName}</td><td class="dim">${g.tp || '—'}</td>${cols.map(c => `<td class="${c[0] === (shareKey || '') ? 'strong' : ''}">${g[c[0]] || '·'}</td>`).join('')}${shareKey ? `<td>${g.tp ? Math.round(g[shareKey] / g.tp * 100) + '%' : '—'}</td>` : ''}</tr>`).join('')
-    }<tr><td class="l strong">Season</td><td class="strong">${P.pi.log.reduce((s, g) => s + g.tp, 0)}</td>${cols.map(c => `<td class="strong">${P.pi[c[0]]}</td>`).join('')}${shareKey ? `<td class="strong">${Math.round(P.pi[shareKey] / Math.max(1, P.pi.log.reduce((s, g) => s + g.tp, 0)) * 100)}%</td>` : ''}</tr></tbody>`;
+    const base = g => g.esTP || g.tp;   // defense: the opponent's offensive plays
+    const seasonBase = P.pi.esTP || P.pi.log.reduce((s, g) => s + g.tp, 0);
+    $('#playsTbl').innerHTML = `<thead><tr><th class="l">Game</th><th>${P.pi.def > P.pi.off ? 'Opp. plays' : 'Team plays'}</th>${cols.map(c => `<th>${c[1]}</th>`).join('')}${hasEs ? '<th>Snap share</th>' : ''}</tr></thead><tbody>${
+      P.pi.log.map(g => `<tr><td class="l">${g.wk.replace('Week ', 'Wk ')} · ${g.oppName}</td><td class="dim">${base(g) || '—'}</td>${cols.map(c => `<td class="${c[0] === 'es' ? 'strong' : ''}">${c[0] === 'es' && g.es != null && !isQB ? '~' : ''}${g[c[0]] || '·'}</td>`).join('')}${hasEs ? `<td>${g.es != null && base(g) ? Math.round(g.es / base(g) * 100) + '%' : '—'}</td>` : ''}</tr>`).join('')
+    }<tr><td class="l strong">Season</td><td class="strong">${seasonBase}</td>${cols.map(c => `<td class="strong">${P.pi[c[0]]}</td>`).join('')}${hasEs ? `<td class="strong">${Math.round(P.pi.es / Math.max(1, seasonBase) * 100)}%</td>` : ''}</tr></tbody>`;
     $('#playsSub').innerHTML = isQB ? 'Estimated snaps: every offensive play credited to the QB running the offense. Close to a true snap count'
-      : 'Plays the player shows up in the play-by-play: carries, targets, tackles and the like. Not snap counts; <a href="depth.html?id=' + tid + '" style="color:inherit">see the depth chart</a>';
+      : hasEs ? `Estimated snaps from a model trained on real NFL snap counts. Typically within ±${P.pi.esErr || 9} snaps a game at this position. <a href="depth.html?id=${tid}" style="color:inherit">How it works</a>`
+      : 'Plays the player shows up in the play-by-play. Not snap counts';
     $('#plays').hidden = false;
   }
 

@@ -106,14 +106,15 @@
 
   const UNITS = [['offense','Offense'],['defense','Defense'],['special','Special Teams']];
   const LABEL = {QB:'Quarterback', RB:'Running back', WR:'Wide receivers', TE:'Tight end', OL:'Offensive line', DL:'Defensive line', LB:'Linebackers', CB:'Cornerbacks', S:'Safeties', K:'Kicker', P:'Punter', LS:'Long snapper'};
-  const unitOf = (s, n) => { const u = ({QB:'snap', K:'kick', P:'punt'}[s] || (['DL','LB','CB','S'].includes(s) ? 'play made' : 'play')); return n === 1 ? u : u.replace(/^(\w+)/, '$1s'); };
+  const MODELED = ['RB','WR','TE','DL','LB','CB','S'];
+  const unitOf = (s, n) => { const u = ({QB:'snap', K:'kick', P:'punt'}[s] || (MODELED.includes(s) ? 'est. snap' : 'play')); return n === 1 ? u : u.replace(/^([\w.]+ ?)(\w+)/, '$1$2s'); };
   const slotCard = u => {
     const ps = u.players.filter(p => u.basis === 'roster' || p.val > 0 || u.players.indexOf(p) < u.starters);
     const rows = ps.map((p, i) => {
       const start = i < u.starters;
       const r = start ? (u.starters > 1 ? u.slot + (i + 1) : u.slot + '1') : (u.starters > 1 ? '—' : u.slot + (i + 1));
       const right = u.basis === 'roster' ? `<span class="v"><small>${p.cls || ''}</small></span>`
-        : `<span class="v">${p.val}<small>${unitOf(u.slot, p.val)}${G.length && p.last ? ` · ${p.last} last` : ''}</small></span>`;
+        : `<span class="v">${MODELED.includes(u.slot) ? '~' : ''}${p.val}<small>${unitOf(u.slot, p.val)}${MODELED.includes(u.slot) && p.tp ? ` · ${Math.round(p.val / p.tp * 100)}%` : ''}${G.length && p.last ? ` · ${p.last} last` : ''}</small></span>`;
       return `<a class="dp ${start ? 'start' : 'bench'}" href="player.html?id=${p.id}&t=${id}"><span class="r">${r}</span><span class="n">${p.no != null ? '#' + p.no + ' ' : ''}${p.name}<small>${[p.pos, p.cls].filter(Boolean).join(' · ')}${p.g ? ` · ${p.g} G` : ''}</small></span>${right}</a>`;
     }).join('');
     const note = u.slot === 'OL' ? 'Linemen leave no trace in play-by-play, so this is roster order (class, then weight), not a real depth chart.'
@@ -123,27 +124,35 @@
 
   app.innerHTML = `
     <div class="dhead"><img src="${M.logo}" alt=""><div class="t"><div class="e">${M.conf} · Through ${through}</div><h1><a href="team.html?id=${id}" style="text-decoration:none">${M.name} ${M.mascot || ''}</a> Depth Chart</h1></div>${switcher}</div>
-    ${UNITS.map(([k, l]) => `<section class="unit"><div class="sec-h"><h2>${l}</h2><p>${k === 'offense' ? 'QB by estimated snaps. Backs and receivers by plays involved (carries + targets)' : k === 'defense' ? 'By plays made (tackles, assists, sacks, breakups) and games played' : 'By kicks and punts'}</p></div><div class="slots">${(PL.depth[k] || []).map(slotCard).join('')}</div></section>`).join('')}
-    <section id="log"><div class="sec-h"><h2>Plays by Game</h2><p>Offense: plays involved, or estimated snaps for QBs. Defense: plays made</p></div>
+    ${UNITS.map(([k, l]) => `<section class="unit"><div class="sec-h"><h2>${l}</h2><p>${k === 'offense' ? 'Ordered by estimated snaps, latest game counted twice so lineup changes show fast. % = share of the team’s plays in games played' : k === 'defense' ? 'Ordered by estimated snaps, latest game counted twice. % = share of the opponent’s plays' : 'By kicks and punts'}</p></div><div class="slots">${(PL.depth[k] || []).map(slotCard).join('')}</div></section>`).join('')}
+    <section id="log"><div class="sec-h"><h2>Snaps by Game</h2><p><span class="tabs" id="logMode" style="display:inline-flex;gap:6px"></span></p></div>
       <div class="sheet-wrap"><table class="sheet dense freeze2" id="logTbl"></table></div></section>
-    <p class="note"><b>These aren’t snap counts.</b> No free source publishes college snap counts. PFF charts them by hand and licenses them commercially. So this chart counts what the play-by-play records: who threw, carried, was targeted, tackled, or broke up a pass. Quarterbacks are the exception: every offensive play is credited to the QB running the offense at that moment, which comes very close to a true snap count. Receivers who block and linemen don't show up in play-by-play, so the line is listed in roster order.</p>`;
+    <p class="note"><b>How the snap estimates work.</b> No free source publishes college snap counts, so these are estimates. Quarterbacks: every offensive play is credited to the QB running the offense, which is close to exact. Everyone else: a model trained on real NFL snap counts (nflverse, 2023–24) turns each player's share of their position group's involvement that game (carries and targets on offense, tackles, sacks and breakups on defense) into a share of the team's plays. Tested on a season it never saw, it's typically within 5 snaps a game for running backs and 9–10 for other positions, and within about 10–15% over a season. Blocking tight ends and receivers who rarely see the ball get underestimated. Offensive linemen leave no trace in the play-by-play, so the line is listed in roster order.</p>`;
   $('#sw').addEventListener('change', e => location.href = 'depth.html?id=' + e.target.value);
 
   /* ---------- game-by-game log ---------- */
   const inLog = (p, g) => (p.pi && p.pi.log.find(x => x.id === g.id)) || null;
+  let mode = 'es';
+  function drawLog(){
+  $('#logMode').innerHTML = [['es','Estimated snaps'],['raw','Plays involved / made']].map(([k,l]) => `<button class="chip ${k===mode?'on':''}" data-m="${k}">${l}</button>`).join('');
   const groups = [['Quarterbacks', p => p.pos === 'QB', 'qb'], ['Running backs', p => ['RB','FB'].includes(p.pos), 'off'], ['Receivers & tight ends', p => ['WR','TE'].includes(p.pos), 'off'],
                   ['Defensive line', p => ['DL','DE','DT','NT','EDGE'].includes(p.pos), 'def'], ['Linebackers', p => ['LB','OLB','ILB','MLB'].includes(p.pos), 'def'], ['Secondary', p => ['CB','S','DB','FS','SS'].includes(p.pos), 'def']];
   const head = `<thead><tr><th class="l">Player</th><th class="c">Pos</th>${G.map(g => `<th title="${g.wk}">${g.wk.replace('Week ','Wk ')}<br><span style="font-weight:600;text-transform:none;letter-spacing:0">${g.site === 'A' ? '@' : 'vs'} ${g.oppName}</span></th>`).join('')}<th>Total</th></tr></thead>`;
-  let body = `<tr><td class="l strong">Team offensive plays</td><td></td>${G.map(g => `<td class="strong">${g.tp}</td>`).join('')}<td class="strong">${G.reduce((s, g) => s + g.tp, 0)}</td></tr>`;
-  groups.forEach(([label, test, key]) => {
-    const ps = PL.players.filter(p => test(p) && p.pi && p.pi[key] > 0).sort((a, b) => b.pi[key] - a.pi[key]);
+  let body = `<tr><td class="l strong">Team offensive plays</td><td></td>${G.map(g => `<td class="strong">${g.tp}</td>`).join('')}<td class="strong">${G.reduce((s, g) => s + g.tp, 0)}</td></tr>`
+    + `<tr><td class="l strong">Opponent offensive plays</td><td></td>${G.map(g => `<td class="strong">${g.otp ?? '—'}</td>`).join('')}<td class="strong">${G.reduce((s, g) => s + (g.otp || 0), 0)}</td></tr>`;
+  groups.forEach(([label, test, rawKey]) => {
+    const key = mode === 'es' ? 'es' : rawKey;
+    const ps = PL.players.filter(p => test(p) && p.pi && (p.pi[key] || 0) > 0).sort((a, b) => (b.pi[key] || 0) - (a.pi[key] || 0));
     if (!ps.length) return;
-    body += `<tr class="grp"><td class="l" colspan="${G.length + 3}">${label}${key === 'qb' ? ' · estimated snaps' : key === 'off' ? ' · plays involved' : ' · plays made'}</td></tr>`;
-    body += ps.map(p => `<tr><td class="l nm"><a href="player.html?id=${p.id}&t=${id}">${p.name}</a></td><td class="c dim">${p.pos}</td>${G.map(g => { const x = inLog(p, g); const v = x ? x[key] : 0;
+    body += `<tr class="grp"><td class="l" colspan="${G.length + 3}">${label}${key === 'es' || key === 'qb' ? ' · estimated snaps' : key === 'off' ? ' · plays involved' : ' · plays made'}</td></tr>`;
+    body += ps.map(p => `<tr><td class="l nm"><a href="player.html?id=${p.id}&t=${id}">${p.name}</a></td><td class="c dim">${p.pos}</td>${G.map(g => { const x = inLog(p, g); const v = x ? (x[key] || 0) : 0;
       const share = key !== 'def' && g.tp ? Math.round(v / g.tp * 100) : null;
-      return `<td class="${v ? '' : 'z'}" ${share != null && v ? `title="${share}% of team plays"` : ''}>${v || '·'}</td>`; }).join('')}<td class="strong">${p.pi[key]}</td></tr>`).join('');
+      return `<td class="${v ? '' : 'z'}" ${share != null && v ? `title="${share}% of team plays"` : ''}>${v || '·'}</td>`; }).join('')}<td class="strong">${p.pi[key] || 0}</td></tr>`).join('');
   });
   $('#logTbl').innerHTML = head + '<tbody>' + body + '</tbody>';
+  }
+  $('#logMode').addEventListener('click', e => { if (e.target.dataset.m) { mode = e.target.dataset.m; drawLog(); } });
+  drawLog();
 })();
 </script>
 </body>
