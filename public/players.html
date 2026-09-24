@@ -11,7 +11,7 @@
   <meta property="og:title" content="FBS Player Leaders — The Depth Chart CFB">
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <script src="tdc-theme.js?v=4"></script>
-  <script src="cfb.js?v=1"></script>
+  <script src="cfb.js?v=2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tdc-sheets.css?v=1">
   <link rel="stylesheet" href="cfb.css?v=1">
@@ -99,7 +99,7 @@
       .sort((a, b) => score(a) - score(b) || (T[a.tid]?.rank || 999) - (T[b.tid]?.rank || 999))
       .slice(0, 12);
     hitIx = -1;
-    box.innerHTML = hits.length ? hits.map(p => `<a href="player.html?id=${p.id}&t=${p.tid}"><img src="${T[p.tid]?.logo || ''}" alt="">${p.name}<span>${p.pos || ''} · ${T[p.tid]?.name || ''}</span></a>`).join('') : '<a style="grid-template-columns:1fr"><span>No players match.</span></a>';
+    box.innerHTML = hits.length ? hits.map(p => `<a href="player.html?id=${p.id}&t=${p.tid}"><img src="${CFB.logo(T[p.tid]?.logo, 22)}" alt="">${p.name}<span>${p.pos || ''} · ${T[p.tid]?.name || ''}</span></a>`).join('') : '<a style="grid-template-columns:1fr"><span>No players match.</span></a>';
     box.hidden = false;
   }
   find.addEventListener('input', search);
@@ -140,7 +140,7 @@
     B.cols.forEach(([k,,,inv]) => { const v = rows.map(r => r[k]).filter(x => x != null).sort((a, b) => a - b); if (v.length > 4) cuts[k] = {q:[.2,.4,.6,.8].map(p => v[Math.floor(p * (v.length - 1))]), inv}; });
     const heat = (k, v) => { const c = cuts[k]; if (!c || v == null) return ''; let b = c.q.filter(x => v > x).length; if (c.inv) b = 4 - b; return 'c' + b; };
     $('#tbl thead').innerHTML = `<tr><th class="rk">RK</th><th class="l">Player</th><th class="l">Team</th><th class="c">Pos</th><th class="c">Class</th>${B.cols.map(([k, l]) => `<th class="sort ${k===sortK?'on':''}" data-k="${k}">${l}${k===sortK?`<span class="ar">${dir<0?'▼':'▲'}</span>`:''}</th>`).join('')}</tr>`;
-    $('#tbl tbody').innerHTML = rows.slice(0, 100).map((r, i) => `<tr><td class="rk">${i + 1}</td><td class="l nm"><a href="player.html?id=${r.id}&t=${r.tid}"><img src="${T[r.tid]?.logo || ''}" alt="" loading="lazy">${r.name}</a></td><td class="l tm"><a href="team.html?id=${r.tid}">${r.team}</a></td><td class="c">${r.pos || ''}</td><td class="c dim">${r.cls || ''}</td>${B.cols.map(([k,,f]) => `<td class="${k===sortK?'strong ':''}${heat(k, r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('');
+    $('#tbl tbody').innerHTML = rows.slice(0, 100).map((r, i) => `<tr><td class="rk">${i + 1}</td><td class="l nm"><a href="player.html?id=${r.id}&t=${r.tid}"><img src="${CFB.logo(T[r.tid]?.logo, 22)}" alt="" loading="lazy">${r.name}</a></td><td class="l tm"><a href="team.html?id=${r.tid}">${r.team}</a></td><td class="c">${r.pos || ''}</td><td class="c dim">${r.cls || ''}</td>${B.cols.map(([k,,f]) => `<td class="${k===sortK?'strong ':''}${heat(k, r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('');
     $('#count').innerHTML = `<strong>${Math.min(100, rows.length)}</strong> of ${rows.length} shown`;
     $('#note').textContent = board === 'epa'
       ? `EPA per play among ${grp}s with ${L.groupMin[grp]}+ plays per team game. Early in the season a handful of big plays can top this list, so check the play count.`
