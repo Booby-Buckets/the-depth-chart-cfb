@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "cfb-static", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8992"], "port": 8992 }
+  ]
+}

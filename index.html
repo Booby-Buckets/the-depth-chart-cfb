@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FBS Power Rankings — The Depth Chart CFB</title>
+  <meta name="description" content="Opponent-adjusted college football power ratings for all 138 FBS teams, offense and defense splits, and projected spreads for every game this week.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Depth Chart CFB">
+  <meta property="og:title" content="FBS Power Rankings — The Depth Chart CFB">
+  <meta property="og:description" content="Opponent-adjusted college football power ratings for all 138 FBS teams, plus projected spreads for this week.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <script src="tdc-theme.js?v=4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="tdc-sheets.css?v=1">
+  <style>
+    :root{--bg:#FAF9F6;--bg2:#F1EFEA;--bg3:#E6E3DB;--border:#DEDACF;--border2:#C6C0B2;--text:#1A1814;--text2:#4A463C;--text3:#8A867A;--accent:#A8843C;--turf:#2F6B3A;--red:#cc2200;}
+    [data-theme="dark"]{--bg:#0A0E18;--bg2:#111726;--bg3:#1A2133;--border:#232B3E;--border2:#34405A;--text:#EEF1F7;--text2:#AEB6C8;--text3:#7A849A;--accent:#E6D5A8;--turf:#6FBF7E;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:500;min-height:100vh;}
+    .col{max-width:1400px;margin:0 auto;padding:0 64px;}
+    @media(max-width:900px){.col{padding:0 16px;}}
+    /* NAV */
+    .nav-wrap{border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100;}
+    .nav-top{height:52px;display:flex;align-items:center;justify-content:space-between;}
+    .nav-logo{font-family:'Playfair Display',serif;font-weight:800;font-size:20px;color:var(--text);text-decoration:none;}
+    .nav-logo span{color:var(--accent);}
+    .nav-logo em{font-style:normal;font-family:'Inter',sans-serif;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--bg);background:var(--turf);padding:3px 6px;margin-left:8px;vertical-align:3px;border-radius:3px;}
+    .nav-actions{display:flex;align-items:center;gap:14px;}
+    .nav-x{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);text-decoration:none;}
+    .nav-x:hover{color:var(--text);}
+    .theme-toggle{background:none;border:1px solid var(--border2);color:var(--text3);font-size:14px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .nav-sub{border-top:1px solid var(--border);}
+    .nav-sub .col{height:36px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;}
+    .nav-sub a,.nav-sub span{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);text-decoration:none;padding:0 14px;height:100%;display:flex;align-items:center;border-bottom:2px solid transparent;white-space:nowrap;}
+    .nav-sub a:first-child{padding-left:0;}
+    .nav-sub a:hover,.nav-sub a.active{color:var(--text);border-bottom-color:var(--accent);}
+    .nav-sub span{opacity:.45;cursor:default;}
+    .nav-sub span small{font-size:8.5px;margin-left:5px;letter-spacing:.1em;}
+    /* HEADER */
+    .page-header{padding:32px 0 20px;border-bottom:1px solid var(--border);}
+    .page-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+    .page-h1{font-family:'Playfair Display',serif;font-weight:800;font-size:34px;letter-spacing:-.02em;margin-bottom:6px;}
+    .page-sub{font-size:13px;color:var(--text3);max-width:760px;line-height:1.55;}
+    .meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+    .meta b{color:var(--text);font-size:15px;font-weight:800;letter-spacing:0;display:block;text-transform:none;}
+    /* SECTIONS */
+    section{padding:28px 0 8px;scroll-margin-top:90px;}
+    @media(max-width:520px){.nav-x{display:none;}}
+    .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+    .sec-h h2{font-family:'Playfair Display',serif;font-weight:800;font-size:22px;}
+    .sec-h p{font-size:12px;color:var(--text3);}
+    /* SLATE */
+    .slate-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    .chip{font:600 11px 'Inter',sans-serif;letter-spacing:.04em;background:var(--bg);border:1px solid var(--border2);color:var(--text2);padding:5px 11px;border-radius:999px;cursor:pointer;}
+    .chip.on{background:var(--text);color:var(--bg);border-color:var(--text);}
+    .slate{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;}
+    .game{border:1px solid var(--border);border-radius:10px;background:var(--bg);padding:11px 13px;display:flex;flex-direction:column;gap:7px;}
+    .game-top{display:flex;justify-content:space-between;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);}
+    .tm{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:8px;font-size:13.5px;font-weight:650;}
+    .tm img{width:22px;height:22px;object-fit:contain;}
+    .tm .rk{font-size:10px;color:var(--text3);font-weight:700;margin-right:5px;}
+    .tm .sc{font-variant-numeric:tabular-nums;font-weight:800;}
+    .tm.lose{color:var(--text3);}
+    .pbar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;display:flex;}
+    .pbar i{display:block;height:100%;background:var(--turf);}
+    .game-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums;}
+    .game-foot b{color:var(--text);}
+    .more{margin-top:12px;}
+    /* RANKINGS */
+    .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+    .filter-select,.search-box{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:6px 10px;outline:none;}
+    .filter-select:focus,.search-box:focus{border-color:var(--accent);}
+    .search-box{width:180px;}
+    .count{font-size:12px;color:var(--text3);margin-left:auto;}
+    .sheet{--c1:44px;--c2:200px;}
+    .sheet td.nm{display:flex;align-items:center;gap:8px;}
+    .sheet td.nm img{width:20px;height:20px;object-fit:contain;flex:none;}
+    .up{color:var(--turf);font-weight:700;} .dn{color:var(--red);font-weight:700;}
+    .note{font-size:11.5px;color:var(--text3);line-height:1.6;margin:14px 0 40px;max-width:900px;}
+    .loading{text-align:center;padding:80px;color:var(--text3);}
+    footer{border-top:1px solid var(--border);padding:22px 0 40px;font-size:11px;color:var(--text3);}
+  </style>
+</head>
+<body>
+<div class="nav-wrap">
+  <div class="col nav-top">
+    <a class="nav-logo" href="/">The <span>Depth</span> Chart<em>CFB</em></a>
+    <div class="nav-actions">
+      <a class="nav-x" href="https://www.thedepthchartcbb.com/">Basketball ↗</a>
+      <button class="theme-toggle" onclick="tdcToggleTheme()" aria-label="Toggle theme">🌙</button>
+    </div>
+  </div>
+  <div class="nav-sub"><div class="col">
+    <a href="#rankings" class="active">Power Rankings</a>
+    <a href="#slate">This Week</a>
+    <span>Teams<small>SOON</small></span>
+    <span>Players<small>SOON</small></span>
+    <span>Recruiting<small>SOON</small></span>
+    <span>Portal<small>SOON</small></span>
+  </div></div>
+</div>
+
+<div class="col">
+  <header class="page-header">
+    <div class="page-eyebrow" id="eyebrow">College Football</div>
+    <h1 class="page-h1">FBS Power Rankings</h1>
+    <p class="page-sub">Every FBS team rated in points: how much it would beat an average FBS team by on a neutral field. The rating adjusts for opponent, dampens blowouts, and leans on last season early on. That lean fades with every game played.</p>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <section id="slate">
+    <div class="sec-h"><h2 id="slateH">This Week</h2><p>Projected spread and win probability from the TDC Rating</p></div>
+    <div class="slate-bar" id="slateBar"></div>
+    <div class="slate" id="slateGrid"><div class="loading">Loading…</div></div>
+    <div class="more"><button class="chip" id="moreBtn" hidden>Show all games</button></div>
+  </section>
+
+  <section id="rankings">
+    <div class="sec-h"><h2>Rankings</h2><p>Click a column to sort</p></div>
+    <div class="controls">
+      <select class="filter-select" id="conf"><option value="">All conferences</option></select>
+      <input class="search-box" id="q" placeholder="Search team…"/>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="sheet-wrap"><table class="sheet dense freeze2" id="tbl"><thead></thead><tbody></tbody></table></div>
+    <p class="note" id="note"></p>
+  </section>
+</div>
+<footer><div class="col">The Depth Chart CFB · Scores and schedules via ESPN<span id="cfbdCredit"></span></div></footer>
+
+<script>
+(async function(){
+  const $ = s => document.querySelector(s);
+  const fmt = (v, d=1, sign=false) => v == null ? '—' : (sign && v > 0 ? '+' : '') + Number(v).toFixed(d);
+  let D;
+  try { D = await (await fetch('data/hub.json', {cache:'no-cache'})).json(); }
+  catch(e){ $('#slateGrid').innerHTML = '<div class="loading">Couldn’t load the ratings.</div>'; return; }
+  const T = Object.fromEntries(D.teams.map(t => [t.id, t]));
+  const logo = id => T[id] ? `<img src="${T[id].logo}" alt="" loading="lazy">` : '<img alt="">';
+
+  $('#eyebrow').textContent = `${D.season} Season · ${D.slateLabel || 'Final'}`;
+  $('#meta').innerHTML = [
+    ['FBS teams', D.teams.length], ['Games rated', D.gamesPlayed],
+    ['Home field', fmt(D.hfa,1) + ' pts'], ['Updated', new Date(D.built).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})]
+  ].map(([k,v]) => `<div>${k}<b>${v}</b></div>`).join('');
+  if (D.hasAdvanced) $('#cfbdCredit').textContent = ' · Advanced stats via CollegeFootballData.com';
+
+  /* ---------- slate ---------- */
+  const slate = D.slate || [];
+  let slateMode = 'top', showAll = false;
+  const isTop = g => (g.homeRank && g.homeRank <= 25) || (g.awayRank && g.awayRank <= 25);
+  const isClose = g => Math.abs(g.spread) <= 7 && g.homeRank && g.awayRank;
+  const modes = [['top','Top 25'], ['close','Toss-ups'], ['all','All games']];
+  function drawSlate(){
+    $('#slateH').textContent = D.slateLabel ? `This Week · ${D.slateLabel}` : 'This Week';
+    $('#slateBar').innerHTML = modes.map(([k,l]) => `<button class="chip ${k===slateMode?'on':''}" data-m="${k}">${l}</button>`).join('');
+    let list = slate.filter(g => slateMode === 'all' || (slateMode === 'top' ? isTop(g) : isClose(g)));
+    if (slateMode === 'top') list.sort((a,b) => Math.min(a.homeRank||999, a.awayRank||999) - Math.min(b.homeRank||999, b.awayRank||999));
+    if (slateMode === 'close') list.sort((a,b) => Math.abs(a.spread) - Math.abs(b.spread));
+    const cap = 12, shown = showAll ? list : list.slice(0, cap);
+    $('#moreBtn').hidden = list.length <= cap;
+    $('#moreBtn').textContent = showAll ? 'Show fewer' : `Show all ${list.length} games`;
+    if (!list.length) { $('#slateGrid').innerHTML = '<div class="loading">No games in this view.</div>'; return; }
+    $('#slateGrid').innerHTML = shown.map(g => {
+      const fav = g.spread >= 0 ? 'home' : 'away';
+      const favName = fav === 'home' ? g.homeName : g.awayName;
+      const pHome = Math.round(g.homeWin * 100);
+      const done = g.completed;
+      const row = (side) => {
+        const id = g[side], rk = g[side+'Rank'], name = g[side+'Name'], sc = side==='home' ? g.hs : g.as, other = side==='home' ? g.as : g.hs;
+        return `<div class="tm ${done && sc < other ? 'lose':''}">${logo(id)}<div>${rk && rk<=25?`<span class="rk">${rk}</span>`:''}${name}</div><span class="sc">${done ? sc : (side==='home' ? pHome : 100-pHome) + '%'}</span></div>`;
+      };
+      const when = new Date(g.date);
+      return `<div class="game">
+        <div class="game-top"><span>${done ? 'Final' : when.toLocaleDateString([], {weekday:'short'}) + ' ' + when.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}${g.neutral?' · Neutral':''}</span><span>${g.tv||''}</span></div>
+        ${row('away')}${row('home')}
+        <div class="pbar" title="Away / home win probability"><i style="width:${100-pHome}%;opacity:.35"></i><i style="width:${pHome}%"></i></div>
+        <div class="game-foot"><span>TDC line: <b>${favName} −${Math.abs(g.spread).toFixed(1)}</b></span><span>Total ${fmt(g.total)}</span></div>
+      </div>`;
+    }).join('');
+  }
+  $('#slateBar').addEventListener('click', e => { const m = e.target.dataset.m; if (m) { slateMode = m; showAll = false; drawSlate(); } });
+  $('#moreBtn').addEventListener('click', () => { showAll = !showAll; drawSlate(); });
+  if (!slate.some(isTop)) slateMode = 'all';
+  drawSlate();
+
+  /* ---------- rankings ---------- */
+  const confs = [...new Set(D.teams.map(t => t.conf))].sort();
+  $('#conf').innerHTML += confs.map(c => `<option>${c}</option>`).join('');
+  D.teams.forEach(t => t.delta = t.prior == null ? null : +(t.net - t.prior).toFixed(1));
+
+  // heat buckets: quintiles over the whole FBS field (higher = better unless inverted)
+  const heat = {};
+  function bucketize(key, invert){
+    const vals = D.teams.map(t => t[key]).filter(v => v != null).sort((a,b) => a-b);
+    if (!vals.length) return;
+    const q = p => vals[Math.floor(p * (vals.length - 1))];
+    const cuts = [q(.2), q(.4), q(.6), q(.8)];
+    heat[key] = v => { if (v == null) return ''; let b = cuts.filter(c => v > c).length; if (invert) b = 4 - b; return 'c' + b; };
+  }
+  const cols = [
+    {k:'rank', l:'RK', cls:'rk', f:t => t.rank},
+    {k:'name', l:'Team', cls:'l nm', f:t => `${logo(t.id)}${t.name}`, sortStr:true},
+    {k:'conf', l:'Conf', cls:'l dim', f:t => t.conf, sortStr:true},
+    {k:'w', l:'W-L', cls:'c', f:t => `${t.w}-${t.l}`, sv:t => t.w - t.l + t.w*0.01},
+    {k:'cw', l:'Conf', cls:'c dim', f:t => t.confAbbr === 'ind' ? '—' : `${t.cw}-${t.cl}`, sv:t => t.cw - t.cl},
+    {k:'net', l:'Rating', cls:'big', f:t => fmt(t.net,1,true), heat:true, tip:'Points better than an average FBS team, neutral field'},
+    {k:'off', l:'Off', f:t => fmt(t.off,1,true), heat:true, tip:'Points scored above average vs average defense'},
+    {k:'def', l:'Def', f:t => fmt(t.def,1,true), heat:true, tip:'Points allowed below average vs average offense'},
+    {k:'sos', l:'SOS', f:t => fmt(t.sos,1,true), heat:true, tip:'Average rating of opponents played'},
+    {k:'prior', l:'Preseason', cls:'dim', f:t => fmt(t.prior,1,true), tip:'Last season’s final rating, regressed 40% to average'},
+    {k:'delta', l:'Δ', f:t => t.delta == null ? '—' : `<span class="${t.delta>0?'up':t.delta<0?'dn':''}">${fmt(t.delta,1,true)}</span>`, tip:'Rating change since the preseason'},
+  ];
+  if (D.hasAdvanced) cols.push(
+    {k:'oEPA', l:'Off EPA', f:t => fmt(t.oEPA,3), heat:true, tip:'Offensive expected points added per play'},
+    {k:'dEPA', l:'Def EPA', f:t => fmt(t.dEPA,3), heat:true, inv:true, tip:'Defensive EPA per play allowed (lower is better)'},
+    {k:'oSR', l:'Off SR', f:t => t.oSR==null?'—':(t.oSR*100).toFixed(1)+'%', heat:true, tip:'Offensive success rate'},
+    {k:'dSR', l:'Def SR', f:t => t.dSR==null?'—':(t.dSR*100).toFixed(1)+'%', heat:true, inv:true, tip:'Defensive success rate allowed (lower is better)'},
+  );
+  cols.filter(c => c.heat).forEach(c => bucketize(c.k, c.inv));
+
+  let sortK = 'rank', sortDir = 1;
+  function drawTable(){
+    const conf = $('#conf').value, q = $('#q').value.trim().toLowerCase();
+    let rows = D.teams.filter(t => (!conf || t.conf === conf) && (!q || (t.name + ' ' + t.full + ' ' + t.abbr).toLowerCase().includes(q)));
+    const c = cols.find(c => c.k === sortK);
+    const sv = c.sv || (t => t[sortK]);
+    rows.sort((a,b) => {
+      const x = sv(a), y = sv(b);
+      if (x == null) return 1; if (y == null) return -1;
+      return (c.sortStr ? String(x).localeCompare(String(y)) : x - y) * sortDir;
+    });
+    $('#tbl thead').innerHTML = '<tr>' + cols.map(c => `<th class="sort ${c.cls&&c.cls.includes('l')?'l':''} ${c.k===sortK?'on':''}" data-k="${c.k}" ${c.tip?`title="${c.tip}"`:''}>${c.l}${c.k===sortK?`<span class="ar">${sortDir>0?'▲':'▼'}</span>`:''}</th>`).join('') + '</tr>';
+    $('#tbl tbody').innerHTML = rows.map(t => '<tr>' + cols.map(c => `<td class="${c.cls||''} ${c.heat && heat[c.k] ? heat[c.k](t[c.k]) : ''}">${c.f(t)}</td>`).join('') + '</tr>').join('');
+    $('#count').innerHTML = `<strong>${rows.length}</strong> teams`;
+  }
+  $('#tbl thead').addEventListener('click', e => {
+    const th = e.target.closest('th'); if (!th) return;
+    const k = th.dataset.k, c = cols.find(c => c.k === k);
+    if (k === sortK) sortDir = -sortDir; else { sortK = k; sortDir = (c.sortStr || k === 'rank' || c.inv) ? 1 : -1; }
+    drawTable();
+  });
+  $('#conf').addEventListener('change', drawTable);
+  $('#q').addEventListener('input', drawTable);
+  drawTable();
+
+  $('#note').innerHTML = `<b>How the rating works.</b> Each game's points are modelled as offense against the opposing defense, with ${fmt(D.hfa,1)} points of home field solved from the data. Margins past 24 count only 35%, so a 63–7 cupcake win can't set a ranking. FCS opponents are pooled into one team. Until a team has played a few games, its rating stays close to its preseason number (last season's final rating, pulled 40% toward average).`;
+})();
+</script>
+</body>
+</html>

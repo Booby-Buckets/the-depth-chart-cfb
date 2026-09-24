@@ -1,0 +1,207 @@
+/* tdc-sheets.css — shared "Google Sheets" informational UI kit.
+   A dense, spreadsheet-style table: bordered grid card, sticky header, gridlines on
+   every cell, zebra rows, tabular numbers, sortable headers, optional frozen first
+   column and heat cells. Theme-aware (light/dark via the site's --bg/--text tokens).
+   Adopt on any page: add this stylesheet, wrap a <table class="sheet"> in
+   <div class="sheet-wrap">, mark text columns with class="l" (numbers default right). */
+
+.sheet-wrap{
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--bg);
+  overflow:auto;
+  max-height:78vh;
+  box-shadow:0 1px 3px rgba(0,0,0,.10);
+  -webkit-overflow-scrolling:touch;
+}
+.sheet{
+  border-collapse:separate;              /* separate so sticky cells keep their borders */
+  border-spacing:0;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:12.5px;
+  width:max-content;
+  min-width:100%;
+  color:var(--text);
+}
+/* header row — sticky, flat grey, uppercase micro-labels */
+.sheet thead th{
+  position:sticky; top:0; z-index:3;
+  background:var(--bg2);
+  text-align:right;
+  font-size:10px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  color:var(--text3);
+  padding:9px 12px;
+  border-bottom:2px solid var(--border2);
+  border-right:1px solid var(--border);
+  white-space:nowrap;
+}
+.sheet thead th:last-child{ border-right:none; }
+.sheet th.l, .sheet td.l{ text-align:left; }
+.sheet th.c, .sheet td.c{ text-align:center; }
+/* body cells — gridlines everywhere, tabular numbers */
+.sheet tbody td{
+  text-align:right;
+  padding:6px 12px;
+  border-bottom:1px solid var(--border);
+  border-right:1px solid var(--border);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.sheet tbody td:last-child{ border-right:none; }
+.sheet tbody tr:last-child td{ border-bottom:none; }
+.sheet tbody tr:nth-child(even) td{ background:color-mix(in srgb, var(--text) 3.5%, transparent); }
+.sheet tbody tr:hover td{ background:color-mix(in srgb, var(--accent) 9%, transparent); }
+/* row-number / rank first column */
+.sheet .rk{ color:var(--text3); font-weight:700; text-align:right; }
+/* name cell — the readable anchor of each row */
+.sheet td.nm{ font-weight:650; }
+.sheet td.nm a{ color:var(--text); text-decoration:none; }
+.sheet td.nm a:hover{ color:var(--accent); text-decoration:underline; }
+.sheet td.dim{ color:var(--text3); }
+.sheet td.strong{ font-weight:800; }
+
+/* frozen first column (add .freeze to .sheet) */
+.sheet.freeze thead th:first-child,
+.sheet.freeze tbody td:first-child{
+  position:sticky; left:0; z-index:2;
+  background:var(--bg);
+  border-right:2px solid var(--border2);
+}
+.sheet.freeze thead th:first-child{ z-index:4; background:var(--bg2); }
+.sheet.freeze tbody tr:nth-child(even) td:first-child{ background:color-mix(in srgb, var(--text) 3.5%, var(--bg)); }
+.sheet.freeze tbody tr:hover td:first-child{ background:color-mix(in srgb, var(--accent) 9%, var(--bg)); }
+
+/* sortable headers */
+.sheet thead th.sort{ cursor:pointer; user-select:none; transition:color .12s, background .12s; }
+.sheet thead th.sort:hover{ color:var(--text); background:color-mix(in srgb, var(--text) 8%, var(--bg2)); }
+.sheet thead th.sort .ar{ opacity:.55; font-size:9px; margin-left:3px; }
+.sheet thead th.sort.on{ color:var(--text); }
+
+/* heat cells — pass --h (0..1); higher = stronger tint of the accent (or red for inverted) */
+.sheet td.heat{ background:color-mix(in srgb, var(--accent) calc(var(--h,0)*38%), transparent) !important; }
+.sheet td.heat.inv{ background:color-mix(in srgb, #e0685230 calc(var(--h,0)*100%), transparent) !important; }
+
+/* value chips inside a cell (grade pills, tags) stay compact */
+.sheet .pill{ display:inline-block; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:800;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent); }
+
+/* a page-level toolbar above a sheet (search / filters / count) */
+.sheet-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 10px; }
+.sheet-bar .count{ font-size:11px; color:var(--text3); font-weight:600; }
+.sheet-bar input[type=search]{
+  font:inherit; font-size:12.5px; padding:6px 11px; border:1px solid var(--border2);
+  border-radius:8px; background:var(--bg2); color:var(--text); min-width:200px;
+}
+.sheet-title{ font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--text3); margin:0 0 8px; }
+
+@media(max-width:640px){ .sheet{ font-size:12px; } .sheet tbody td{ padding:6px 9px; } .sheet thead th{ padding:8px 9px; } }
+
+/* ── Retrofit: the site's existing data-table classes get the sheet grid on any page that
+   loads this file (non-data pages simply don't include it). Keeps border-collapse so layout
+   widths don't shift — just adds vertical gridlines to the existing horizontal ones, zebra
+   rows, a sticky header, and tabular numbers. Header background stays page-defined. ── */
+.sortable-table, .nil-table, .roster-table, .proj-table, .rk-table, .gl-table, .stats-table{
+  font-variant-numeric:tabular-nums;
+}
+.sortable-table td, .nil-table td, .roster-table td, .proj-table td, .rk-table td, .gl-table td, .stats-table td,
+.sortable-table th, .nil-table th, .roster-table th, .proj-table th, .rk-table th, .gl-table th, .stats-table th{
+  border-right:1px solid var(--border) !important;
+}
+.sortable-table td:last-child, .nil-table td:last-child, .roster-table td:last-child, .proj-table td:last-child, .rk-table td:last-child, .gl-table td:last-child, .stats-table td:last-child,
+.sortable-table th:last-child, .nil-table th:last-child, .roster-table th:last-child, .proj-table th:last-child, .rk-table th:last-child, .gl-table th:last-child, .stats-table th:last-child{
+  border-right:none !important;
+}
+.sortable-table thead th, .nil-table thead th, .roster-table thead th, .proj-table thead th, .rk-table thead th, .gl-table thead th, .stats-table thead th{
+  position:sticky; top:0; z-index:3;
+}
+.sortable-table tbody tr:nth-child(even) td, .nil-table tbody tr:nth-child(even) td, .roster-table tbody tr:nth-child(even) td, .proj-table tbody tr:nth-child(even) td{
+  background:color-mix(in srgb, var(--text) 3.5%, transparent);
+}
+.sortable-table tbody tr:hover td, .nil-table tbody tr:hover td, .roster-table tbody tr:hover td, .proj-table tbody tr:hover td{
+  background:color-mix(in srgb, var(--accent) 9%, transparent);
+}
+/* onoff.html and similar pages use a bare <table> in .tbl-wrap — add the vertical gridlines
+   + zebra so it reads as a sheet (it already has the sticky header / tabular numbers). */
+.tbl-wrap table td, .tbl-wrap table th{ border-right:1px solid var(--border); }
+.tbl-wrap table td:last-child, .tbl-wrap table th:last-child{ border-right:none; }
+.tbl-wrap table tbody tr:nth-child(even) td{ background:color-mix(in srgb, var(--text) 3.5%, transparent); }
+
+
+/* ══ Big-Board grade (Sept 2026) ══════════════════════════════════════════════
+   Three additions the NBA Big Board needed, now shared so any sheet can use them:
+   a denser row, a frozen BLOCK of two or three leading columns instead of one, and
+   a red-to-green conditional format. ─────────────────────────────────────────── */
+
+/* dense — the board's proportions: micro headers, tight rows, thin gridlines */
+.sheet.dense{ font-size:12.5px; }
+.sheet.dense thead th{ font-size:9px; letter-spacing:.07em; padding:7px 7px;
+  border-bottom:1px solid var(--border); }
+.sheet.dense tbody td{ padding:6px 7px; }
+.sheet.dense tbody tr:last-child td{ border-bottom:1px solid var(--border); }
+.sheet.dense td.big{ font-weight:800; font-size:13.5px; color:var(--text); }
+.sheet.dense td.sm{ font-size:11px; color:var(--text3); }
+
+/* frozen BLOCK — .freeze2 / .freeze3 pin the first two or three columns, so rank,
+   name and the one score you are reading stay on screen while the rest scrolls.
+   The page sets the widths: .sheet{--c1:40px;--c2:186px;--c3:54px} */
+.sheet.freeze2 thead th:nth-child(-n+2), .sheet.freeze2 tbody td:nth-child(-n+2),
+.sheet.freeze3 thead th:nth-child(-n+3), .sheet.freeze3 tbody td:nth-child(-n+3){
+  position:sticky; z-index:2; background:var(--bg); }
+.sheet.freeze2 thead th:nth-child(-n+2),
+.sheet.freeze3 thead th:nth-child(-n+3){ z-index:4; background:var(--bg2); }
+.sheet.freeze2 thead th:nth-child(1), .sheet.freeze2 tbody td:nth-child(1),
+.sheet.freeze3 thead th:nth-child(1), .sheet.freeze3 tbody td:nth-child(1){
+  left:0; width:var(--c1,44px); min-width:var(--c1,44px); }
+.sheet.freeze2 thead th:nth-child(2), .sheet.freeze2 tbody td:nth-child(2),
+.sheet.freeze3 thead th:nth-child(2), .sheet.freeze3 tbody td:nth-child(2){
+  left:var(--c1,44px); width:var(--c2,190px); min-width:var(--c2,190px);
+  max-width:var(--c2,190px); overflow:hidden; text-overflow:ellipsis; }
+.sheet.freeze3 thead th:nth-child(3), .sheet.freeze3 tbody td:nth-child(3){
+  left:calc(var(--c1,44px) + var(--c2,190px)); width:var(--c3,54px); min-width:var(--c3,54px); }
+.sheet.freeze2 thead th:nth-child(2), .sheet.freeze2 tbody td:nth-child(2),
+.sheet.freeze3 thead th:nth-child(3), .sheet.freeze3 tbody td:nth-child(3){
+  border-right:2px solid var(--border2); }
+/* the zebra and hover tints are translucent, so the frozen block needs them mixed
+   into an OPAQUE colour or the scrolling columns show through it */
+.sheet.freeze2 tbody tr:nth-child(even) td:nth-child(-n+2),
+.sheet.freeze3 tbody tr:nth-child(even) td:nth-child(-n+3){
+  background:color-mix(in srgb, var(--text) 3.5%, var(--bg)); }
+.sheet.freeze2 tbody tr:hover td:nth-child(-n+2),
+.sheet.freeze3 tbody tr:hover td:nth-child(-n+3){
+  background:color-mix(in srgb, var(--accent) 9%, var(--bg)); }
+
+/* CONDITIONAL FORMAT — five buckets, worst to best, the way a scouting sheet
+   colours a column. Drawn as a background IMAGE so it composes over the zebra
+   banding and stays opaque on a frozen column instead of replacing them.
+   A page's existing percentile buckets can drive it with no logic change:
+   c0 bottom · c1 below median · c2 above median · c3 strong · c4 elite. */
+.sheet td.c0{ background-image:linear-gradient(hsla(0,70%,48%,.34),hsla(0,70%,48%,.34)); }
+.sheet td.c1{ background-image:linear-gradient(hsla(30,70%,48%,.15),hsla(30,70%,48%,.15)); }
+.sheet td.c2{ background-image:linear-gradient(hsla(95,70%,48%,.15),hsla(95,70%,48%,.15)); }
+.sheet td.c3{ background-image:linear-gradient(hsla(115,70%,48%,.26),hsla(115,70%,48%,.26)); }
+.sheet td.c4{ background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40)); }
+.sheet td.c0,.sheet td.c3,.sheet td.c4{ font-weight:700; color:var(--text); }
+[data-theme="dark"] .sheet td.c0{ background-image:linear-gradient(hsla(0,70%,46%,.36),hsla(0,70%,46%,.36)); }
+[data-theme="dark"] .sheet td.c4{ background-image:linear-gradient(hsla(125,70%,46%,.42),hsla(125,70%,46%,.42)); }
+/* the same scale for the retrofitted page tables */
+.roster-table td.c0,.proj-table td.c0{ background-image:linear-gradient(hsla(0,70%,48%,.34),hsla(0,70%,48%,.34)); }
+.roster-table td.c1,.proj-table td.c1{ background-image:linear-gradient(hsla(30,70%,48%,.15),hsla(30,70%,48%,.15)); }
+.roster-table td.c2,.proj-table td.c2{ background-image:linear-gradient(hsla(95,70%,48%,.15),hsla(95,70%,48%,.15)); }
+.roster-table td.c3,.proj-table td.c3{ background-image:linear-gradient(hsla(115,70%,48%,.26),hsla(115,70%,48%,.26)); }
+.roster-table td.c4,.proj-table td.c4{ background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40)); }
+.roster-table td.c0,.roster-table td.c3,.roster-table td.c4,
+.proj-table td.c0,.proj-table td.c3,.proj-table td.c4{ font-weight:700; color:var(--text); }
+/* NOTE: no global body.no-color off-switch here on purpose. Two pages already use
+   that body class for their OWN narrower toggles (roster.html's Stat Colors, and
+   team-stats.html's per-team drawer, which defaults to off) — a blanket rule here
+   silently blanked the shading on every sheet those pages render. Pages scope their
+   own switch. */
+
+/* the shading key that goes under a sheet */
+.sheet-legend{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-top:10px;
+  font-size:10.5px; color:var(--text3); }
+.sheet-legend .sw{ display:inline-block; width:34px; height:9px; border-radius:2px;
+  vertical-align:-1px; margin-right:5px;
+  background:linear-gradient(90deg,hsla(0,70%,48%,.34),hsla(60,70%,48%,.12),hsla(125,70%,48%,.40)); }
+.sheet thead th.sort .ar{ opacity:0; }
+.sheet thead th.sort.on .ar,.sheet thead th.sort.sorted .ar{ opacity:1; }
