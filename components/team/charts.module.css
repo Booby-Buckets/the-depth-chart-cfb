@@ -1,0 +1,13 @@
+.card { border: 1px solid var(--border); border-radius: 10px; background: var(--bg); padding: 16px 18px; position: relative; }
+.card h3 { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.big { font-size: 13px; color: var(--text2); margin: 6px 0 10px; }
+.big b { color: var(--text); font-size: 18px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.ax { font: 600 10px var(--font-sans), system-ui, sans-serif; fill: var(--text3); }
+.grid { stroke: var(--border); stroke-width: 1; }
+.zero { stroke: var(--border2); stroke-width: 1; stroke-dasharray: 3 3; }
+.dl { font: 800 11px var(--font-sans), system-ui, sans-serif; fill: var(--text); }
+.tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 11.5px; font-weight: 600; padding: 6px 9px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -110%); z-index: 5; }
+.tip b { font-weight: 800; }
+.mini { display: flex; gap: 4px; }
+.mini :global(.chip) { padding: 3px 9px; font-size: 10px; }

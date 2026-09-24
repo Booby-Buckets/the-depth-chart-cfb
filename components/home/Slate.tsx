@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { SlateGame } from "@/lib/data";
 import { etDay, etTime } from "@/lib/format";
@@ -12,7 +13,7 @@ const CAP = 12;
 const isTop = (g: SlateGame) => (!!g.homeRank && g.homeRank <= 25) || (!!g.awayRank && g.awayRank <= 25);
 const isClose = (g: SlateGame) => Math.abs(g.spread) <= 7 && !!g.homeRank && !!g.awayRank;
 
-export default function Slate({ games, logos }: { games: SlateGame[]; logos: Record<string, string> }) {
+export default function Slate({ games, logos, slugs }: { games: SlateGame[]; logos: Record<string, string>; slugs: Record<string, string> }) {
   const [mode, setMode] = useState<Mode>(games.some(isTop) ? "top" : "all");
   const [showAll, setShowAll] = useState(false);
 
@@ -32,7 +33,7 @@ export default function Slate({ games, logos }: { games: SlateGame[]; logos: Rec
         <div className="loading">No games in this view.</div>
       ) : (
         <div className={styles.grid}>
-          {shown.map((g) => <GameCard key={g.id} g={g} logos={logos} />)}
+          {shown.map((g) => <GameCard key={g.id} g={g} logos={logos} slugs={slugs} />)}
         </div>
       )}
       {list.length > CAP && (
@@ -44,7 +45,7 @@ export default function Slate({ games, logos }: { games: SlateGame[]; logos: Rec
   );
 }
 
-function GameCard({ g, logos }: { g: SlateGame; logos: Record<string, string> }) {
+function GameCard({ g, logos, slugs }: { g: SlateGame; logos: Record<string, string>; slugs: Record<string, string> }) {
   const pHome = Math.round(g.homeWin * 100);
   const favName = g.spread >= 0 ? g.homeName : g.awayName;
   const row = (side: "home" | "away") => {
@@ -56,7 +57,7 @@ function GameCard({ g, logos }: { g: SlateGame; logos: Record<string, string> })
         <img src={logos[id] || `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png`} alt="" loading="lazy" />
         <div>
           {rk && rk <= 25 ? <span className={styles.rk}>{rk}</span> : null}
-          {logos[id] ? <a className={styles.tl} href={`/team.html?id=${id}`}>{name}</a> : name}
+          {slugs[id] ? <Link className={styles.tl} href={`/teams/${slugs[id]}`}>{name}</Link> : name}
         </div>
         <span className={styles.sc}>{g.completed ? sc : `${side === "home" ? pHome : 100 - pHome}%`}</span>
       </div>

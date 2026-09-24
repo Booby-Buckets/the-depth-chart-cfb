@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getHub } from "@/lib/data";
+import { getTeamIndex } from "@/lib/data";
 import { fmt, etStamp } from "@/lib/format";
 import Slate from "@/components/home/Slate";
 import Rankings from "@/components/home/Rankings";
@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const hub = await getHub();
+  const { hub, slugOf } = await getTeamIndex();
   const logos = Object.fromEntries(hub.teams.map((t) => [t.id, t.logo]));
+  const slugs = Object.fromEntries(slugOf);
   return (
     <div className="col">
       <header className="page-header">
@@ -36,12 +37,12 @@ export default async function Home() {
           <h2>{hub.slateLabel ? `This Week · ${hub.slateLabel}` : "This Week"}</h2>
           <p>Projected spread and win probability from the TDC Rating</p>
         </div>
-        <Slate games={hub.slate} logos={logos} />
+        <Slate games={hub.slate} logos={logos} slugs={slugs} />
       </section>
 
       <section id="rankings" className={styles.section}>
         <div className="sec-h"><h2>Rankings</h2><p>Click a column to sort</p></div>
-        <Rankings teams={hub.teams} hasAdvanced={hub.hasAdvanced} />
+        <Rankings teams={hub.teams} hasAdvanced={hub.hasAdvanced} slugs={slugs} />
         <p className="note">
           <b>How the rating works.</b> Each game&apos;s points are modelled as offense against the opposing defense, with{" "}
           {fmt(hub.hfa, 1)} points of home field solved from the data. Margins past 24 count only 35%, so a 63–7 cupcake win

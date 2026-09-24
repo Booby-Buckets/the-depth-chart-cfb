@@ -8,7 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 const LINKS: { href: string; label: string; match: (p: string) => boolean }[] = [
   { href: "/", label: "Power Rankings", match: (p) => p === "/" },
   { href: "/#slate", label: "This Week", match: () => false },
-  { href: "/team.html", label: "Teams", match: (p) => p.startsWith("/teams") },
+  { href: "/teams", label: "Teams", match: (p) => p.startsWith("/teams") },
   { href: "/depth.html", label: "Depth Charts", match: (p) => p.startsWith("/depth") },
   { href: "/players.html", label: "Players", match: (p) => p.startsWith("/players") },
 ];
