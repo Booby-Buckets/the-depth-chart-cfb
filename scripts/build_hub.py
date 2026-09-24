@@ -13,7 +13,7 @@ so Net = Off + Def is a neutral-field point margin vs an average FBS team.
     rating regressed 40% to the mean; the pull fades as games are played.
 Raw feeds are cached in scripts/cache/ so re-runs are cheap.
 """
-import json, os, sys, math, time, urllib.request, datetime
+import json, os, sys, math, time, urllib.request, urllib.error, datetime
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,7 +22,8 @@ OUT = os.path.join(ROOT, "data", "hub.json")
 os.makedirs(CACHE, exist_ok=True)
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 
-ESPN = "https://site.api.espn.com/apis/site/v2/sports/football/college-football"
+# site.web.api answers from GitHub Actions runners; site.api 403s them
+ESPN = "https://site.web.api.espn.com/apis/site/v2/sports/football/college-football"
 ESPN_WEB = "https://site.web.api.espn.com/apis/v2/sports/football/college-football"
 CFBD = "https://api.collegefootballdata.com"
 HFA_PRIOR = 2.5         # home-field points, also solved for
@@ -40,13 +41,20 @@ def get(url, cache_name=None, max_age=None, headers=None):
     if path and os.path.exists(path) and (max_age is None or time.time() - os.path.getmtime(path) < max_age):
         with open(path) as f:
             return json.load(f)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})})
     for attempt in range(3):
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})})
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 data = json.load(r)
             break
-        except Exception as e:
+        except urllib.error.HTTPError as e:
+            if attempt == 2:
+                raise
+            if e.code == 403 and "espn.com" in url:   # the other ESPN host usually answers
+                a, b = "://site.web.api.espn.com", "://site.api.espn.com"
+                url = url.replace(a, b) if a in url else url.replace(b, a)
+            time.sleep(2)
+        except Exception:
             if attempt == 2:
                 raise
             time.sleep(2)
