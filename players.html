@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FBS Player Leaders — The Depth Chart CFB</title>
+  <meta name="description" content="Search every FBS player and browse national leaderboards: passing, rushing, receiving, defense and EPA per play by position.">
+  <link rel="canonical" href="https://www.thedepthchartcfb.com/players.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Depth Chart CFB">
+  <meta property="og:title" content="FBS Player Leaders — The Depth Chart CFB">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <script src="tdc-theme.js?v=4"></script>
+  <script src="cfb.js?v=1"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="tdc-sheets.css?v=1">
+  <link rel="stylesheet" href="cfb.css?v=1">
+  <style>
+    .finder{position:relative;max-width:520px;margin-top:16px;}
+    .finder input{width:100%;font:600 15px 'Inter',sans-serif;padding:12px 14px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);color:var(--text);outline:none;}
+    .finder input:focus{border-color:var(--accent);}
+    .hits{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:20;overflow:hidden;}
+    .hits a{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:8px 12px;color:var(--text);text-decoration:none;font-size:13.5px;font-weight:600;border-bottom:1px solid var(--border);}
+    .hits a:last-child{border-bottom:none;}
+    .hits a:hover,.hits a.on{background:color-mix(in srgb,var(--accent) 10%,transparent);}
+    .hits img{width:22px;height:22px;object-fit:contain;}
+    .hits span{font-size:11.5px;color:var(--text3);font-weight:600;}
+    .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+    .sheet td.nm a{display:flex;align-items:center;gap:8px;}
+    .sheet td.tm{color:var(--text3);}
+    .sheet td.tm a{color:inherit;text-decoration:none;} .sheet td.tm a:hover{color:var(--text);text-decoration:underline;}
+    .sheet{--c1:44px;--c2:190px;}
+  </style>
+</head>
+<body>
+<div class="nav-wrap">
+  <div class="col nav-top">
+    <a class="nav-logo" href="/">The <span>Depth</span> Chart<em>CFB</em></a>
+    <div class="nav-actions">
+      <a class="nav-x" href="https://www.thedepthchartcbb.com/">Basketball ↗</a>
+      <button class="theme-toggle" onclick="tdcToggleTheme()" aria-label="Toggle theme">🌙</button>
+    </div>
+  </div>
+  <div class="nav-sub"><div class="col">
+    <a href="/#rankings">Power Rankings</a>
+    <a href="/#slate">This Week</a>
+    <a href="team.html">Teams</a>
+    <a href="players.html" class="active">Players</a>
+    <span>Recruiting<small>SOON</small></span>
+    <span>Portal<small>SOON</small></span>
+  </div></div>
+</div>
+
+<div class="col">
+  <header class="page-header">
+    <div class="page-eyebrow" id="eyebrow">FBS Players</div>
+    <h1 class="page-h1">Player Leaders</h1>
+    <p class="page-sub">Search any FBS player, or browse the national leaders. EPA per play (expected points added) measures how much each snap a player is part of moves the team's expected score. It's ranked within position, since a receiver's catches and a quarterback's dropbacks aren't the same job.</p>
+    <div class="finder"><input id="find" placeholder="Search players, e.g. “Carr” or “Ohio State QB”…" autocomplete="off"/><div class="hits" id="hits" hidden></div></div>
+  </header>
+
+  <section>
+    <div class="controls">
+      <span class="tabs" id="tabs"></span>
+      <span class="tabs" id="groups"></span>
+      <select class="filter-select" id="conf"><option value="">All conferences</option></select>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="sheet-wrap"><table class="sheet dense freeze2" id="tbl"><thead></thead><tbody></tbody></table></div>
+    <p class="note" id="note"></p>
+  </section>
+</div>
+<footer><div class="col">The Depth Chart CFB · Player stats, EPA and usage via CollegeFootballData.com · Rosters via ESPN</div></footer>
+
+<script>
+(async function(){
+  const $ = s => document.querySelector(s);
+  const {fmt, ord} = CFB;
+  let L, H, IX;
+  try {
+    [L, H] = await Promise.all([fetch('data/players/leaders.json', {cache:'no-cache'}).then(r => r.json()), fetch('data/hub.json', {cache:'no-cache'}).then(r => r.json())]);
+  } catch (e) { $('#tbl').outerHTML = '<div class="loading">Couldn’t load player data.</div>'; return; }
+  const T = Object.fromEntries(H.teams.map(t => [t.id, t]));
+  $('#eyebrow').textContent = `${L.season} Season · FBS Players`;
+
+  /* ---------- search ---------- */
+  let hitIx = -1, hits = [];
+  const find = $('#find'), box = $('#hits');
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, '');
+  find.addEventListener('focus', async () => { if (!IX) try { IX = (await (await fetch('data/players/index.json')).json()).map(r => ({id:r[0], name:r[1], tid:r[2], pos:r[3], key: norm(r[1] + ' ' + (T[r[2]] ? T[r[2]].name + ' ' + T[r[2]].abbr : '') + ' ' + (r[3] || ''))})); } catch (e) { IX = []; } });
+  function search(){
+    const q = norm(find.value.trim());
+    if (!q || !IX) { box.hidden = true; return; }
+    const words = q.split(/\s+/);
+    // best first: a name word that IS the query word ("carr" -> CJ Carr), then one that starts with it
+    const score = p => { const toks = norm(p.name).split(' '); return words.some(w => toks.includes(w)) ? 0 : words.some(w => toks.some(t => t.startsWith(w))) ? 1 : 2; };
+    hits = IX.filter(p => words.every(w => p.key.includes(w)))
+      .sort((a, b) => score(a) - score(b) || (T[a.tid]?.rank || 999) - (T[b.tid]?.rank || 999))
+      .slice(0, 12);
+    hitIx = -1;
+    box.innerHTML = hits.length ? hits.map(p => `<a href="player.html?id=${p.id}&t=${p.tid}"><img src="${T[p.tid]?.logo || ''}" alt="">${p.name}<span>${p.pos || ''} · ${T[p.tid]?.name || ''}</span></a>`).join('') : '<a style="grid-template-columns:1fr"><span>No players match.</span></a>';
+    box.hidden = false;
+  }
+  find.addEventListener('input', search);
+  find.addEventListener('keydown', e => {
+    const links = [...box.querySelectorAll('a[href]')];
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); hitIx = (hitIx + (e.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length; links.forEach((a, i) => a.classList.toggle('on', i === hitIx)); }
+    if (e.key === 'Enter' && links.length) location.href = links[Math.max(0, hitIx)].href;
+    if (e.key === 'Escape') box.hidden = true;
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.finder')) box.hidden = true; });
+
+  /* ---------- leaderboards ---------- */
+  const pc = v => v == null ? '—' : (v * 100).toFixed(1) + '%';
+  const n0 = v => v == null ? '—' : (v % 1 ? v.toFixed(1) : String(v));
+  const e2 = v => v == null ? '—' : fmt(v, 2, true);
+  const BOARDS = {
+    passing: {l:'Passing', sort:'yds', cols:[['att','Att',n0],['cmp','Cmp',n0],['pct','Cmp %',pc],['yds','Yards',n0],['td','TD',n0],['int','INT',n0,true],['ypa','Y/A',n0],['epa','EPA/dropback',e2]]},
+    rushing: {l:'Rushing', sort:'yds', cols:[['car','Car',n0],['yds','Yards',n0],['ypc','Y/C',n0],['td','TD',n0],['long','Long',n0],['epa','EPA/rush',e2]]},
+    receiving: {l:'Receiving', sort:'yds', cols:[['rec','Rec',n0],['yds','Yards',n0],['ypr','Y/R',n0],['td','TD',n0],['long','Long',n0],['use','Target share',v => v == null ? '—' : Math.round(v*100) + '%']]},
+    defense: {l:'Defense', sort:'tot', cols:[['tot','Tackles',n0],['solo','Solo',n0],['tfl','TFL',n0],['sacks','Sacks',n0],['int','INT',n0],['pd','PD',n0],['qbh','QB hurries',n0]]},
+    epa: {l:'EPA per play', sort:'epa', cols:[['plays','Plays',n0],['epa','EPA/play',e2],['epaPass','Pass',e2],['epaRush','Rush',e2],['use','Usage',v => v == null ? '—' : Math.round(v*100) + '%']]},
+  };
+  let board = 'passing', grp = 'QB', sortK = 'yds', dir = -1;
+  const confs = [...new Set(H.teams.map(t => t.conf))].sort();
+  $('#conf').innerHTML += confs.map(c => `<option>${c}</option>`).join('');
+  try { const s = JSON.parse(localStorage.getItem('cfb_players_view') || '{}'); if (BOARDS[s.board]) { board = s.board; grp = s.grp || grp; sortK = BOARDS[board].sort; } } catch (e) {}
+
+  function draw(){
+    const B = BOARDS[board];
+    $('#tabs').innerHTML = Object.entries(BOARDS).map(([k, b]) => `<button class="chip ${k===board?'on':''}" data-b="${k}">${b.l}</button>`).join('');
+    $('#groups').innerHTML = board === 'epa' ? ['QB','RB','WR/TE'].map(g => `<button class="chip ${g===grp?'on':''}" data-g="${g}" style="font-size:10px;padding:4px 9px">${g}</button>`).join('') : '';
+    const conf = $('#conf').value;
+    let rows = L.boards[board].filter(r => (!conf || r.conf === conf) && (board !== 'epa' || r.group === grp));
+    const col = B.cols.find(c => c[0] === sortK);
+    rows = rows.slice().sort((a, b) => ((a[sortK] ?? -1e9) - (b[sortK] ?? -1e9)) * dir * (col && col[3] ? -1 : 1) || (b[B.sort] ?? 0) - (a[B.sort] ?? 0));
+    // heat: quintiles within the rows shown
+    const cuts = {};
+    B.cols.forEach(([k,,,inv]) => { const v = rows.map(r => r[k]).filter(x => x != null).sort((a, b) => a - b); if (v.length > 4) cuts[k] = {q:[.2,.4,.6,.8].map(p => v[Math.floor(p * (v.length - 1))]), inv}; });
+    const heat = (k, v) => { const c = cuts[k]; if (!c || v == null) return ''; let b = c.q.filter(x => v > x).length; if (c.inv) b = 4 - b; return 'c' + b; };
+    $('#tbl thead').innerHTML = `<tr><th class="rk">RK</th><th class="l">Player</th><th class="l">Team</th><th class="c">Pos</th><th class="c">Class</th>${B.cols.map(([k, l]) => `<th class="sort ${k===sortK?'on':''}" data-k="${k}">${l}${k===sortK?`<span class="ar">${dir<0?'▼':'▲'}</span>`:''}</th>`).join('')}</tr>`;
+    $('#tbl tbody').innerHTML = rows.slice(0, 100).map((r, i) => `<tr><td class="rk">${i + 1}</td><td class="l nm"><a href="player.html?id=${r.id}&t=${r.tid}"><img src="${T[r.tid]?.logo || ''}" alt="" loading="lazy">${r.name}</a></td><td class="l tm"><a href="team.html?id=${r.tid}">${r.team}</a></td><td class="c">${r.pos || ''}</td><td class="c dim">${r.cls || ''}</td>${B.cols.map(([k,,f]) => `<td class="${k===sortK?'strong ':''}${heat(k, r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('');
+    $('#count').innerHTML = `<strong>${Math.min(100, rows.length)}</strong> of ${rows.length} shown`;
+    $('#note').textContent = board === 'epa'
+      ? `EPA per play among ${grp}s with ${L.groupMin[grp]}+ plays per team game. Early in the season a handful of big plays can top this list, so check the play count.`
+      : `The top 300 FBS players by ${B.l.toLowerCase()} ${B.sort === 'tot' ? 'tackles' : 'yards'}. Click a column to re-sort them. EPA columns are per play.`;
+    try { localStorage.setItem('cfb_players_view', JSON.stringify({board, grp})); } catch (e) {}
+  }
+  $('#tabs').addEventListener('click', e => { const b = e.target.dataset.b; if (b) { board = b; sortK = BOARDS[b].sort; dir = -1; draw(); } });
+  $('#groups').addEventListener('click', e => { const g = e.target.dataset.g; if (g) { grp = g; draw(); } });
+  $('#conf').addEventListener('change', draw);
+  $('#tbl thead').addEventListener('click', e => { const th = e.target.closest('th.sort'); if (!th) return; if (th.dataset.k === sortK) dir = -dir; else { sortK = th.dataset.k; dir = -1; } draw(); });
+  draw();
+})();
+</script>
+</body>
+</html>

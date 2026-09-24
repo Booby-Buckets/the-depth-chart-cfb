@@ -12,6 +12,7 @@
   <meta property="og:title" content="FBS Teams — The Depth Chart CFB">
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <script src="tdc-theme.js?v=4"></script>
+  <script src="cfb.js?v=1"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tdc-sheets.css?v=1">
   <link rel="stylesheet" href="cfb.css?v=1">
@@ -71,6 +72,14 @@
     .wp i{display:inline-block;width:54px;height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;}
     .wp i s{display:block;height:100%;background:var(--tc-text);}
     tr.bye td{color:var(--text3);font-style:italic;}
+    .leaders{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;}
+    .lead{border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--text);display:block;border-top:3px solid var(--tc-text);}
+    .lead:hover{background:color-mix(in srgb,var(--accent) 7%,transparent);}
+    .lead .k{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+    .lead .n{font-size:15px;font-weight:750;margin:5px 0 2px;}
+    .lead .p{font-size:11px;color:var(--text3);font-weight:600;}
+    .lead .v{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:6px;}
+    .lead .v small{font-size:11px;color:var(--text3);font-weight:600;margin-left:4px;}
     /* directory */
     .dir{columns:3 300px;column-gap:18px;}
     .conf{break-inside:avoid;margin-bottom:18px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
@@ -96,7 +105,7 @@
     <a href="/#rankings">Power Rankings</a>
     <a href="/#slate">This Week</a>
     <a href="team.html" class="active">Teams</a>
-    <span>Players<small>SOON</small></span>
+    <a href="players.html">Players</a>
     <span>Recruiting<small>SOON</small></span>
     <span>Portal<small>SOON</small></span>
   </div></div>
@@ -109,9 +118,7 @@
 (async function(){
   const $ = s => document.querySelector(s);
   const app = $('#app');
-  const fmt = (v, d=1, sign=false) => v == null ? '—' : (sign && v > 0 ? '+' : '') + Number(v).toFixed(d);
-  const pct = p => p == null ? '—' : p > .995 ? '>99%' : p < .005 ? '<1%' : Math.round(p*100) + '%';
-  const ord = n => n + (['th','st','nd','rd'][(n%100-20)%10] || ['th','st','nd','rd'][n%100] || 'th');
+  const {fmt, pct, ord} = CFB;
   const id = new URLSearchParams(location.search).get('id');
 
   let H;
@@ -155,23 +162,7 @@
   const HT = Object.fromEntries(H.teams.map(t => [t.id, t]));
   document.title = `${M.name} ${M.mascot || ''} — The Depth Chart CFB`;
 
-  /* team colour: a band colour that holds white text, and a text/mark colour readable on the page */
-  const hex2rgb = h => { h = (h || '555555').replace('#',''); return [0,2,4].map(i => parseInt(h.substr(i,2),16)); };
-  const lum = rgb => { const c = rgb.map(v => { v /= 255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); }); return .2126*c[0] + .7152*c[1] + .0722*c[2]; };
-  const contrast = (a,b) => { const x = lum(a), y = lum(b); return (Math.max(x,y)+.05) / (Math.min(x,y)+.05); };
-  const mix = (a,b,t) => a.map((v,i) => Math.round(v + (b[i]-v)*t));
-  const css = rgb => `rgb(${rgb.join(',')})`;
-  function toward(rgb, target, bg, need){ for (let t = 0; t <= 1; t += .05) { const c = mix(rgb, target, t); if (contrast(c, bg) >= need) return c; } return target; }
-  function paintTeam(){
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const base = hex2rgb(M.color), bg = hex2rgb(getComputedStyle(document.body).backgroundColor.match(/\d+/g).slice(0,3).map(v => (+v).toString(16).padStart(2,'0')).join(''));
-    const band = toward(base, [0,0,0], [255,255,255], 4.5);           // white text on the band
-    const text = toward(base, dark ? [255,255,255] : [0,0,0], bg, 3.2); // marks + coloured text on the page
-    const r = document.documentElement.style;
-    r.setProperty('--tc-band', css(band)); r.setProperty('--tc-on', '#fff'); r.setProperty('--tc-text', css(text));
-  }
-  paintTeam();
-  new MutationObserver(() => { paintTeam(); drawCharts(); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  CFB.paintTeam(M, () => drawCharts());
 
   const confRec = M.confAbbr === 'ind' ? '' : ` · ${R.cw}-${R.cl} ${M.conf}`;
   const o = D.outlook;
@@ -196,7 +187,7 @@
         <div class="tile"><div class="k">Projected</div><div class="v">${o.expW.toFixed(1)}-${o.expL.toFixed(1)}</div><div class="s">bowl-eligible <b>${pct(o.bowlP)}</b></div></div>
       </div>
     </div>
-    <div class="jump"><a class="chip" href="#outlook">Outlook</a><a class="chip" href="#schedule">Schedule</a><a class="chip" href="#stats">Team stats</a><a class="chip" href="#roster">Roster</a></div>
+    <div class="jump"><a class="chip" href="#outlook">Outlook</a><a class="chip" href="#leaders">Leaders</a><a class="chip" href="#schedule">Schedule</a><a class="chip" href="#stats">Team stats</a><a class="chip" href="#roster">Roster</a></div>
 
     <section id="outlook">
       <div class="sec-h"><h2>Season Outlook</h2><p>From the TDC Rating, updated after every game</p></div>
@@ -212,6 +203,11 @@
           <div id="dist"></div><div class="tip" id="distTip"></div>
         </div>
       </div>
+    </section>
+
+    <section id="leaders" hidden>
+      <div class="sec-h"><h2>Team Leaders</h2><p><a href="players.html" style="color:inherit">National leaderboards →</a></p></div>
+      <div class="leaders" id="leadGrid"></div>
     </section>
 
     <section id="schedule">
@@ -240,7 +236,7 @@
   const rankHeat = r => r == null ? '' : 'c' + Math.max(0, Math.min(4, 4 - Math.floor((r - 1) / (N / 5))));
 
   /* ---------- charts ---------- */
-  function tipAt(tip, card, x, y, html){ const b = card.getBoundingClientRect(); tip.innerHTML = html; tip.style.left = (x - b.left) + 'px'; tip.style.top = (y - b.top) + 'px'; tip.style.opacity = 1; }
+  const tipAt = CFB.tip;
   function drawHist(){
     const h = D.history, W = 560, Hh = 210, pl = 34, pr = 70, pt = 14, pb = 26;
     const vals = h.map(p => p.net), lo = Math.min(0, ...vals) - 3, hi = Math.max(0, ...vals) + 3;
@@ -342,7 +338,7 @@
   const inches = s => { const m = (s||'').match(/(\d+)'\s*(\d+)/); return m ? +m[1]*12 + +m[2] : null; };
   const rcols = [
     {k:'no', l:'#', f:p => p.no ?? '', sv:p => p.no == null ? 999 : +p.no},
-    {k:'name', l:'Player', cls:'l nm', f:p => p.name, str:true},
+    {k:'name', l:'Player', cls:'l nm', f:p => `<a href="player.html?id=${p.id}&t=${id}">${p.name}</a>`, sv:p => p.name, str:true},
     {k:'pos', l:'Pos', cls:'c', f:p => p.pos || '', sv:p => posIx(p.pos)},
     {k:'cls', l:'Class', cls:'c', f:p => p.cls || '', sv:p => CLS[p.cls] || 9},
     {k:'ht', l:'Ht', f:p => p.ht || '', sv:p => inches(p.ht)},
@@ -366,6 +362,28 @@
   $('#rtbl thead').addEventListener('click', e => { const th = e.target.closest('th'); if (!th) return; if (th.dataset.k === rk) rdir = -rdir; else { rk = th.dataset.k; rdir = 1; } drawRoster(); });
   if (!D.roster.length) $('#roster').innerHTML += '<p class="note">ESPN hasn’t published this roster yet.</p>';
   drawRoster();
+
+  /* ---------- team leaders (from the player build) ---------- */
+  try {
+    const PL = await (await fetch(`data/players/${encodeURIComponent(id)}.json`, {cache:'no-cache'})).json();
+    const st = (p, c, k) => (p.stats[c] || {})[k];
+    const top = (c, k) => PL.players.filter(p => st(p, c, k) > 0).sort((a, b) => st(b, c, k) - st(a, c, k))[0];
+    const cards = [
+      ['Passing', top('passing','YDS'), p => [st(p,'passing','YDS'), 'yds', `${st(p,'passing','TD')} TD · ${st(p,'passing','INT')} INT`], 'passing.YDS'],
+      ['Rushing', top('rushing','YDS'), p => [st(p,'rushing','YDS'), 'yds', `${st(p,'rushing','CAR')} car · ${st(p,'rushing','TD')} TD`], 'rushing.YDS'],
+      ['Receiving', top('receiving','YDS'), p => [st(p,'receiving','YDS'), 'yds', `${st(p,'receiving','REC')} rec · ${st(p,'receiving','TD')} TD`], 'receiving.YDS'],
+      ['Tackles', top('defensive','TOT'), p => [st(p,'defensive','TOT'), 'tkl', `${st(p,'defensive','TFL') || 0} TFL`], 'defensive.TOT'],
+      ['Sacks', top('defensive','SACKS'), p => [st(p,'defensive','SACKS'), 'sacks', `${st(p,'defensive','QB HUR') || 0} hurries`], 'defensive.SACKS'],
+      ['Interceptions', top('interceptions','INT'), p => [st(p,'interceptions','INT'), 'INT', `${st(p,'defensive','PD') || 0} PD`], 'interceptions.INT'],
+    ].filter(c => c[1]);
+    if (cards.length) {
+      $('#leadGrid').innerHTML = cards.map(([k, p, f, rkKey]) => {
+        const [v, unit, sub] = f(p), rk = (p.rk || {})[rkKey];
+        return `<a class="lead" href="player.html?id=${p.id}&t=${id}"><div class="k">${k}</div><div class="n">${p.name}</div><div class="p">${p.pos || ''}${p.cls ? ' · ' + p.cls : ''}${rk ? ' · ' + ord(rk[0]) + ' in FBS' : ''}</div><div class="v">${v % 1 ? v.toFixed(1) : v}<small>${unit}</small></div><div class="p">${sub}</div></a>`;
+      }).join('');
+      $('#leaders').hidden = false;
+    }
+  } catch (e) { /* no player data yet: leave the section hidden */ }
 })();
 </script>
 </body>

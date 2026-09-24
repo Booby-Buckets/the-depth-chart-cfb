@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Player — The Depth Chart CFB</title>
+  <meta name="description" content="College football player profile: season stats ranked across FBS, EPA per play by situation against position peers, usage share, and the position room.">
+  <link rel="canonical" href="https://www.thedepthchartcfb.com/player.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Depth Chart CFB">
+  <meta property="og:title" content="Player — The Depth Chart CFB">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <script src="tdc-theme.js?v=4"></script>
+  <script src="cfb.js?v=1"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="tdc-sheets.css?v=1">
+  <link rel="stylesheet" href="cfb.css?v=1">
+  <style>
+    .hero{margin-top:22px;border-radius:14px;overflow:hidden;border:1px solid var(--border);}
+    .hero-band{background:var(--tc-band);color:var(--tc-on);padding:22px 26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;position:relative;}
+    .hero-band::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 55%,rgba(0,0,0,.18));pointer-events:none;}
+    .num{font-family:'Playfair Display',serif;font-weight:800;font-size:64px;line-height:1;opacity:.9;min-width:70px;text-align:center;}
+    .hero-id{flex:1;min-width:230px;position:relative;z-index:1;}
+    .hero-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.85;}
+    .hero-eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4);}
+    .hero-name{font-family:'Playfair Display',serif;font-weight:800;font-size:38px;letter-spacing:-.02em;line-height:1.1;margin:4px 0 6px;}
+    .hero-sub{font-size:13px;opacity:.9;display:flex;gap:14px;flex-wrap:wrap;}
+    .hero-team{position:relative;z-index:1;display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);padding:8px 12px;border-radius:10px;}
+    .hero-team img{width:40px;height:40px;object-fit:contain;background:rgba(255,255,255,.92);border-radius:50%;padding:4px;}
+    .hero-team b{display:block;font-size:14px;} .hero-team span{font-size:11px;opacity:.85;}
+    .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:700;}
+    .tiles{display:grid;grid-template-columns:repeat(var(--n,6),1fr);background:var(--bg);}
+    .tile{padding:14px 18px;border-right:1px solid var(--border);}
+    .tile:last-child{border-right:none;}
+    .tile .k{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+    .tile .v{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:3px;}
+    .tile .s{font-size:11.5px;color:var(--text3);margin-top:2px;} .tile .s b{color:var(--text2);}
+    @media(max-width:1000px){.tiles{grid-template-columns:repeat(3,1fr);}.tile:nth-child(3n){border-right:none;}.tile:nth-child(-n+3){border-bottom:1px solid var(--border);}}
+    @media(max-width:560px){.tiles{grid-template-columns:repeat(2,1fr);}.tile{border-right:1px solid var(--border)!important;border-bottom:1px solid var(--border);}.tile:nth-child(2n){border-right:none!important;}.hero-name{font-size:30px;}.num{font-size:44px;}}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+    @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+    .card{border:1px solid var(--border);border-radius:10px;background:var(--bg);padding:16px 18px;position:relative;}
+    .card h3{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+    .card .sub{font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5;}
+    .statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+    /* situational bars: bar = player, tick = position-group average */
+    .sit{display:grid;grid-template-columns:118px 1fr 56px;align-items:center;gap:10px;padding:5px 0;font-size:12.5px;cursor:default;}
+    .sit .l{color:var(--text2);font-weight:600;}
+    .sit .track{position:relative;height:14px;}
+    .sit .zero{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--border2);}
+    .sit .bar{position:absolute;top:2px;height:10px;background:var(--tc-text);border-radius:3px;}
+    .sit .avg{position:absolute;top:-4px;height:22px;width:2px;background:var(--text);border:1px solid var(--bg);box-sizing:content-box;margin-left:-2px;}
+    .sit .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
+    .legend{display:flex;gap:16px;font-size:11px;color:var(--text3);margin-top:10px;flex-wrap:wrap;}
+    .legend i{display:inline-block;vertical-align:-1px;margin-right:6px;}
+    .legend .lb{width:14px;height:8px;background:var(--tc-text);border-radius:2px;}
+    .legend .lt{width:2px;height:12px;background:var(--text);}
+    .tip{position:absolute;pointer-events:none;background:var(--text);color:var(--bg);font-size:11.5px;font-weight:600;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .08s;z-index:5;}
+    .sheet tr.me td{background-image:linear-gradient(color-mix(in srgb,var(--tc-text) 16%,transparent),color-mix(in srgb,var(--tc-text) 16%,transparent));font-weight:800;}
+    .sheet td.nm a{color:var(--text);text-decoration:none;} .sheet td.nm a:hover{text-decoration:underline;}
+    .empty{padding:30px;text-align:center;color:var(--text3);border:1px dashed var(--border2);border-radius:10px;font-size:13px;}
+  </style>
+</head>
+<body>
+<div class="nav-wrap">
+  <div class="col nav-top">
+    <a class="nav-logo" href="/">The <span>Depth</span> Chart<em>CFB</em></a>
+    <div class="nav-actions">
+      <a class="nav-x" href="https://www.thedepthchartcbb.com/">Basketball ↗</a>
+      <button class="theme-toggle" onclick="tdcToggleTheme()" aria-label="Toggle theme">🌙</button>
+    </div>
+  </div>
+  <div class="nav-sub"><div class="col">
+    <a href="/#rankings">Power Rankings</a>
+    <a href="/#slate">This Week</a>
+    <a href="team.html">Teams</a>
+    <a href="players.html" class="active">Players</a>
+    <span>Recruiting<small>SOON</small></span>
+    <span>Portal<small>SOON</small></span>
+  </div></div>
+</div>
+
+<div class="col" id="app"><div class="loading">Loading…</div></div>
+<footer><div class="col">The Depth Chart CFB · Rosters via ESPN · Player stats, EPA and usage via CollegeFootballData.com</div></footer>
+
+<script>
+(async function(){
+  const $ = s => document.querySelector(s);
+  const app = $('#app');
+  const {fmt, ord} = CFB;
+  const qs = new URLSearchParams(location.search);
+  const pid = qs.get('id');
+  let tid = qs.get('t');
+  const fail = msg => app.innerHTML = `<div class="loading">${msg} <a href="players.html">Search players →</a></div>`;
+  if (!pid) return fail('No player picked.');
+
+  // a link without the team (e.g. shared from elsewhere): find it in the search index
+  if (!tid) {
+    try { const ix = await (await fetch('data/players/index.json')).json(); const hit = ix.find(r => r[0] === pid); if (hit) tid = hit[2]; } catch (e) {}
+    if (!tid) return fail('We couldn’t find that player.');
+  }
+  let PL, TM;
+  try {
+    [PL, TM] = await Promise.all([fetch(`data/players/${encodeURIComponent(tid)}.json`, {cache:'no-cache'}).then(r => r.json()),
+                                 fetch(`data/teams/${encodeURIComponent(tid)}.json`, {cache:'no-cache'}).then(r => r.json())]);
+  } catch (e) { return fail('We couldn’t load that team’s players.'); }
+  const P = PL.players.find(p => p.id === pid);
+  if (!P) return fail('That player isn’t on this team’s roster.');
+  const M = TM.meta;
+  document.title = `${P.name} — ${M.name} ${P.pos || ''} — The Depth Chart CFB`;
+  CFB.paintTeam(M);
+
+  const st = (c, k) => (P.stats[c] || {})[k];
+  const rk = key => (P.rk || {})[key];
+  const rkTxt = key => { const r = rk(key); return r ? `<b>${ord(r[0])}</b> of ${r[1]} in FBS` : ''; };
+  const n0 = v => v == null ? '—' : (v % 1 ? v.toFixed(1) : String(v));
+  const GROUPS = {QB:['QB'], RB:['RB','FB'], 'WR/TE':['WR','TE']};
+  const group = Object.keys(GROUPS).find(g => GROUPS[g].includes(P.pos));
+  const CLS = {FR:'Freshman', SO:'Sophomore', JR:'Junior', SR:'Senior', GR:'Graduate'};
+
+  /* ---------- tiles, by role ---------- */
+  const T = (k, v, key, sub) => ({k, v, s: sub || (key ? rkTxt(key) : '')});
+  const epaTile = () => P.ppa ? T('EPA / play', fmt(P.ppa.avg.all, 2, true), 'ppa.all', rk('ppa.all') ? `<b>${ord(rk('ppa.all')[0])}</b> of ${rk('ppa.all')[1]} ${group}s` : `${P.ppa.plays} plays`) : null;
+  const useTile = k => P.use && P.use[k] != null ? T(k === 'pass' ? 'Target share' : 'Usage', Math.round(P.use[k]*100) + '%', null, k === 'pass' ? 'of team pass plays' : 'of team plays involved in') : null;
+  let tiles = [];
+  if (st('passing','ATT') >= 10) tiles = [T('Pass yards', n0(st('passing','YDS')), 'passing.YDS'), T('TD – INT', `${n0(st('passing','TD'))}–${n0(st('passing','INT'))}`), T('Yards / att.', fmt(st('passing','YPA'),1), 'passing.YPA'), T('Completion', fmt(st('passing','PCT')*100,1) + '%', 'passing.PCT'), epaTile(), useTile('overall')];
+  else if (st('rushing','CAR') >= 8) tiles = [T('Rush yards', n0(st('rushing','YDS')), 'rushing.YDS'), T('Yards / carry', fmt(st('rushing','YPC'),1), 'rushing.YPC'), T('Rush TD', n0(st('rushing','TD')), 'rushing.TD'), T('Receptions', n0(st('receiving','REC') || 0), 'receiving.REC'), epaTile(), useTile('overall')];
+  else if (st('receiving','REC') >= 2) tiles = [T('Receptions', n0(st('receiving','REC')), 'receiving.REC'), T('Rec. yards', n0(st('receiving','YDS')), 'receiving.YDS'), T('Yards / catch', fmt(st('receiving','YPR'),1), 'receiving.YPR'), T('Rec. TD', n0(st('receiving','TD')), 'receiving.TD'), epaTile(), useTile('pass')];
+  else if (st('defensive','TOT')) tiles = [T('Tackles', n0(st('defensive','TOT')), 'defensive.TOT'), T('Solo', n0(st('defensive','SOLO'))), T('Tackles for loss', n0(st('defensive','TFL')), 'defensive.TFL'), T('Sacks', n0(st('defensive','SACKS')), 'defensive.SACKS'), T('Interceptions', n0(st('interceptions','INT') || 0), 'interceptions.INT'), T('Passes defended', n0(st('defensive','PD')), 'defensive.PD')];
+  else if (st('kicking','FGA')) tiles = [T('Field goals', `${n0(st('kicking','FGM'))}/${n0(st('kicking','FGA'))}`, 'kicking.FGM'), T('FG %', fmt(st('kicking','PCT')*100,1) + '%', 'kicking.PCT'), T('Long', n0(st('kicking','LONG'))), T('Extra points', `${n0(st('kicking','XPM'))}/${n0(st('kicking','XPA'))}`), T('Points', n0(st('kicking','PTS')))];
+  else if (st('punting','NO')) tiles = [T('Punts', n0(st('punting','NO'))), T('Avg', fmt(st('punting','YPP'),1)), T('Inside 20', n0(st('punting','In 20'))), T('Long', n0(st('punting','LONG')))];
+  tiles = tiles.filter(Boolean);
+
+  const recruit = P.recruit ? `<span class="badge">${'★'.repeat(P.recruit.stars || 0)} ${P.recruit.year} recruit${P.recruit.ranking ? ' · #' + P.recruit.ranking + ' nationally' : ''}</span>` : '';
+  const bio = [P.pos, CLS[P.cls] || P.cls, [P.ht, P.wt].filter(Boolean).join(', '), P.home].filter(Boolean);
+  const R = TM.rating;
+  app.innerHTML = `
+    <div class="hero">
+      <div class="hero-band">
+        ${P.no != null ? `<div class="num">#${P.no}</div>` : ''}
+        <div class="hero-id">
+          <div class="hero-eyebrow"><a href="team.html?id=${tid}">${M.name}</a> · ${PL.season}</div>
+          <div class="hero-name">${P.name}</div>
+          <div class="hero-sub">${bio.map(b => `<span>${b}</span>`).join('')}${recruit}</div>
+        </div>
+        <a class="hero-team" href="team.html?id=${tid}"><img src="${M.logo}" alt=""><div><b>${M.name} ${M.mascot || ''}</b><span>${R.w}-${R.l} · TDC #${R.rank}</span></div></a>
+      </div>
+      ${tiles.length ? `<div class="tiles" style="--n:${Math.min(6, tiles.length)}">${tiles.map(t => `<div class="tile"><div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s || '&nbsp;'}</div></div>`).join('')}</div>` : ''}
+    </div>
+    <section id="eff" hidden>
+      <div class="sec-h"><h2>Efficiency &amp; Role</h2><p>EPA = expected points added per play. Compared with every FBS ${group || ''} who qualifies</p></div>
+      <div class="grid2">
+        <div class="card" id="effCard"><h3>EPA per play by situation</h3><div class="sub" id="effSub"></div><div id="effBars"></div><div class="tip" id="effTip"></div>
+          <div class="legend"><span><i class="lb"></i>${P.name.split(' ').slice(-1)[0]}</span><span><i class="lt"></i>${group} average</span></div></div>
+        <div class="card" id="useCard"><h3>Share of team plays</h3><div class="sub">How often the offense runs through this player. Pass = targets or dropbacks, rush = carries</div><div id="useBars"></div><div class="tip" id="useTip"></div>
+          <div class="legend"><span><i class="lb"></i>${P.name.split(' ').slice(-1)[0]}</span><span><i class="lt"></i>${group} average</span></div></div>
+      </div>
+    </section>
+    <section id="stats"><div class="sec-h"><h2>${PL.season} Season Stats</h2><p>FBS rank among qualifying players</p></div><div class="statgrid" id="statGrid"></div></section>
+    <section id="room"><div class="sec-h"><h2>Position Room</h2><p id="roomSub"></p></div><div class="sheet-wrap"><table class="sheet dense" id="roomTbl"></table></div></section>
+    <p class="note">Stats, EPA and usage come from CollegeFootballData.com and refresh daily. FBS ranks only count players with enough volume for the stat to mean something. Qualifying for EPA takes ${(PL.groupAvg[group] || {}).minPerGame || '—'}+ plays per team game.</p>`;
+
+  /* ---------- efficiency & usage bars ---------- */
+  const SIT = [['all','All plays'],['pass','Passing'],['rush','Rushing'],['firstDown','1st down'],['secondDown','2nd down'],['thirdDown','3rd down'],['standardDowns','Standard downs'],['passingDowns','Passing downs']];
+  function bars(el, tipEl, card, rows, lo, hi, fmtV, avgLabel){
+    const x = v => ((v - lo) / (hi - lo) * 100);
+    el.innerHTML = rows.map((r, i) => {
+      const a = Math.min(x(0), x(r.v)), w = Math.abs(x(r.v) - x(0));
+      return `<div class="sit" data-i="${i}"><span class="l">${r.l}</span><span class="track"><span class="zero" style="left:${x(0)}%"></span>
+        <span class="bar" style="left:${a}%;width:${Math.max(w, .6)}%"></span>${r.avg != null ? `<span class="avg" style="left:${x(r.avg)}%"></span>` : ''}</span><span class="v">${fmtV(r.v)}</span></div>`;
+    }).join('');
+    el.querySelectorAll('.sit').forEach(row => {
+      row.addEventListener('mousemove', e => { const r = rows[+row.dataset.i]; CFB.tip(tipEl, card, e.clientX, e.clientY, `<b>${r.l}</b> · ${fmtV(r.v)} · ${avgLabel} ${r.avg == null ? '—' : fmtV(r.avg)}`); });
+      row.addEventListener('mouseleave', () => tipEl.style.opacity = 0);
+    });
+  }
+  if (P.ppa && group) {
+    const G = PL.groupAvg[group];
+    const rows = SIT.map(([k, l]) => ({l, v: P.ppa.avg[k], avg: G.ppa[k]})).filter(r => r.v != null);
+    const vals = rows.flatMap(r => [r.v, r.avg]).filter(v => v != null);
+    const lo = Math.min(0, ...vals) - .1, hi = Math.max(0, ...vals) + .1;
+    bars($('#effBars'), $('#effTip'), $('#effCard'), rows, lo, hi, v => fmt(v, 2, true), `${group} avg`);
+    const r = rk('ppa.all');
+    $('#effSub').innerHTML = `${P.ppa.plays} plays · ${fmt(P.ppa.tot, 1, true)} total EPA${r ? ` · <b>${ord(r[0])}</b> of ${r[1]} qualifying ${group}s` : ` · not enough plays to rank yet`}`;
+    if (P.use) {
+      const urows = [['overall','All plays'],['pass','Pass plays'],['rush','Run plays'],['firstDown','1st down'],['secondDown','2nd down'],['thirdDown','3rd down'],['standardDowns','Standard downs'],['passingDowns','Passing downs']]
+        .map(([k, l]) => ({l, v: P.use[k], avg: G.use[k]})).filter(r => r.v != null);
+      bars($('#useBars'), $('#useTip'), $('#useCard'), urows, 0, Math.max(.2, ...urows.flatMap(r => [r.v, r.avg || 0])) * 1.08, v => Math.round(v * 100) + '%', `${group} avg`);
+    } else $('#useCard').hidden = true;
+    $('#eff').hidden = false;
+  }
+
+  /* ---------- season stat tables ---------- */
+  const CATS = [
+    ['passing','Passing',[['COMPLETIONS','Completions'],['ATT','Attempts'],['PCT','Completion %'],['YDS','Yards'],['YPA','Yards / att.'],['TD','Touchdowns'],['INT','Interceptions']]],
+    ['rushing','Rushing',[['CAR','Carries'],['YDS','Yards'],['YPC','Yards / carry'],['TD','Touchdowns'],['LONG','Long']]],
+    ['receiving','Receiving',[['REC','Receptions'],['YDS','Yards'],['YPR','Yards / catch'],['TD','Touchdowns'],['LONG','Long']]],
+    ['defensive','Defense',[['TOT','Tackles'],['SOLO','Solo'],['TFL','Tackles for loss'],['SACKS','Sacks'],['QB HUR','QB hurries'],['PD','Passes defended'],['TD','Defensive TD']]],
+    ['interceptions','Interceptions',[['INT','Interceptions'],['YDS','Return yards'],['TD','Pick-sixes']]],
+    ['fumbles','Fumbles',[['FUM','Fumbles'],['LOST','Lost'],['REC','Recovered']]],
+    ['kicking','Kicking',[['FGM','FG made'],['FGA','FG attempts'],['PCT','FG %'],['LONG','Long'],['XPM','XP made'],['XPA','XP attempts'],['PTS','Points']]],
+    ['punting','Punting',[['NO','Punts'],['YDS','Yards'],['YPP','Average'],['In 20','Inside 20'],['TB','Touchbacks'],['LONG','Long']]],
+    ['kickReturns','Kick returns',[['NO','Returns'],['YDS','Yards'],['AVG','Average'],['TD','Touchdowns'],['LONG','Long']]],
+    ['puntReturns','Punt returns',[['NO','Returns'],['YDS','Yards'],['AVG','Average'],['TD','Touchdowns'],['LONG','Long']]],
+  ];
+  const heat = r => { if (!r) return ''; const q = (r[0] - 1) / r[1]; return 'c' + (q < .1 ? 4 : q < .25 ? 3 : q < .5 ? 2 : q < .75 ? 1 : 0); };
+  const sv = (k, v) => v == null ? '—' : k === 'PCT' ? (v * 100).toFixed(1) + '%' : (v % 1 ? v.toFixed(1) : String(v));
+  const tables = CATS.filter(([c]) => P.stats[c] && Object.values(P.stats[c]).some(v => v)).map(([c, label, rowsDef]) =>
+    `<div class="sheet-wrap"><table class="sheet dense" style="width:100%"><thead><tr><th class="l">${label}</th><th>${PL.season}</th><th>FBS rank</th></tr></thead><tbody>${
+      rowsDef.filter(([k]) => P.stats[c][k] != null).map(([k, l]) => { const r = rk(`${c}.${k}`); return `<tr><td class="l">${l}</td><td class="strong">${sv(k, P.stats[c][k])}</td><td class="${heat(r)}">${r ? ord(r[0]) + ' <span style="color:var(--text3);font-weight:500">/ ' + r[1] + '</span>' : '<span style="color:var(--text3)">—</span>'}</td></tr>`; }).join('')
+    }</tbody></table></div>`);
+  $('#statGrid').innerHTML = tables.length ? tables.join('') : `<div class="empty">${P.name} hasn’t recorded any stats yet this season.</div>`;
+
+  /* ---------- position room: the depth chart around him ---------- */
+  const FAM = [['QB',['QB']],['RB',['RB','FB']],['WR',['WR']],['TE',['TE']],['OL',['OL','OT','OG','G','T','C','IOL']],['DL',['DL','DE','DT','NT','EDGE']],['LB',['LB','OLB','ILB','MLB']],['DB',['DB','CB','S','FS','SS','SAF']],['ST',['PK','K','P','LS']]];
+  const fam = (FAM.find(([, ps]) => ps.includes(P.pos)) || [P.pos, [P.pos]]);
+  const room = PL.players.filter(p => fam[1].includes(p.pos));
+  const S = (p, c, k) => (p.stats[c] || {})[k];
+  const cols = {
+    QB: [['Att', p => S(p,'passing','ATT')], ['Yds', p => S(p,'passing','YDS')], ['TD', p => S(p,'passing','TD')], ['INT', p => S(p,'passing','INT')], ['EPA/play', p => p.ppa && fmt(p.ppa.avg.all, 2, true)]],
+    RB: [['Car', p => S(p,'rushing','CAR')], ['Yds', p => S(p,'rushing','YDS')], ['YPC', p => S(p,'rushing','YPC')], ['TD', p => S(p,'rushing','TD')], ['Rec', p => S(p,'receiving','REC')], ['EPA/play', p => p.ppa && fmt(p.ppa.avg.all, 2, true)]],
+    WR: [['Rec', p => S(p,'receiving','REC')], ['Yds', p => S(p,'receiving','YDS')], ['TD', p => S(p,'receiving','TD')], ['Tgt share', p => p.use && p.use.pass != null ? Math.round(p.use.pass*100) + '%' : null], ['EPA/play', p => p.ppa && fmt(p.ppa.avg.all, 2, true)]],
+    DEF: [['Tkl', p => S(p,'defensive','TOT')], ['TFL', p => S(p,'defensive','TFL')], ['Sacks', p => S(p,'defensive','SACKS')], ['INT', p => S(p,'interceptions','INT')], ['PD', p => S(p,'defensive','PD')]],
+    ST: [['FG', p => S(p,'kicking','FGA') ? `${S(p,'kicking','FGM')}/${S(p,'kicking','FGA')}` : null], ['Punts', p => S(p,'punting','NO')], ['Avg', p => S(p,'punting','YPP')]],
+    OL: [],
+  }[{QB:'QB', RB:'RB', WR:'WR', TE:'WR', OL:'OL', DL:'DEF', LB:'DEF', DB:'DEF', ST:'ST'}[fam[0]] || 'OL'];
+  const volume = p => (cols[0] ? +(String(cols[0][1](p) ?? '').split('/')[0]) || 0 : 0);
+  room.sort((a, b) => volume(b) - volume(a) || (+a.no || 999) - (+b.no || 999));
+  $('#roomSub').textContent = `${room.length} ${fam[0] === 'ST' ? 'specialists' : fam[0] + 's'} on the ${M.name} roster${cols.length ? ', ordered by ' + cols[0][0].toLowerCase() : ''}`;
+  $('#roomTbl').innerHTML = `<thead><tr><th>#</th><th class="l">Player</th><th class="c">Pos</th><th class="c">Class</th>${cols.map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${
+    room.map(p => `<tr class="${p.id === P.id ? 'me' : ''}"><td class="rk">${p.no ?? ''}</td><td class="l nm"><a href="player.html?id=${p.id}&t=${tid}">${p.name}</a></td><td class="c">${p.pos || ''}</td><td class="c">${p.cls || ''}</td>${cols.map(c => { const v = c[1](p); return `<td>${v == null || v === '' ? '<span style="color:var(--text3)">—</span>' : v}</td>`; }).join('')}</tr>`).join('')
+  }</tbody>`;
+})();
+</script>
+</body>
+</html>

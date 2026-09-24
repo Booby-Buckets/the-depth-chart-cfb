@@ -254,3 +254,4 @@ def build_team_files(ctx):
         with open(os.path.join(OUTDIR, f"{tid}.json"), "w") as f:
             json.dump(out, f, separators=(",", ":"))
     print(f"wrote {len(teams)} team files to {OUTDIR} ({len(snaps) - 1} weekly snapshots)")
+    return {tid: roster for tid, (_, roster, _) in feeds.items()}

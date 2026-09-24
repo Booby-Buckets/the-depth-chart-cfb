@@ -201,23 +201,44 @@ def game_sd(rat, a, b):
 
 
 # ---------- CFBD advanced (optional) ----------
-def cfbd_advanced(season, teams):
+# CFBD's free tier is 1,000 calls/month and the pool is shared with the basketball site's
+# CBBD scripts, so every feed is fetched at most once per CFBD_MAX_AGE and every consumer
+# falls back to the last published data when a call fails (quota, network, no key).
+CFBD_MAX_AGE = 20 * 3600
+ADV_KEYS = ("oEPA", "dEPA", "oSR", "dSR", "oExpl", "dExpl")
+
+
+def cfbd_get(path, cache_name, max_age=CFBD_MAX_AGE):
+    """A CFBD feed, or None if it can't be had right now (caller falls back)."""
     key = (os.environ.get("CFBD_KEY") or "").strip()
-    if not key:
-        return {}
-    H = {"Authorization": "Bearer " + key}
+    cached = os.path.join(CACHE, cache_name)
+    if not key and not os.path.exists(cached):
+        return None
     try:
-        tl = get(f"{CFBD}/teams/fbs?year={season}", f"cfbd_teams_{season}.json", max_age=7 * 86400, headers=H)
-        adv = get(f"{CFBD}/stats/season/advanced?year={season}&excludeGarbageTime=true",
-                  f"cfbd_adv_{season}.json", max_age=6 * 3600, headers=H)
+        return get(f"{CFBD}/{path}", cache_name, max_age=max_age if key else None,
+                   headers={"Authorization": "Bearer " + key} if key else None)
     except Exception as e:
-        print("CFBD fetch failed, skipping advanced stats:", e)
-        return {}
-    school_to_id = {t["school"]: str(t["id"]) for t in tl}  # CFBD team ids are ESPN ids
+        print(f"CFBD {path} unavailable ({e}); using last published data")
+        return None
+
+
+def cfbd_advanced(season, teams):
+    adv = cfbd_get(f"stats/season/advanced?year={season}&excludeGarbageTime=true", f"cfbd_adv_{season}.json")
+    if adv is None:
+        # keep whatever the site already shows rather than dropping the columns
+        try:
+            prev = json.load(open(OUT))
+            out = {t["id"]: {k: t[k] for k in ADV_KEYS if t.get(k) is not None} for t in prev["teams"]
+                   if prev.get("season") == season and any(t.get(k) is not None for k in ADV_KEYS)}
+        except (OSError, ValueError, KeyError):
+            out = {}
+        print(f"CFBD advanced stats: reused last published values for {len(out)} teams")
+        return out
+    by_name = {info["name"]: tid for tid, info in teams.items()}  # CFBD school == ESPN location
     out = {}
     for r in adv:
-        tid = school_to_id.get(r.get("team"))
-        if tid not in teams:
+        tid = by_name.get(r.get("team"))
+        if tid is None:
             continue
         o, d = r.get("offense") or {}, r.get("defense") or {}
         out[tid] = {"oEPA": o.get("ppa"), "dEPA": d.get("ppa"), "oSR": o.get("successRate"), "dSR": d.get("successRate"),
@@ -312,21 +333,28 @@ def main():
     with open(OUT, "w") as f:
         json.dump(out, f, separators=(",", ":"))
     print(f"wrote {OUT}: {len(rows)} teams, {out['gamesPlayed']} games, slate {slate_label} ({len(slate)} games), HFA {hfa:.2f}")
-    # sitemap: home, team directory, every team page
-    site = "https://www.thedepthchartcfb.com"
-    urls = [f"{site}/", f"{site}/team.html"] + [f"{site}/team.html?id={r['id']}" for r in rows]
-    with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
-        f.writelines(f"  <url><loc>{u.replace('&', '&amp;')}</loc></url>\n" for u in urls)
-        f.write("</urlset>\n")
-
     from build_teams import build_team_files
-    build_team_files({
+    rosters = build_team_files({
         "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "data", "teams"), "season": season, "built": out["built"],
         "teams": teams, "rows": rows, "games": fbs_games, "rat": rat, "hfa": hfa, "mu": mu, "prior": prior,
         "solve": solve, "win_prob": win_prob, "compress": compress,
         "rating_sd": rating_sd, "margin_sd": MARGIN_SD,
     })
+    from build_players import build_player_files
+    build_player_files({
+        "root": ROOT, "season": season, "teams": teams, "rows": rows, "rosters": rosters, "cfbd_get": cfbd_get,
+    })
+    # sitemap: home, directories, every team page, every player with stats
+    site = "https://www.thedepthchartcfb.com"
+    urls = [f"{site}/", f"{site}/team.html", f"{site}/players.html"] + [f"{site}/team.html?id={r['id']}" for r in rows]
+    try:
+        urls += [f"{site}/player.html?id={pid}&t={tid}" for pid, _, tid, _ in json.load(open(os.path.join(ROOT, "data", "players", "index.json")))]
+    except (OSError, ValueError):
+        pass
+    with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+        f.writelines(f"  <url><loc>{u.replace('&', '&amp;')}</loc></url>\n" for u in urls)
+        f.write("</urlset>\n")
     for r in rows[:15]:
         print(f"{r['rank']:>3} {r['name']:<22} {r['w']}-{r['l']}  net {r['net']:+.1f}  off {r['off']:+.1f}  def {r['def']:+.1f}  prior {r['prior']}")
 
