@@ -42,7 +42,7 @@ const LABEL: Record<string, string> = {
   QB: "Quarterback", RB: "Running back", WR: "Wide receivers", TE: "Tight end", OL: "Offensive line",
   DL: "Defensive line", LB: "Linebackers", CB: "Cornerbacks", S: "Safeties", K: "Kicker", P: "Punter", LS: "Long snapper",
 };
-const MODELED = ["RB", "WR", "TE", "DL", "LB", "CB", "S"];
+const MODELED = ["RB", "WR", "TE", "DL", "LB", "CB", "S", "OL"];
 const unitOf = (slot: string, n?: number) => {
   const u = ({ QB: "snap", K: "kick", P: "punt" } as Record<string, string>)[slot] || (MODELED.includes(slot) ? "est. snap" : "play");
   return n === 1 ? u : u + "s";
@@ -99,9 +99,10 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
 function SlotCard({ u, hasGames }: { u: DepthSlot; hasGames: boolean }) {
   const ps = u.players.filter((p, i) => u.basis === "roster" || p.val > 0 || i < u.starters);
   const note =
-    u.slot === "OL" ? "Linemen leave no trace in play-by-play, so this is roster order (class, then weight), not a real depth chart." :
+    u.slot === "OL" && u.basis === "starts" ? "From each game’s starting lineup. Starting linemen play nearly every snap (NFL median: 100%), so a start counts as about 97% of the team’s plays." :
+    u.slot === "OL" ? "No starting lineups posted yet, so this is roster order (class, then weight)." :
     u.basis === "roster" ? "No plays recorded yet, so this is roster order." : "";
-  const subtitle = u.basis !== "production" ? "roster order" : MODELED.includes(u.slot) || u.slot === "QB" ? "season snap share" : `by ${unitOf(u.slot)}`;
+  const subtitle = u.basis === "roster" ? "roster order" : u.basis === "starts" ? "starts · snap share" : MODELED.includes(u.slot) || u.slot === "QB" ? "season snap share" : `by ${unitOf(u.slot)}`;
   return (
     <div className={s.slot}>
       <h3>{LABEL[u.slot] || u.slot}<span>{subtitle}</span></h3>
@@ -132,7 +133,7 @@ function SlotRow({ p, i, u, hasGames }: { p: DepthPlayer; i: number; u: DepthSlo
       <span className={s.r}>{label}</span>
       <span className={s.n}>
         {p.no != null ? `#${p.no} ` : ""}{p.name}
-        <small>{[p.pos, p.cls].filter(Boolean).join(" · ")}{p.g ? ` · ${p.g} G` : ""}</small>
+        <small>{[p.pos, p.cls].filter(Boolean).join(" · ")}{p.g ? ` · ${p.g} G` : ""}{p.gs ? ` · ${p.gs} GS` : ""}</small>
       </span>
       {right}
     </Link>
@@ -141,13 +142,14 @@ function SlotRow({ p, i, u, hasGames }: { p: DepthPlayer; i: number; u: DepthSlo
 
 /* The game-by-game table's rows, computed here so the client only gets what it shows. */
 function logGroups(PL: PlayersFile): LogGroup[] {
-  const defs: [string, (pos: string) => boolean, "qb" | "off" | "def"][] = [
+  const defs: [string, (pos: string) => boolean, "qb" | "off" | "def" | "gs"][] = [
     ["Quarterbacks", (p) => p === "QB", "qb"],
     ["Running backs", (p) => ["RB", "FB"].includes(p), "off"],
     ["Receivers & tight ends", (p) => ["WR", "TE"].includes(p), "off"],
     ["Defensive line", (p) => ["DL", "DE", "DT", "NT", "EDGE"].includes(p), "def"],
     ["Linebackers", (p) => ["LB", "OLB", "ILB", "MLB"].includes(p), "def"],
     ["Secondary", (p) => ["CB", "S", "DB", "FS", "SS"].includes(p), "def"],
+    ["Offensive line", (p) => ["OL", "OT", "OG", "G", "T", "C", "IOL"].includes(p), "gs"],
   ];
   return defs.map(([label, test, rawKey]) => ({
     label, rawKey,

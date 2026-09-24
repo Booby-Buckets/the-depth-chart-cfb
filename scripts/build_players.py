@@ -20,6 +20,7 @@ being dropped.
 """
 import json, os
 from build_pbp import build_plays_involved
+from build_starters import build_starters, OL_POS
 import snap_model
 
 # ranked stats: (category, stat, label, min per team game to qualify, higher is better)
@@ -95,10 +96,10 @@ CLASS_ORDER = {"GR": 0, "SR": 1, "JR": 2, "SO": 3, "FR": 4}
 
 def depth_chart(plist, tgames):
     """Order every position group by the work players actually get.
-    Skill spots: plays involved (season + the latest game again, so a new starter rises fast).
-    QB: estimated snaps. Defense: plays made + 2 per game appeared. Specialists: kicks/punts.
-    Offensive line leaves no play-by-play trace, so it falls back to roster order
-    (class, then weight) and is flagged as such."""
+    Skill spots + defense: estimated snaps (season + the latest game again, so a new starter
+    rises fast). QB: estimated snaps from play-by-play. Offensive line: games started, from
+    ESPN's per-game starting lineups (falls back to roster order if a team has none).
+    Specialists: kicks/punts."""
     last = tgames[-1]["id"] if tgames else None
 
     def recent(p, key):
@@ -108,6 +109,8 @@ def depth_chart(plist, tgames):
         pi = p.get("pi") or {}
         if slot == "QB":
             return pi.get("qb", 0) + recent(p, "qb")
+        if slot == "OL":  # real starting lineups: starts first, the latest game's start breaks ties
+            return 100 * pi.get("gs", 0) + 50 * recent(p, "gs") + pi.get("es", 0)
         if slot in ("RB", "WR", "TE", "DL", "LB", "CB", "S"):
             return pi.get("es", 0) + recent(p, "es")
         if slot in ("K", "P"):
@@ -128,14 +131,16 @@ def depth_chart(plist, tgames):
         starters = pool[:n]
         if slot in ("CB", "S"):
             used.update(p["id"] for p in starters)  # a generic DB can start at CB or S, not both
-        pi_key = {"QB": "qb", "K": "st", "P": "st", "OL": "off", "LS": "st"}.get(slot, "es")
+        pi_key = {"QB": "qb", "K": "st", "P": "st", "LS": "st"}.get(slot, "es")
         out.setdefault(unit, []).append({
-            "slot": slot, "starters": n, "basis": "production" if by_production and slot not in ("OL", "LS") else "roster",
+            "slot": slot, "starters": n,
+            "basis": ("starts" if slot == "OL" else "production") if by_production and slot != "LS" else "roster",
             "players": [{"id": p["id"], "name": p["name"], "no": p.get("no"), "pos": p.get("pos"), "cls": p.get("cls"),
                          "val": (p.get("pi") or {}).get(pi_key, 0), "g": (p.get("pi") or {}).get("g", 0),
                          "last": recent(p, pi_key), "tp": (p.get("pi") or {}).get("esTP", 0),
                          "lo": (p.get("pi") or {}).get("esLo"), "hi": (p.get("pi") or {}).get("esHi"),
-                         "inv": (p.get("pi") or {}).get("off" if unit == "offense" else "def", 0)}
+                         "inv": (p.get("pi") or {}).get("off" if unit == "offense" else "def", 0),
+                         "gs": (p.get("pi") or {}).get("gs", 0), "startedLast": bool(recent(p, "gs"))}
                         for p in pool[:max(n * 2 + 1, 4)]],
         })
     return out
@@ -145,6 +150,7 @@ def depth_chart(plist, tgames):
 # the field per play in college; if a group's estimates add up past that, they're scaled down
 SNAP_GROUPS = {"RB": ("RB", "FB"), "WR": ("WR",), "TE": ("TE",), "DL": ("DL", "DE", "DT", "NT", "EDGE"),
                "LB": ("LB", "OLB", "ILB", "MLB"), "DB": ("CB", "S", "FS", "SS", "DB")}
+OL_STARTER_SHARE = 0.97
 ON_FIELD_MAX = {"RB": 1.3, "WR": 3.6, "TE": 1.8, "DL": 4.3, "LB": 3.6, "DB": 5.8}
 
 
@@ -166,6 +172,12 @@ def estimate_snaps(P, team_plays, game_info):
         for row in pi["log"]:
             if p.get("pos") == "QB":
                 row["es"] = row["qb"]
+            elif p.get("pos") in OL_POS:
+                # NFL snap data: starting linemen play a median 100% of snaps (mean 97%, 10th
+                # percentile 90%); backups only jumbo/injury snaps, which we can't see
+                if row.get("gs") and row.get("tp"):
+                    row["es"], row["esTP"] = round(OL_STARTER_SHARE * row["tp"]), row["tp"]
+                    row["esLo"], row["esHi"] = round(0.90 * row["tp"]), row["tp"]
             elif grp:
                 x = row["off"] if grp in ("RB", "WR", "TE") else row["def"]
                 if x > 0:
@@ -194,7 +206,10 @@ def estimate_snaps(P, team_plays, game_info):
             pi["es"] = sum(r.get("es", 0) for r in pi["log"])
             pi["esTP"] = sum(r.get("esTP", r.get("tp", 0)) for r in pi["log"] if "es" in r)
             grp = "QB" if p.get("pos") == "QB" else snap_group(p.get("pos"))
-            if grp and grp != "QB":
+            if p.get("pos") in OL_POS:
+                pi["esLo"] = sum(r.get("esLo", 0) for r in pi["log"] if "es" in r)
+                pi["esHi"] = sum(r.get("esHi", 0) for r in pi["log"] if "es" in r)
+            elif grp and grp != "QB":
                 pi["esErr"] = snap_model.error(grp)[0]
                 b = snap_model.band(grp, pi["es"], sum(1 for r in pi["log"] if "es" in r))
                 if b:  # 80% range for the season-to-date total
@@ -318,6 +333,36 @@ def build_player_files(ctx):
                         "tp": team_plays.get((gid, tid), 0), **c})
         log.sort(key=lambda x: x["date"])
         p["pi"] = {k: rec[k] for k in ("off", "qb", "def", "st", "pen")} | {"g": len(log), "log": log}
+
+    # --- who started each game (ESPN per-game rosters): the only trace offensive linemen leave ---
+    def log_row(p, gid):
+        pi_ = p.setdefault("pi", {"off": 0, "qb": 0, "def": 0, "st": 0, "pen": 0, "g": 0, "log": []})
+        row = next((r for r in pi_["log"] if r["id"] == gid), None)
+        if row is None:
+            g, tid = game_info[gid], p["tid"]
+            row = {"id": gid, "date": g["date"], "wk": g["weekLabel"], "opp": g["away"] if g["home"] == tid else g["home"],
+                   "oppName": g["awayName"] if g["home"] == tid else g["homeName"],
+                   "tp": team_plays.get((gid, tid), 0), "off": 0, "qb": 0, "def": 0, "st": 0, "pen": 0}
+            pi_["log"].append(row)
+            pi_["log"].sort(key=lambda x: x["date"])
+        return row
+    starters = build_starters(get, games_list)
+    for (gid, tid), lineup in starters.items():
+        if gid not in game_info:
+            continue
+        for pid, pos in lineup:
+            p = P.get(pid)
+            if p is None or p["tid"] != tid:
+                continue
+            row = log_row(p, gid)
+            row["gs"] = 1
+            if pos:
+                row["gsPos"] = pos
+    lineup_games = {k for k in starters}
+    for p in P.values():
+        if p.get("pi"):
+            p["pi"]["g"] = len(p["pi"]["log"])
+            p["pi"]["gs"] = sum(1 for r in p["pi"]["log"] if r.get("gs"))
 
     estimate_snaps(P, team_plays, game_info)
 

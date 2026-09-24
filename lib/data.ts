@@ -76,11 +76,13 @@ export async function getTeamIndex() {
 export type DepthPlayer = {
   id: string; name: string; no: string | null; pos: string | null; cls: string | null;
   val: number; g: number; last: number; tp: number; lo?: number | null; hi?: number | null; inv?: number;
+  gs?: number; startedLast?: boolean;
 };
-export type DepthSlot = { slot: string; starters: number; basis: "production" | "roster"; players: DepthPlayer[] };
+export type DepthSlot = { slot: string; starters: number; basis: "production" | "starts" | "roster"; players: DepthPlayer[] };
 export type PlayLogRow = {
   id: string; date: string; wk: string; opp: string; oppName: string; tp: number;
   off: number; qb: number; def: number; st: number; pen: number; es?: number; esTP?: number; esLo?: number; esHi?: number;
+  gs?: number; gsPos?: string;
 };
 export type PPA = { all: number | null; pass: number | null; rush: number | null; firstDown: number | null; secondDown: number | null; thirdDown: number | null; standardDowns: number | null; passingDowns: number | null };
 export type Usage = { overall: number | null; pass: number | null; rush: number | null; firstDown: number | null; secondDown: number | null; thirdDown: number | null; standardDowns: number | null; passingDowns: number | null };
@@ -89,7 +91,7 @@ export type PlayerFull = PlayerLite & {
   ppa?: { avg: PPA; tot: number; plays: number };
   use?: Usage;
   recruit?: { year: number; stars: number | null; rating: number | null; ranking: number | null; school: string | null; city: string | null; stateProvince: string | null; position: string | null };
-  pi?: { off: number; qb: number; def: number; st: number; pen: number; g: number; log: PlayLogRow[]; es?: number; esTP?: number; esLo?: number; esHi?: number };
+  pi?: { off: number; qb: number; def: number; st: number; pen: number; g: number; gs?: number; log: PlayLogRow[]; es?: number; esTP?: number; esLo?: number; esHi?: number };
 };
 export type TeamGame = { id: string; date: string; wk: string; opp: string; oppName: string; site: "H" | "A" | "N"; tp: number; otp?: number };
 export type PlayersFile = {

@@ -66,8 +66,9 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
   const pi = P.pi;
   if (pi?.es && pi.esTP) {
     const sp = (v: number) => Math.round((v / pi.esTP!) * 100);
+    const starts = pi.gs ? `${pi.gs} of ${pi.g} started · ` : "";
     shownTiles = [T("Snap share", sp(pi.es) + "%", null,
-      pi.esLo != null ? <>likely <b>{sp(pi.esLo)}–{sp(pi.esHi!)}%</b> · est.</> : P.pos === "QB" ? `${pi.es} of ${pi.esTP} snaps` : "estimated"), ...shownTiles].slice(0, 6);
+      pi.esLo != null ? <>{starts}likely <b>{sp(pi.esLo)}–{sp(pi.esHi!)}%</b></> : P.pos === "QB" ? `${starts}${pi.es} of ${pi.esTP} snaps` : `${starts}estimated`), ...shownTiles].slice(0, 6);
   }
   const bio = [P.pos, CLS[P.cls || ""] || P.cls, [P.ht, P.wt].filter(Boolean).join(", "), P.home].filter(Boolean) as string[];
   const G = group ? PL.groupAvg[group] : null;
@@ -185,12 +186,14 @@ function SnapsTable({ P, teamSlug }: { P: PlayerFull; teamSlug: string }) {
   const base = (g: { esTP?: number; tp: number }) => g.esTP || g.tp; // defense: the opponent's offensive plays
   const seasonBase = pi.esTP || pi.log.reduce((a, g) => a + g.tp, 0);
   const range = (lo?: number, hi?: number) => (lo != null ? <span className={s.muted}> ({lo}–{hi})</span> : null);
+  const anyStarts = pi.log.some((g) => g.gs);
   return (
     <section className={s.section}>
       <div className="sec-h">
         <h2>Snaps by Game</h2>
         <p>
-          {isQB ? "Estimated snaps: every offensive play credited to the QB running the offense. Close to a true snap count"
+          {["OL", "OT", "OG", "G", "T", "C", "IOL"].includes(P.pos || "") ? "Starts come from each game’s starting lineup. Starting linemen play nearly every snap (NFL median: 100%), so a start counts as about 97% of the team’s plays"
+            : isQB ? "Estimated snaps: every offensive play credited to the QB running the offense. Close to a true snap count"
             : hasEs ? <>Estimated snaps from a model trained on real NFL snap counts. Ranges in brackets are where the real number lands 80% of the time: wide for a single game, tighter over the season. <Link href={`/depth/${teamSlug}`} style={{ color: "inherit" }}>How it works</Link></>
             : "Plays the player shows up in the play-by-play. Not snap counts"}
         </p>
@@ -199,7 +202,7 @@ function SnapsTable({ P, teamSlug }: { P: PlayerFull; teamSlug: string }) {
         <table className="sheet dense">
           <thead>
             <tr>
-              <th className="l">Game</th><th>{pi.def > pi.off ? "Opp. plays" : "Team plays"}</th>
+              <th className="l">Game</th>{anyStarts && <th className="c">Start</th>}<th>{pi.def > pi.off ? "Opp. plays" : "Team plays"}</th>
               {cols.map((c) => <th key={c[0]}>{c[1]}</th>)}
               {hasEs && <th>Snap share</th>}
             </tr>
@@ -208,6 +211,7 @@ function SnapsTable({ P, teamSlug }: { P: PlayerFull; teamSlug: string }) {
             {pi.log.map((g) => (
               <tr key={g.id}>
                 <td className="l">{g.wk.replace("Week ", "Wk ")} · {g.oppName}</td>
+                {anyStarts && <td className="c">{g.gs ? <b title="Started (ESPN lineup)">✓ {g.gsPos || ""}</b> : <span className={s.muted}>—</span>}</td>}
                 <td className="dim">{base(g) || "—"}</td>
                 {cols.map(([k]) => {
                   const v = (g as unknown as Record<string, number>)[k];
@@ -217,7 +221,7 @@ function SnapsTable({ P, teamSlug }: { P: PlayerFull; teamSlug: string }) {
               </tr>
             ))}
             <tr>
-              <td className="l strong">Season</td><td className="strong">{seasonBase}</td>
+              <td className="l strong">Season</td>{anyStarts && <td className="c strong">{pi.gs} GS</td>}<td className="strong">{seasonBase}</td>
               {cols.map(([k]) => <td key={k} className="strong">{(pi as unknown as Record<string, number>)[k]}{k === "es" && range(pi.esLo, pi.esHi)}</td>)}
               {hasEs && <td className="strong">{Math.round((pi.es! / Math.max(1, seasonBase)) * 100)}%</td>}
             </tr>

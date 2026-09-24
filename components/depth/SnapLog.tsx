@@ -7,7 +7,7 @@ import type { TeamGame } from "@/lib/data";
 
 export type LogGroup = {
   label: string;
-  rawKey: "qb" | "off" | "def";
+  rawKey: "qb" | "off" | "def" | "gs";
   players: { id: string; name: string; pos: string; es: number[]; esRange: ([number, number] | null)[]; raw: number[]; esTotal: number; rawTotal: number }[];
 };
 
@@ -19,7 +19,7 @@ export default function SnapLog({ games, groups }: { games: TeamGame[]; groups: 
       <div className="sec-h">
         <h2>Snaps by Game</h2>
         <p style={{ display: "inline-flex", gap: 6 }}>
-          {([["es", "Estimated snaps"], ["raw", "Plays involved / made"]] as const).map(([k, l]) => (
+          {([["es", "Estimated snaps"], ["raw", "Plays / starts"]] as const).map(([k, l]) => (
             <button key={k} className={`chip ${k === mode ? "on" : ""}`} onClick={() => setMode(k)}>{l}</button>
           ))}
         </p>
@@ -48,7 +48,7 @@ export default function SnapLog({ games, groups }: { games: TeamGame[]; groups: 
                 .filter((p) => p.tot > 0)
                 .sort((a, b) => b.tot - a.tot);
               if (!rows.length) return null;
-              const what = useEs || grp.rawKey === "qb" ? "estimated snaps" : grp.rawKey === "off" ? "plays involved" : "plays made";
+              const what = useEs || grp.rawKey === "qb" ? "estimated snaps" : grp.rawKey === "gs" ? "games started" : grp.rawKey === "off" ? "plays involved" : "plays made";
               return [
                 <tr key={`h-${grp.label}`} className="grp-row">
                   <td className="l" colSpan={games.length + 3} style={{ background: "var(--bg2)", fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--text3)" }}>
