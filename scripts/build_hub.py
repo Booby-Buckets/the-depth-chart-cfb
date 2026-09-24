@@ -312,6 +312,14 @@ def main():
     with open(OUT, "w") as f:
         json.dump(out, f, separators=(",", ":"))
     print(f"wrote {OUT}: {len(rows)} teams, {out['gamesPlayed']} games, slate {slate_label} ({len(slate)} games), HFA {hfa:.2f}")
+    # sitemap: home, team directory, every team page
+    site = "https://www.thedepthchartcfb.com"
+    urls = [f"{site}/", f"{site}/team.html"] + [f"{site}/team.html?id={r['id']}" for r in rows]
+    with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+        f.writelines(f"  <url><loc>{u.replace('&', '&amp;')}</loc></url>\n" for u in urls)
+        f.write("</urlset>\n")
+
     from build_teams import build_team_files
     build_team_files({
         "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "data", "teams"), "season": season, "built": out["built"],
