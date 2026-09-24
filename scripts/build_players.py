@@ -18,6 +18,7 @@ reached, player stat blocks are carried over from the last published files inste
 being dropped.
 """
 import json, os
+from build_pbp import build_plays_involved
 
 # ranked stats: (category, stat, label, min per team game to qualify, higher is better)
 RANKED = [
@@ -72,8 +73,74 @@ def _rank_desc(pairs):
     return out
 
 
+# Production depth chart: (unit, slot label, how many starters, roster positions that can fill it)
+DEPTH = [
+    ("offense", "QB", 1, ("QB",)),
+    ("offense", "RB", 1, ("RB", "FB")),
+    ("offense", "WR", 3, ("WR",)),
+    ("offense", "TE", 1, ("TE",)),
+    ("offense", "OL", 5, ("OL", "OT", "OG", "G", "C", "IOL")),
+    ("defense", "DL", 4, ("DL", "DE", "DT", "NT", "EDGE")),
+    ("defense", "LB", 3, ("LB", "OLB", "ILB", "MLB")),
+    ("defense", "CB", 2, ("CB", "DB")),
+    ("defense", "S", 2, ("S", "FS", "SS", "DB")),
+    ("special", "K", 1, ("PK", "K")),
+    ("special", "P", 1, ("P",)),
+    ("special", "LS", 1, ("LS",)),
+]
+CLASS_ORDER = {"GR": 0, "SR": 1, "JR": 2, "SO": 3, "FR": 4}
+
+
+def depth_chart(plist, tgames):
+    """Order every position group by the work players actually get.
+    Skill spots: plays involved (season + the latest game again, so a new starter rises fast).
+    QB: estimated snaps. Defense: plays made + 2 per game appeared. Specialists: kicks/punts.
+    Offensive line leaves no play-by-play trace, so it falls back to roster order
+    (class, then weight) and is flagged as such."""
+    last = tgames[-1]["id"] if tgames else None
+
+    def recent(p, key):
+        return next((g[key] for g in (p.get("pi") or {}).get("log", []) if g["id"] == last), 0)
+
+    def score(p, slot):
+        pi = p.get("pi") or {}
+        if slot == "QB":
+            return pi.get("qb", 0) + recent(p, "qb")
+        if slot in ("RB", "WR", "TE"):
+            return pi.get("off", 0) + recent(p, "off")
+        if slot in ("DL", "LB", "CB", "S"):
+            return pi.get("def", 0) + 2 * pi.get("g", 0) + recent(p, "def")
+        if slot in ("K", "P"):
+            return pi.get("st", 0)
+        return 0
+
+    def roster_key(p):
+        wt = int("".join(ch for ch in (p.get("wt") or "") if ch.isdigit()) or 0)
+        return (CLASS_ORDER.get(p.get("cls"), 5), -wt, p["name"])
+
+    used, out = set(), {}
+    for unit, slot, n, positions in DEPTH:
+        # ESPN's rosters miss some real contributors (LSU's top two receivers, early 2026), so anyone
+        # with recorded plays counts even when only CFBD knows them
+        pool = [p for p in plist if p.get("pos") in positions and p["id"] not in used and (p.get("onRoster") or p.get("pi"))]
+        pool.sort(key=lambda p: (-score(p, slot), roster_key(p)))
+        by_production = any(score(p, slot) > 0 for p in pool)
+        starters = pool[:n]
+        if slot in ("CB", "S"):
+            used.update(p["id"] for p in starters)  # a generic DB can start at CB or S, not both
+        pi_key = {"QB": "qb", "K": "st", "P": "st"}.get(slot, "off" if unit == "offense" else "def")
+        out.setdefault(unit, []).append({
+            "slot": slot, "starters": n, "basis": "production" if by_production and slot not in ("OL", "LS") else "roster",
+            "players": [{"id": p["id"], "name": p["name"], "no": p.get("no"), "pos": p.get("pos"), "cls": p.get("cls"),
+                         "val": (p.get("pi") or {}).get(pi_key, 0), "g": (p.get("pi") or {}).get("g", 0),
+                         "last": recent(p, pi_key)} for p in pool[:max(n * 2 + 1, 4)]],
+        })
+    return out
+
+
 def build_player_files(ctx):
     root, season, teams, rows, rosters, cfbd_get = (ctx[k] for k in ("root", "season", "teams", "rows", "rosters", "cfbd_get"))
+    games_list, get = ctx["games"], ctx["get"]
     outdir = os.path.join(root, "data", "players")
     os.makedirs(outdir, exist_ok=True)
     by_name = {info["name"]: tid for tid, info in teams.items()}
@@ -168,6 +235,27 @@ def build_player_files(ctx):
     if stats is None and ppa is None and not prev:
         print("players: no CFBD data and nothing published yet; writing bios only")
 
+    # --- plays involved + estimated QB snaps from ESPN play-by-play (free, keyless) ---
+    qb_ids = {pid for pid, p in P.items() if p["pos"] == "QB"}
+    pi, team_plays = build_plays_involved(get, games_list, qb_ids)
+    game_info = {g["id"]: g for g in games_list}
+    for pid, rec in pi.items():
+        if pid not in P:
+            continue  # FCS opponents, or players on no FBS roster
+        p = P[pid]
+        tid = p["tid"]
+        log = []
+        for gid, c in rec["games"].items():
+            g = game_info.get(gid)
+            if not g:
+                continue
+            opp = g["away"] if g["home"] == tid else g["home"]
+            log.append({"id": gid, "date": g["date"], "wk": g["weekLabel"], "opp": opp,
+                        "oppName": g["awayName"] if g["home"] == tid else g["homeName"],
+                        "tp": team_plays.get((gid, tid), 0), **c})
+        log.sort(key=lambda x: x["date"])
+        p["pi"] = {k: rec[k] for k in ("off", "qb", "def", "st", "pen")} | {"g": len(log), "log": log}
+
     # --- FBS ranks for the headline stats ---
     for cat, stat, _, (qc, qs, per_g), _hi in RANKED:
         pairs = []
@@ -207,8 +295,15 @@ def build_player_files(ctx):
             by_team.setdefault(p["tid"], []).append(p)
     for tid in teams:
         plist = sorted(by_team.get(tid, []), key=lambda p: (p["no"] is None, int(p["no"]) if str(p["no"] or "").isdigit() else 999, p["name"]))
+        tgames = [{"id": g["id"], "date": g["date"], "wk": g["weekLabel"],
+                   "opp": g["away"] if g["home"] == tid else g["home"],
+                   "oppName": g["awayName"] if g["home"] == tid else g["homeName"],
+                   "site": "N" if g["neutral"] else ("H" if g["home"] == tid else "A"),
+                   "tp": team_plays.get((g["id"], tid), 0)}
+                  for g in sorted(games_list, key=lambda g: g["date"]) if g["completed"] and tid in (g["home"], g["away"])]
         with open(os.path.join(outdir, f"{tid}.json"), "w") as f:
-            json.dump({"season": season, "tid": tid, "groupAvg": group_avg, "players": plist}, f, separators=(",", ":"))
+            json.dump({"season": season, "tid": tid, "groupAvg": group_avg, "games": tgames,
+                       "depth": depth_chart(plist, tgames), "players": plist}, f, separators=(",", ":"))
 
     # --- search index + leaderboards (only rewritten when we actually have stats) ---
     have_stats = [p for p in P.values() if p["name"] and (p["stats"] or p.get("ppa"))]

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Depth Charts — The Depth Chart CFB</title>
+  <meta name="description" content="College football depth charts built from who actually plays: every FBS team ordered by plays involved, estimated QB snaps, and plays made, with a game-by-game play log.">
+  <link rel="canonical" href="https://www.thedepthchartcfb.com/depth.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Depth Chart CFB">
+  <meta property="og:title" content="Depth Charts — The Depth Chart CFB">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <script src="tdc-theme.js?v=4"></script>
+  <script src="cfb.js?v=1"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="tdc-sheets.css?v=1">
+  <link rel="stylesheet" href="cfb.css?v=1">
+  <style>
+    .dhead{margin-top:22px;border-radius:14px;overflow:hidden;background:var(--tc-band);color:var(--tc-on);padding:18px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .dhead img{width:56px;height:56px;object-fit:contain;background:rgba(255,255,255,.92);border-radius:50%;padding:6px;}
+    .dhead .t{flex:1;min-width:200px;}
+    .dhead .e{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.85;}
+    .dhead h1{font-family:'Playfair Display',serif;font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1.15;}
+    .dhead a{color:inherit;}
+    .switch{font:600 12px 'Inter',sans-serif;background:rgba(255,255,255,.14);color:inherit;border:1px solid rgba(255,255,255,.35);padding:6px 8px;border-radius:6px;max-width:200px;}
+    .switch option{color:#1A1814;}
+    .unit{margin-top:8px;}
+    .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+    .slot{border:1px solid var(--border);border-radius:10px;background:var(--bg);overflow:hidden;}
+    .slot h3{display:flex;justify-content:space-between;align-items:baseline;padding:9px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);}
+    .slot h3 span{font-size:10px;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--text3);}
+    .dp{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);}
+    .dp:last-child{border-bottom:none;}
+    .dp:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);}
+    .dp .r{font-size:10px;font-weight:800;color:var(--text3);letter-spacing:.04em;}
+    .dp.start .r{color:var(--tc-text);}
+    .dp .n{font-size:13px;font-weight:650;line-height:1.25;}
+    .dp .n small{display:block;font-size:10.5px;color:var(--text3);font-weight:600;}
+    .dp .v{text-align:right;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;}
+    .dp .v small{display:block;font-size:10px;color:var(--text3);font-weight:600;}
+    .dp.bench{opacity:.72;}
+    .dp.start{border-left:3px solid var(--tc-text);padding-left:9px;}
+    .caveat{font-size:11.5px;color:var(--text3);padding:8px 12px;border-top:1px dashed var(--border2);}
+    .sheet td.nm a{color:var(--text);text-decoration:none;} .sheet td.nm a:hover{text-decoration:underline;}
+    .sheet tr.grp td{background:var(--bg2)!important;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+    .sheet td.z{color:var(--text3);}
+    .dir{columns:3 280px;column-gap:18px;}
+    .conf{break-inside:avoid;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    .conf h3{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);background:var(--bg2);padding:8px 12px;border-bottom:1px solid var(--border);}
+    .conf a{display:flex;align-items:center;gap:9px;padding:6px 12px;color:var(--text);text-decoration:none;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);}
+    .conf a:last-child{border-bottom:none;} .conf a:hover{background:color-mix(in srgb,var(--accent) 9%,transparent);}
+    .conf a img{width:20px;height:20px;object-fit:contain;}
+  </style>
+</head>
+<body>
+<div class="nav-wrap">
+  <div class="col nav-top">
+    <a class="nav-logo" href="/">The <span>Depth</span> Chart<em>CFB</em></a>
+    <div class="nav-actions">
+      <a class="nav-x" href="https://www.thedepthchartcbb.com/">Basketball ↗</a>
+      <button class="theme-toggle" onclick="tdcToggleTheme()" aria-label="Toggle theme">🌙</button>
+    </div>
+  </div>
+  <div class="nav-sub"><div class="col">
+    <a href="/#rankings">Power Rankings</a>
+    <a href="/#slate">This Week</a>
+    <a href="team.html">Teams</a>
+    <a href="depth.html" class="active">Depth Charts</a>
+    <a href="players.html">Players</a>
+    <span>Recruiting<small>SOON</small></span>
+    <span>Portal<small>SOON</small></span>
+  </div></div>
+</div>
+
+<div class="col" id="app"><div class="loading">Loading…</div></div>
+<footer><div class="col">The Depth Chart CFB · Built from ESPN play-by-play and rosters</div></footer>
+
+<script>
+(async function(){
+  const $ = s => document.querySelector(s);
+  const app = $('#app');
+  const id = new URLSearchParams(location.search).get('id');
+  let H;
+  try { H = await (await fetch('data/hub.json', {cache:'no-cache'})).json(); } catch (e) { app.innerHTML = '<div class="loading">Couldn’t load teams.</div>'; return; }
+
+  /* ---------- directory ---------- */
+  if (!id) {
+    const byConf = {};
+    H.teams.forEach(t => (byConf[t.conf] = byConf[t.conf] || []).push(t));
+    app.innerHTML = `<header class="page-header"><div class="page-eyebrow">${H.season} Season</div><h1 class="page-h1">Depth Charts</h1>
+      <p class="page-sub">Every FBS depth chart, built from who actually plays. Each position is ordered by plays involved, estimated QB snaps and plays made on defense, straight from the play-by-play. No guesswork from a preseason list.</p></header>
+      <section><div class="dir">${Object.keys(byConf).sort().map(c => `<div class="conf"><h3>${c}</h3>${byConf[c].sort((a,b) => a.name.localeCompare(b.name)).map(t => `<a href="depth.html?id=${t.id}"><img src="${t.logo}" alt="" loading="lazy">${t.name}</a>`).join('')}</div>`).join('')}</div></section>`;
+    return;
+  }
+
+  let PL, TM;
+  try {
+    [PL, TM] = await Promise.all([fetch(`data/players/${encodeURIComponent(id)}.json`, {cache:'no-cache'}).then(r => r.json()),
+                                 fetch(`data/teams/${encodeURIComponent(id)}.json`, {cache:'no-cache'}).then(r => r.json())]);
+  } catch (e) { app.innerHTML = '<div class="loading">No depth chart for that team. <a href="depth.html">All teams →</a></div>'; return; }
+  const M = TM.meta, G = PL.games;
+  document.title = `${M.name} Depth Chart — The Depth Chart CFB`;
+  CFB.paintTeam(M);
+  const through = G.length ? G[G.length - 1].wk : 'preseason';
+  const switcher = `<select class="switch" id="sw" aria-label="Switch team">${[...H.teams].sort((a,b) => a.name.localeCompare(b.name)).map(t => `<option value="${t.id}" ${t.id===id?'selected':''}>${t.name}</option>`).join('')}</select>`;
+
+  const UNITS = [['offense','Offense'],['defense','Defense'],['special','Special Teams']];
+  const LABEL = {QB:'Quarterback', RB:'Running back', WR:'Wide receivers', TE:'Tight end', OL:'Offensive line', DL:'Defensive line', LB:'Linebackers', CB:'Cornerbacks', S:'Safeties', K:'Kicker', P:'Punter', LS:'Long snapper'};
+  const unitOf = (s, n) => { const u = ({QB:'snap', K:'kick', P:'punt'}[s] || (['DL','LB','CB','S'].includes(s) ? 'play made' : 'play')); return n === 1 ? u : u.replace(/^(\w+)/, '$1s'); };
+  const slotCard = u => {
+    const ps = u.players.filter(p => u.basis === 'roster' || p.val > 0 || u.players.indexOf(p) < u.starters);
+    const rows = ps.map((p, i) => {
+      const start = i < u.starters;
+      const r = start ? (u.starters > 1 ? u.slot + (i + 1) : u.slot + '1') : (u.starters > 1 ? '—' : u.slot + (i + 1));
+      const right = u.basis === 'roster' ? `<span class="v"><small>${p.cls || ''}</small></span>`
+        : `<span class="v">${p.val}<small>${unitOf(u.slot, p.val)}${G.length && p.last ? ` · ${p.last} last` : ''}</small></span>`;
+      return `<a class="dp ${start ? 'start' : 'bench'}" href="player.html?id=${p.id}&t=${id}"><span class="r">${r}</span><span class="n">${p.no != null ? '#' + p.no + ' ' : ''}${p.name}<small>${[p.pos, p.cls].filter(Boolean).join(' · ')}${p.g ? ` · ${p.g} G` : ''}</small></span>${right}</a>`;
+    }).join('');
+    const note = u.slot === 'OL' ? 'Linemen leave no trace in play-by-play, so this is roster order (class, then weight), not a real depth chart.'
+      : u.basis === 'roster' ? 'No plays recorded yet, so this is roster order.' : '';
+    return `<div class="slot"><h3>${LABEL[u.slot] || u.slot}<span>${u.basis === 'production' ? 'by ' + unitOf(u.slot) : 'roster order'}</span></h3>${rows || '<div class="caveat">Nobody listed.</div>'}${note ? `<div class="caveat">${note}</div>` : ''}</div>`;
+  };
+
+  app.innerHTML = `
+    <div class="dhead"><img src="${M.logo}" alt=""><div class="t"><div class="e">${M.conf} · Through ${through}</div><h1><a href="team.html?id=${id}" style="text-decoration:none">${M.name} ${M.mascot || ''}</a> Depth Chart</h1></div>${switcher}</div>
+    ${UNITS.map(([k, l]) => `<section class="unit"><div class="sec-h"><h2>${l}</h2><p>${k === 'offense' ? 'QB by estimated snaps. Backs and receivers by plays involved (carries + targets)' : k === 'defense' ? 'By plays made (tackles, assists, sacks, breakups) and games played' : 'By kicks and punts'}</p></div><div class="slots">${(PL.depth[k] || []).map(slotCard).join('')}</div></section>`).join('')}
+    <section id="log"><div class="sec-h"><h2>Plays by Game</h2><p>Offense: plays involved, or estimated snaps for QBs. Defense: plays made</p></div>
+      <div class="sheet-wrap"><table class="sheet dense freeze2" id="logTbl"></table></div></section>
+    <p class="note"><b>These aren’t snap counts.</b> No free source publishes college snap counts. PFF charts them by hand and licenses them commercially. So this chart counts what the play-by-play records: who threw, carried, was targeted, tackled, or broke up a pass. Quarterbacks are the exception: every offensive play is credited to the QB running the offense at that moment, which comes very close to a true snap count. Receivers who block and linemen don't show up in play-by-play, so the line is listed in roster order.</p>`;
+  $('#sw').addEventListener('change', e => location.href = 'depth.html?id=' + e.target.value);
+
+  /* ---------- game-by-game log ---------- */
+  const inLog = (p, g) => (p.pi && p.pi.log.find(x => x.id === g.id)) || null;
+  const groups = [['Quarterbacks', p => p.pos === 'QB', 'qb'], ['Running backs', p => ['RB','FB'].includes(p.pos), 'off'], ['Receivers & tight ends', p => ['WR','TE'].includes(p.pos), 'off'],
+                  ['Defensive line', p => ['DL','DE','DT','NT','EDGE'].includes(p.pos), 'def'], ['Linebackers', p => ['LB','OLB','ILB','MLB'].includes(p.pos), 'def'], ['Secondary', p => ['CB','S','DB','FS','SS'].includes(p.pos), 'def']];
+  const head = `<thead><tr><th class="l">Player</th><th class="c">Pos</th>${G.map(g => `<th title="${g.wk}">${g.wk.replace('Week ','Wk ')}<br><span style="font-weight:600;text-transform:none;letter-spacing:0">${g.site === 'A' ? '@' : 'vs'} ${g.oppName}</span></th>`).join('')}<th>Total</th></tr></thead>`;
+  let body = `<tr><td class="l strong">Team offensive plays</td><td></td>${G.map(g => `<td class="strong">${g.tp}</td>`).join('')}<td class="strong">${G.reduce((s, g) => s + g.tp, 0)}</td></tr>`;
+  groups.forEach(([label, test, key]) => {
+    const ps = PL.players.filter(p => test(p) && p.pi && p.pi[key] > 0).sort((a, b) => b.pi[key] - a.pi[key]);
+    if (!ps.length) return;
+    body += `<tr class="grp"><td class="l" colspan="${G.length + 3}">${label}${key === 'qb' ? ' · estimated snaps' : key === 'off' ? ' · plays involved' : ' · plays made'}</td></tr>`;
+    body += ps.map(p => `<tr><td class="l nm"><a href="player.html?id=${p.id}&t=${id}">${p.name}</a></td><td class="c dim">${p.pos}</td>${G.map(g => { const x = inLog(p, g); const v = x ? x[key] : 0;
+      const share = key !== 'def' && g.tp ? Math.round(v / g.tp * 100) : null;
+      return `<td class="${v ? '' : 'z'}" ${share != null && v ? `title="${share}% of team plays"` : ''}>${v || '·'}</td>`; }).join('')}<td class="strong">${p.pi[key]}</td></tr>`).join('');
+  });
+  $('#logTbl').innerHTML = head + '<tbody>' + body + '</tbody>';
+})();
+</script>
+</body>
+</html>

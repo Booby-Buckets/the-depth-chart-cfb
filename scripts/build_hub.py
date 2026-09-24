@@ -343,10 +343,12 @@ def main():
     from build_players import build_player_files
     build_player_files({
         "root": ROOT, "season": season, "teams": teams, "rows": rows, "rosters": rosters, "cfbd_get": cfbd_get,
+        "games": fbs_games, "get": get,
     })
     # sitemap: home, directories, every team page, every player with stats
     site = "https://www.thedepthchartcfb.com"
-    urls = [f"{site}/", f"{site}/team.html", f"{site}/players.html"] + [f"{site}/team.html?id={r['id']}" for r in rows]
+    urls = [f"{site}/", f"{site}/team.html", f"{site}/depth.html", f"{site}/players.html"] \
+        + [f"{site}/team.html?id={r['id']}" for r in rows] + [f"{site}/depth.html?id={r['id']}" for r in rows]
     try:
         urls += [f"{site}/player.html?id={pid}&t={tid}" for pid, _, tid, _ in json.load(open(os.path.join(ROOT, "data", "players", "index.json")))]
     except (OSError, ValueError):
