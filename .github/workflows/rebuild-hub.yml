@@ -67,4 +67,9 @@ jobs:
           git config user.name "tdc-cfb-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Auto: rebuild power rankings + team pages"
-          git push
+          # a code push may have landed while we built: replay our data commit on top of it
+          # (our freshly built data wins any conflict), then push; retry once on a race
+          for i in 1 2; do
+            git pull --rebase -X theirs origin main && git push && break
+            sleep 5
+          done
