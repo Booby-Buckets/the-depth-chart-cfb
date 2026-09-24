@@ -9,6 +9,7 @@ import TeamSwitcher from "@/components/team/TeamSwitcher";
 import { RatingChart, RecordOdds } from "@/components/team/Charts";
 import Roster from "@/components/team/Roster";
 import s from "./team.module.css";
+import { logo } from "@/lib/logo";
 
 // every FBS team is prerendered at build time
 export async function generateStaticParams() {
@@ -54,7 +55,7 @@ export default async function TeamPage({ params }: PageProps<"/teams/[slug]">) {
       <div className={s.hero}>
         <div className={s.band}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className={s.logo} src={M.logo} alt={`${M.name} logo`} />
+          <img className={s.logo} src={logo(M.logo, 84)} alt={`${M.name} logo`} />
           <div className={s.id}>
             <div className={s.eyebrow}>{M.conf} · {D.season}</div>
             <h1 className={s.name}>{M.name} {M.mascot || ""}</h1>
@@ -188,7 +189,7 @@ function Schedule({ D, slugOf, netHeat }: { D: TeamFile; slugOf: Map<string, str
               <td className={`l ${s.opp}`}>
                 <span className={s.at}>{g.site === "A" ? "@" : "vs"}</span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={g.oppLogo} alt="" loading="lazy" />
+                <img src={logo(g.oppLogo, 20)} alt="" loading="lazy" />
                 {g.oppRank ? <span className={s.orank}>{g.oppRank}</span> : null}
                 {g.oppFbs && oppSlug ? <Link href={`/teams/${oppSlug}`}>{g.oppName}</Link> : <>{g.oppName} <span className={s.tag}>FCS</span></>}
                 {g.conf && <span className={s.tag}>CONF</span>}

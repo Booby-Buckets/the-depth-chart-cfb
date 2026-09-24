@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { HubTeam } from "@/lib/data";
 import { fmt } from "@/lib/format";
+import { logo } from "@/lib/logo";
 
 type Col = {
   k: keyof HubTeam | "delta"; l: string; cls?: string; tip?: string;
@@ -19,7 +20,7 @@ function columns(hasAdvanced: boolean, slugs: Record<string, string>): Col[] {
     { k: "rank", l: "RK", cls: "rk", f: (t) => t.rank },
     { k: "name", l: "Team", cls: "l nm", str: true, sv: (t) => t.name,
       // eslint-disable-next-line @next/next/no-img-element
-      f: (t) => <Link href={`/teams/${slugs[t.id]}`}><img src={t.logo} alt="" loading="lazy" />{t.name}</Link> },
+      f: (t) => <Link href={`/teams/${slugs[t.id]}`}><img src={logo(t.logo, 20)} alt="" loading="lazy" />{t.name}</Link> },
     { k: "conf", l: "Conf", cls: "l dim", str: true, f: (t) => t.conf },
     { k: "w", l: "W-L", cls: "c", f: (t) => `${t.w}-${t.l}`, sv: (t) => t.w - t.l + t.w * 0.01 },
     { k: "cw", l: "Conf", cls: "c dim", f: (t) => (t.confAbbr === "ind" ? "—" : `${t.cw}-${t.cl}`), sv: (t) => t.cw - t.cl },

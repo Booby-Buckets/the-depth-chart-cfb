@@ -7,6 +7,7 @@ import { playerHref } from "@/lib/slug";
 import TeamSwitcher from "@/components/team/TeamSwitcher";
 import SnapLog, { type LogGroup } from "@/components/depth/SnapLog";
 import s from "./depth.module.css";
+import { logo } from "@/lib/logo";
 
 export async function generateStaticParams() {
   const { slugOf } = await getTeamIndex();
@@ -60,7 +61,7 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
     <div className={`col ${s.scope}`} style={teamColors(M.color)}>
       <div className={s.head}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={M.logo} alt="" />
+        <img src={logo(M.logo, 56)} alt="" />
         <div className={s.t}>
           <div className={s.e}>{M.conf} · Through {through}</div>
           <h1><Link href={`/teams/${slug}`}>{M.name} {M.mascot || ""}</Link> Depth Chart</h1>

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { LeaderRow } from "@/lib/data";
 import { fmt } from "@/lib/format";
 import { playerHref } from "@/lib/slug";
+import { logo } from "@/lib/logo";
 
 type TeamInfo = { slug: string; logo: string; name: string };
 type Fmt = (v: number | null | undefined) => string;
@@ -127,7 +128,7 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
                 <td className="l nm">
                   <Link href={playerHref(r.name, r.id)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={teams[r.tid]?.logo || ""} alt="" loading="lazy" />{r.name}
+                    <img src={logo(teams[r.tid]?.logo, 20)} alt="" loading="lazy" />{r.name}
                   </Link>
                 </td>
                 <td className="l dim">{teams[r.tid] ? <Link href={`/teams/${teams[r.tid].slug}`} style={{ color: "inherit", textDecoration: "none" }}>{r.team}</Link> : r.team}</td>

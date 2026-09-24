@@ -7,6 +7,7 @@ import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
 import { teamColors } from "@/lib/teamColor";
 import SitBars from "@/components/player/SitBars";
 import s from "./player.module.css";
+import { logo } from "@/lib/logo";
 
 // 14,000+ players: none are built ahead; each renders on its first visit and is cached after that
 export async function generateStaticParams() { return []; }
@@ -90,7 +91,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
           </div>
           <Link className={s.team} href={`/teams/${teamSlug}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={M.logo} alt="" />
+            <img src={logo(M.logo, 40)} alt="" />
             <div><b>{M.name} {M.mascot || ""}</b><span>{R.w}-{R.l} · TDC #{R.rank}</span></div>
           </Link>
         </div>

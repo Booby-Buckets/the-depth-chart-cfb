@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTeamIndex } from "@/lib/data";
 import s from "@/components/team/directory.module.css";
+import { logo } from "@/lib/logo";
 
 export const metadata: Metadata = {
   title: "Depth Charts",
@@ -31,7 +32,7 @@ export default async function DepthIndex() {
               {byConf.get(c)!.sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
                 <Link key={t.id} href={`/depth/${slugOf.get(t.id)}`} style={{ gridTemplateColumns: "22px 1fr" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={t.logo} alt="" loading="lazy" />
+                  <img src={logo(t.logo, 22)} alt="" loading="lazy" />
                   <span>{t.name}</span>
                 </Link>
               ))}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { playerHref } from "@/lib/slug";
 import s from "./players.module.css";
+import { logo } from "@/lib/logo";
 
 type TeamInfo = { slug: string; logo: string; name: string; abbr: string; rank: number };
 type Entry = { id: string; name: string; tid: string; pos: string | null; key: string };
@@ -57,7 +58,7 @@ export default function PlayerSearch({ teams }: { teams: Record<string, TeamInfo
           {!index ? <span className={s.none}>Loading players…</span> : hits.length === 0 ? <span className={s.none}>No players match.</span> : hits.map((p, i) => (
             <Link key={p.id} href={playerHref(p.name, p.id)} className={i === cursor ? s.on : undefined}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={teams[p.tid]?.logo || ""} alt="" />
+              <img src={logo(teams[p.tid]?.logo, 22)} alt="" />
               {p.name}
               <span>{p.pos || ""} · {teams[p.tid]?.name || ""}</span>
             </Link>

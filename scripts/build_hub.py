@@ -13,7 +13,7 @@ so Net = Off + Def is a neutral-field point margin vs an average FBS team.
     rating regressed 40% to the mean; the pull fades as games are played.
 Raw feeds are cached in scripts/cache/ so re-runs are cheap.
 """
-import json, os, sys, math, time, urllib.request, urllib.error, datetime
+import json, os, re, sys, math, time, unicodedata, urllib.request, urllib.error, datetime
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -191,6 +191,13 @@ def rating_sd(r, tid):
     return FCS_SD if tid == "FCS" else RATING_SD0 * math.sqrt(PRIOR_GAMES / (PRIOR_GAMES + r["gp"]))
 
 
+def slugify(s):
+    """URL slug, identical to lib/slug.ts: strip accents and apostrophes, lowercase, dash the rest."""
+    s = "".join(c for c in unicodedata.normalize("NFD", s) if not 0x300 <= ord(c) <= 0x36F).lower()
+    s = re.sub(r"[&'’ʻ]", "", s)
+    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
+
 def win_prob(spread, sd=MARGIN_SD):
     return 0.5 * (1 + math.erf(spread / (sd * math.sqrt(2))))
 
@@ -345,17 +352,26 @@ def main():
         "root": ROOT, "season": season, "teams": teams, "rows": rows, "rosters": rosters, "cfbd_get": cfbd_get,
         "games": fbs_games, "get": get,
     })
-    # sitemap: home, directories, every team page, every player with stats
+    # sitemap: home, directories, every team + depth-chart page, every player with stats.
+    # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).
     site = "https://www.thedepthchartcfb.com"
-    urls = [f"{site}/", f"{site}/team.html", f"{site}/depth.html", f"{site}/players.html"] \
-        + [f"{site}/team.html?id={r['id']}" for r in rows] + [f"{site}/depth.html?id={r['id']}" for r in rows]
+    tslug, seen = {}, set()
+    for r in rows:
+        sl = slugify(r["name"])
+        if sl in seen:
+            sl = f"{sl}-{r['id']}"
+        seen.add(sl)
+        tslug[r["id"]] = sl
+    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players"] \
+        + [f"{site}/teams/{tslug[r['id']]}" for r in rows] + [f"{site}/depth/{tslug[r['id']]}" for r in rows]
     try:
-        urls += [f"{site}/player.html?id={pid}&t={tid}" for pid, _, tid, _ in json.load(open(os.path.join(ROOT, "public", "data", "players", "index.json")))]
+        urls += [f"{site}/players/{slugify(name) or 'player'}-{pid}"
+                 for pid, name, _, _ in json.load(open(os.path.join(ROOT, "public", "data", "players", "index.json")))]
     except (OSError, ValueError):
         pass
     with open(os.path.join(ROOT, "public", "sitemap.xml"), "w") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
-        f.writelines(f"  <url><loc>{u.replace('&', '&amp;')}</loc></url>\n" for u in urls)
+        f.writelines(f"  <url><loc>{u}</loc></url>\n" for u in urls)
         f.write("</urlset>\n")
     for r in rows[:15]:
         print(f"{r['rank']:>3} {r['name']:<22} {r['w']}-{r['l']}  net {r['net']:+.1f}  off {r['off']:+.1f}  def {r['def']:+.1f}  prior {r['prior']}")

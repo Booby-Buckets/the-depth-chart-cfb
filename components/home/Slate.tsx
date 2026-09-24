@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { SlateGame } from "@/lib/data";
 import { etDay, etTime } from "@/lib/format";
 import styles from "./Slate.module.css";
+import { logo } from "@/lib/logo";
 
 type Mode = "top" | "close" | "all";
 const MODES: [Mode, string][] = [["top", "Top 25"], ["close", "Toss-ups"], ["all", "All games"]];
@@ -54,7 +55,7 @@ function GameCard({ g, logos, slugs }: { g: SlateGame; logos: Record<string, str
     return (
       <div key={side} className={`${styles.tm} ${g.completed && sc != null && other != null && sc < other ? styles.lose : ""}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logos[id] || `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png`} alt="" loading="lazy" />
+        <img src={logo(logos[id] || `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png`, 22)} alt="" loading="lazy" />
         <div>
           {rk && rk <= 25 ? <span className={styles.rk}>{rk}</span> : null}
           {slugs[id] ? <Link className={styles.tl} href={`/teams/${slugs[id]}`}>{name}</Link> : name}
