@@ -73,3 +73,25 @@ export async function getTeamIndex() {
   }
   return { hub, bySlug, slugOf };
 }
+
+/* ---------- depth charts + snap estimates (the per-team player file) ---------- */
+export type DepthPlayer = {
+  id: string; name: string; no: string | null; pos: string | null; cls: string | null;
+  val: number; g: number; last: number; tp: number; lo?: number | null; hi?: number | null; inv?: number;
+};
+export type DepthSlot = { slot: string; starters: number; basis: "production" | "roster"; players: DepthPlayer[] };
+export type PlayLogRow = {
+  id: string; date: string; wk: string; opp: string; oppName: string; tp: number;
+  off: number; qb: number; def: number; st: number; pen: number; es?: number; esTP?: number; esLo?: number; esHi?: number;
+};
+export type PlayerFull = PlayerLite & {
+  onRoster?: boolean;
+  pi?: { off: number; qb: number; def: number; st: number; pen: number; g: number; log: PlayLogRow[]; es?: number; esTP?: number; esLo?: number; esHi?: number };
+};
+export type TeamGame = { id: string; date: string; wk: string; opp: string; oppName: string; site: "H" | "A" | "N"; tp: number; otp?: number };
+export type PlayersFile = {
+  season: number; tid: string; games: TeamGame[];
+  depth: Record<"offense" | "defense" | "special", DepthSlot[]>;
+  players: PlayerFull[];
+};
+export const getPlayersFile = (id: string) => readJson<PlayersFile>(`players/${id}.json`);

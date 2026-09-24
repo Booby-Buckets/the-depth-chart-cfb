@@ -80,7 +80,7 @@ export default async function TeamPage({ params }: PageProps<"/teams/[slug]">) {
         <a className="chip" href="#schedule">Schedule</a>
         <a className="chip" href="#stats">Team stats</a>
         <a className="chip" href="#roster">Roster</a>
-        <a className="chip" href={`/depth.html?id=${t.id}`}>Depth chart →</a>
+        <Link className="chip" href={`/depth/${slug}`}>Depth chart →</Link>
       </nav>
 
       <section id="outlook" className={s.section}>
