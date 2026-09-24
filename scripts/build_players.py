@@ -133,6 +133,7 @@ def depth_chart(plist, tgames):
             "players": [{"id": p["id"], "name": p["name"], "no": p.get("no"), "pos": p.get("pos"), "cls": p.get("cls"),
                          "val": (p.get("pi") or {}).get(pi_key, 0), "g": (p.get("pi") or {}).get("g", 0),
                          "last": recent(p, pi_key), "tp": (p.get("pi") or {}).get("esTP", 0),
+                         "lo": (p.get("pi") or {}).get("esLo"), "hi": (p.get("pi") or {}).get("esHi"),
                          "inv": (p.get("pi") or {}).get("off" if unit == "offense" else "def", 0)}
                         for p in pool[:max(n * 2 + 1, 4)]],
         })
@@ -183,6 +184,9 @@ def estimate_snaps(P, team_plays, game_info):
         for (p, row, _), pct in zip(ranked, pcts):
             row["es"] = round(pct * scale * plays)
             row["esTP"] = plays
+            b = snap_model.band(grp, row["es"], 1)
+            if b:
+                row["esLo"], row["esHi"] = b[0], min(plays, b[1])
     for p in P.values():
         pi = p.get("pi")
         if pi and any("es" in r for r in pi["log"]):
@@ -191,6 +195,9 @@ def estimate_snaps(P, team_plays, game_info):
             grp = "QB" if p.get("pos") == "QB" else snap_group(p.get("pos"))
             if grp and grp != "QB":
                 pi["esErr"] = snap_model.error(grp)[0]
+                b = snap_model.band(grp, pi["es"], sum(1 for r in pi["log"] if "es" in r))
+                if b:  # 80% range for the season-to-date total
+                    pi["esLo"], pi["esHi"] = b[0], min(pi["esTP"], b[1])
 
 
 def build_player_files(ctx):

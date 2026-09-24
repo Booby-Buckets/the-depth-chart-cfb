@@ -79,6 +79,36 @@ def fit(df):
                                          monotonic_cst=[1, 1, 0, -1], loss="absolute_error").fit(df[FEATURES], df.pct)
 
 
+# uncertainty: how actual snaps compare with the estimate, for a total over k games
+K_BINS = [(1, 1), (2, 2), (3, 3), (4, 5), (6, 8), (9, 12), (13, 99)]
+SIZE_BINS = [(0, 15), (15, 40), (40, 1e9)]   # estimated snaps PER GAME (total / games)
+
+
+def bands(test, pred):
+    """80% ranges as ratios actual/estimate, by games in the total and by the estimate's size.
+    Built from season-to-date totals on the held-out season, in week order."""
+    t = test.assign(pred=pred * test.TT).sort_values("week")
+    t["k"] = t.groupby("pfr_player_id").cumcount() + 1
+    t["cp"] = t.groupby("pfr_player_id").pred.cumsum()
+    t["ca"] = t.groupby("pfr_player_id").snaps.cumsum()
+    out = []
+    for k0, k1 in K_BINS:
+        row = []
+        for s0, s1 in SIZE_BINS:
+            per = t.cp / t.k
+            q = t[t.k.between(k0, k1) & (per >= s0) & (per < s1) & (t.cp > 0)]
+            r = (q.ca / q.cp).to_numpy()
+            row.append([round(float(np.quantile(r, .1)), 3), round(float(np.quantile(r, .9)), 3)] if len(r) >= 30 else None)
+        out.append(row)
+    # thin cells borrow from the nearest filled cell (by games) in the same size bin
+    for j in range(len(SIZE_BINS)):
+        filled = [i for i in range(len(K_BINS)) if out[i][j]]
+        for i in range(len(K_BINS)):
+            if out[i][j] is None:
+                out[i][j] = out[min(filled, key=lambda f: abs(f - i))][j] if filled else [0.5, 1.5]
+    return {"k_bins": K_BINS, "size_bins": [list(b) for b in SIZE_BINS[:-1]] + [[SIZE_BINS[-1][0], None]], "q10_q90": out}
+
+
 def export(model):
     """sklearn tree ensemble -> plain JSON (evaluated by build_players.snap_pct)."""
     trees = []
@@ -102,8 +132,10 @@ def main():
         season_err = float((np.abs(season.pred - season.act) / season.act).median())
         final = fit(pd.concat([a, b]))
         out["groups"][grp] = {"mae_snaps_per_game": round(per_game, 1), "median_season_error": round(season_err, 3),
-                              "n_train": int(len(a) + len(b)), **export(final)}
+                              "n_train": int(len(a) + len(b)), "bands": bands(b, p), **export(final)}
         print(f"{grp}: ±{per_game:.1f} snaps/game, season totals within {season_err:.0%} (median), {len(a) + len(b)} player-games")
+        bb = out["groups"][grp]["bands"]["q10_q90"]
+        print(f"     80% range for a regular (40+/game): 1 game {bb[0][2]} · 3 games {bb[2][2]} · 13+ games {bb[6][2]}   | part-timer (15-40): 1 game {bb[0][1]} · 13+ {bb[6][1]}")
     with open(OUT, "w") as f:
         json.dump(out, f, separators=(",", ":"))
     print(f"wrote {OUT} ({os.path.getsize(OUT) // 1024} KB)")

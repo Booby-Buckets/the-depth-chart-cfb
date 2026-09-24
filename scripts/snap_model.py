@@ -21,6 +21,19 @@ def error(group):
     return g.get("mae_snaps_per_game"), g.get("median_season_error")
 
 
+def band(group, est_total, games):
+    """80% range for an estimated snap total over `games` games -> (lo, hi) in snaps."""
+    g = _model()["groups"].get(group)
+    if not g or "bands" not in g or est_total <= 0:
+        return None
+    b = g["bands"]
+    i = next((i for i, (k0, k1) in enumerate(b["k_bins"]) if k0 <= games <= k1), len(b["k_bins"]) - 1)
+    per_game = est_total / max(1, games)
+    j = 0 if per_game < 15 else 1 if per_game < 40 else 2
+    lo, hi = b["q10_q90"][i][j]
+    return round(est_total * lo), round(est_total * hi)
+
+
 def snap_pct(group, share, rate, n, rk):
     g = _model()["groups"].get(group)
     if not g:

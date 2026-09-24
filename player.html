@@ -131,6 +131,11 @@
   else if (st('kicking','FGA')) tiles = [T('Field goals', `${n0(st('kicking','FGM'))}/${n0(st('kicking','FGA'))}`, 'kicking.FGM'), T('FG %', fmt(st('kicking','PCT')*100,1) + '%', 'kicking.PCT'), T('Long', n0(st('kicking','LONG'))), T('Extra points', `${n0(st('kicking','XPM'))}/${n0(st('kicking','XPA'))}`), T('Points', n0(st('kicking','PTS')))];
   else if (st('punting','NO')) tiles = [T('Punts', n0(st('punting','NO'))), T('Avg', fmt(st('punting','YPP'),1)), T('Inside 20', n0(st('punting','In 20'))), T('Long', n0(st('punting','LONG')))];
   tiles = tiles.filter(Boolean);
+  if (P.pi && P.pi.es && P.pi.esTP) {
+    const sp = v => Math.round(v / P.pi.esTP * 100);
+    tiles.unshift(T('Snap share', sp(P.pi.es) + '%', null, P.pi.esLo != null ? `likely <b>${sp(P.pi.esLo)}–${sp(P.pi.esHi)}%</b> · est.` : P.pos === 'QB' ? `${P.pi.es} of ${P.pi.esTP} snaps` : 'estimated'));
+    tiles = tiles.slice(0, 6);
+  }
 
   const recruit = P.recruit ? `<span class="badge">${'★'.repeat(P.recruit.stars || 0)} ${P.recruit.year} recruit${P.recruit.ranking ? ' · #' + P.recruit.ranking + ' nationally' : ''}</span>` : '';
   const bio = [P.pos, CLS[P.cls] || P.cls, [P.ht, P.wt].filter(Boolean).join(', '), P.home].filter(Boolean);
@@ -222,10 +227,10 @@
     const base = g => g.esTP || g.tp;   // defense: the opponent's offensive plays
     const seasonBase = P.pi.esTP || P.pi.log.reduce((s, g) => s + g.tp, 0);
     $('#playsTbl').innerHTML = `<thead><tr><th class="l">Game</th><th>${P.pi.def > P.pi.off ? 'Opp. plays' : 'Team plays'}</th>${cols.map(c => `<th>${c[1]}</th>`).join('')}${hasEs ? '<th>Snap share</th>' : ''}</tr></thead><tbody>${
-      P.pi.log.map(g => `<tr><td class="l">${g.wk.replace('Week ', 'Wk ')} · ${g.oppName}</td><td class="dim">${base(g) || '—'}</td>${cols.map(c => `<td class="${c[0] === 'es' ? 'strong' : ''}">${c[0] === 'es' && g.es != null && !isQB ? '~' : ''}${g[c[0]] || '·'}</td>`).join('')}${hasEs ? `<td>${g.es != null && base(g) ? Math.round(g.es / base(g) * 100) + '%' : '—'}</td>` : ''}</tr>`).join('')
-    }<tr><td class="l strong">Season</td><td class="strong">${seasonBase}</td>${cols.map(c => `<td class="strong">${P.pi[c[0]]}</td>`).join('')}${hasEs ? `<td class="strong">${Math.round(P.pi.es / Math.max(1, seasonBase) * 100)}%</td>` : ''}</tr></tbody>`;
+      P.pi.log.map(g => `<tr><td class="l">${g.wk.replace('Week ', 'Wk ')} · ${g.oppName}</td><td class="dim">${base(g) || '—'}</td>${cols.map(c => `<td class="${c[0] === 'es' ? 'strong' : ''}">${c[0] === 'es' && g.es != null && !isQB ? '~' : ''}${g[c[0]] || '·'}${c[0] === 'es' && g.esLo != null ? ` <span style="color:var(--text3);font-weight:500">(${g.esLo}–${g.esHi})</span>` : ''}</td>`).join('')}${hasEs ? `<td>${g.es != null && base(g) ? Math.round(g.es / base(g) * 100) + '%' : '—'}</td>` : ''}</tr>`).join('')
+    }<tr><td class="l strong">Season</td><td class="strong">${seasonBase}</td>${cols.map(c => `<td class="strong">${P.pi[c[0]]}${c[0] === 'es' && P.pi.esLo != null ? ` <span style="color:var(--text3);font-weight:500">(${P.pi.esLo}–${P.pi.esHi})</span>` : ''}</td>`).join('')}${hasEs ? `<td class="strong">${Math.round(P.pi.es / Math.max(1, seasonBase) * 100)}%</td>` : ''}</tr></tbody>`;
     $('#playsSub').innerHTML = isQB ? 'Estimated snaps: every offensive play credited to the QB running the offense. Close to a true snap count'
-      : hasEs ? `Estimated snaps from a model trained on real NFL snap counts. Typically within ±${P.pi.esErr || 9} snaps a game at this position. <a href="depth.html?id=${tid}" style="color:inherit">How it works</a>`
+      : hasEs ? `Estimated snaps from a model trained on real NFL snap counts. Ranges in brackets are where the real number lands 80% of the time: wide for a single game, tighter over the season. <a href="depth.html?id=${tid}" style="color:inherit">How it works</a>`
       : 'Plays the player shows up in the play-by-play. Not snap counts';
     $('#plays').hidden = false;
   }
