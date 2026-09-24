@@ -1,4 +1,4 @@
-"""build_hub.py — builds data/hub.json, the CFB home page's power rankings + this week's slate.
+"""build_hub.py — builds public/data/hub.json, the CFB home page's power rankings + this week's slate.
 
   python3 scripts/build_hub.py                 # current season, games from ESPN (no key)
   CFBD_KEY=... python3 scripts/build_hub.py    # + CFBD advanced stats (EPA/play, success rate)
@@ -18,7 +18,7 @@ import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "scripts", "cache")
-OUT = os.path.join(ROOT, "data", "hub.json")
+OUT = os.path.join(ROOT, "public", "data", "hub.json")   # served at /data/hub.json
 os.makedirs(CACHE, exist_ok=True)
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 
@@ -335,7 +335,7 @@ def main():
     print(f"wrote {OUT}: {len(rows)} teams, {out['gamesPlayed']} games, slate {slate_label} ({len(slate)} games), HFA {hfa:.2f}")
     from build_teams import build_team_files
     rosters = build_team_files({
-        "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "data", "teams"), "season": season, "built": out["built"],
+        "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "public", "data", "teams"), "season": season, "built": out["built"],
         "teams": teams, "rows": rows, "games": fbs_games, "rat": rat, "hfa": hfa, "mu": mu, "prior": prior,
         "solve": solve, "win_prob": win_prob, "compress": compress,
         "rating_sd": rating_sd, "margin_sd": MARGIN_SD,
@@ -350,10 +350,10 @@ def main():
     urls = [f"{site}/", f"{site}/team.html", f"{site}/depth.html", f"{site}/players.html"] \
         + [f"{site}/team.html?id={r['id']}" for r in rows] + [f"{site}/depth.html?id={r['id']}" for r in rows]
     try:
-        urls += [f"{site}/player.html?id={pid}&t={tid}" for pid, _, tid, _ in json.load(open(os.path.join(ROOT, "data", "players", "index.json")))]
+        urls += [f"{site}/player.html?id={pid}&t={tid}" for pid, _, tid, _ in json.load(open(os.path.join(ROOT, "public", "data", "players", "index.json")))]
     except (OSError, ValueError):
         pass
-    with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
+    with open(os.path.join(ROOT, "public", "sitemap.xml"), "w") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
         f.writelines(f"  <url><loc>{u.replace('&', '&amp;')}</loc></url>\n" for u in urls)
         f.write("</urlset>\n")

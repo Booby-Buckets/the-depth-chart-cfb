@@ -1,7 +1,7 @@
 name: Rebuild power rankings
 
 # Re-runs scripts/build_hub.py so the ratings, records, "This Week" slate and every team
-# page (data/teams/*.json) pick up finished games, then commits data/. The push triggers a Vercel deploy, so
+# page (data/teams/*.json) pick up finished games, then commits public/data/. The push triggers a Vercel deploy, so
 # the live site refreshes on its own.
 #
 # Schedule (UTC, Aug–Jan only):
@@ -51,12 +51,12 @@ jobs:
 
       - name: Commit if the ratings changed
         run: |
-          git add data sitemap.xml
+          git add public/data public/sitemap.xml
           # hub.json's "built" timestamp changes every run; ignore it so an idle day doesn't deploy
-          others=$(git diff --cached --name-only | grep -v '^data/hub.json$' || true)
-          if [ -z "$others" ] && git show HEAD:data/hub.json > /tmp/old.json 2>/dev/null && python3 - <<'EOF'
+          others=$(git diff --cached --name-only | grep -v '^public/data/hub.json$' || true)
+          if [ -z "$others" ] && git show HEAD:public/data/hub.json > /tmp/old.json 2>/dev/null && python3 - <<'EOF'
           import json, sys
-          a, b = json.load(open('/tmp/old.json')), json.load(open('data/hub.json'))
+          a, b = json.load(open('/tmp/old.json')), json.load(open('public/data/hub.json'))
           a.pop('built', None); b.pop('built', None)
           sys.exit(0 if a == b else 1)
           EOF

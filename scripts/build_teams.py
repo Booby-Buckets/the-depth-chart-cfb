@@ -1,4 +1,4 @@
-"""build_teams.py — one data/teams/{espn_id}.json per FBS team, for team.html.
+"""build_teams.py — one public/data/teams/{espn_id}.json per FBS team, for team.html.
 
 Called from build_hub.main() (it reuses the ratings, games and HTTP cache), so there's
 still one command:  python3 scripts/build_hub.py

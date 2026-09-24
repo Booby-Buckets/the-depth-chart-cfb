@@ -2,7 +2,7 @@
 
 Called from build_hub.main() after the team build (it reuses the ESPN rosters it fetched).
 
-Outputs (data/players/):
+Outputs (public/data/players/, served at /data/players/):
   {team_id}.json  every player on that FBS team: ESPN bio + CFBD season stats, EPA (PPA)
                   per play by situation, usage share, FBS ranks, 2026 recruiting profile;
                   plus the position-group EPA averages the page compares against
@@ -203,7 +203,7 @@ def estimate_snaps(P, team_plays, game_info):
 def build_player_files(ctx):
     root, season, teams, rows, rosters, cfbd_get = (ctx[k] for k in ("root", "season", "teams", "rows", "rosters", "cfbd_get"))
     games_list, get = ctx["games"], ctx["get"]
-    outdir = os.path.join(root, "data", "players")
+    outdir = os.path.join(root, "public", "data", "players")
     os.makedirs(outdir, exist_ok=True)
     by_name = {info["name"]: tid for tid, info in teams.items()}
     games = {r["id"]: max(1, r["w"] + r["l"]) for r in rows}
