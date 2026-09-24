@@ -7,6 +7,7 @@ Outputs (public/data/players/, served at /data/players/):
                   per play by situation, usage share, FBS ranks, 2026 recruiting profile;
                   plus the position-group EPA averages the page compares against
   index.json      [id, name, team_id, pos] for every FBS player with stats (player search)
+  ids.json        {player id: team id} for every FBS player (page URLs)
   leaders.json    top-300 boards: passing, rushing, receiving, defense; EPA per play top 150 per group
 
 Identity: CFBD player ids are ESPN athlete ids, so ESPN roster bio and CFBD stats join on
@@ -369,6 +370,10 @@ def build_player_files(ctx):
         with open(os.path.join(outdir, f"{tid}.json"), "w") as f:
             json.dump({"season": season, "tid": tid, "groupAvg": group_avg, "games": tgames,
                        "depth": depth_chart(plist, tgames), "players": plist}, f, separators=(",", ":"))
+
+    # --- player id -> team id for every FBS player (resolves /players/<name>-<id> URLs) ---
+    with open(os.path.join(outdir, "ids.json"), "w") as f:
+        json.dump({p["id"]: p["tid"] for p in P.values() if p["name"]}, f, separators=(",", ":"))
 
     # --- search index + leaderboards (only rewritten when we actually have stats) ---
     have_stats = [p for p in P.values() if p["name"] and (p["stats"] or p.get("ppa"))]

@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { getTeamIndex, getTeam, getPlayersFile, type DepthSlot, type DepthPlayer, type PlayersFile } from "@/lib/data";
 import { teamColors } from "@/lib/teamColor";
+import { playerHref } from "@/lib/slug";
 import TeamSwitcher from "@/components/team/TeamSwitcher";
 import SnapLog, { type LogGroup } from "@/components/depth/SnapLog";
 import s from "./depth.module.css";
@@ -71,13 +72,13 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
         <section key={k} className={s.unit}>
           <div className="sec-h"><h2>{label}</h2><p>{sub}</p></div>
           <div className={s.slots}>
-            {(PL.depth[k] || []).map((u) => <SlotCard key={u.slot} u={u} teamId={t.id} hasGames={G.length > 0} />)}
+            {(PL.depth[k] || []).map((u) => <SlotCard key={u.slot} u={u} hasGames={G.length > 0} />)}
           </div>
         </section>
       ))}
 
       <section className={s.section}>
-        <SnapLog games={G} groups={logGroups(PL)} teamId={t.id} />
+        <SnapLog games={G} groups={logGroups(PL)} />
       </section>
 
       <p className="note">
@@ -94,7 +95,7 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
   );
 }
 
-function SlotCard({ u, teamId, hasGames }: { u: DepthSlot; teamId: string; hasGames: boolean }) {
+function SlotCard({ u, hasGames }: { u: DepthSlot; hasGames: boolean }) {
   const ps = u.players.filter((p, i) => u.basis === "roster" || p.val > 0 || i < u.starters);
   const note =
     u.slot === "OL" ? "Linemen leave no trace in play-by-play, so this is roster order (class, then weight), not a real depth chart." :
@@ -103,13 +104,13 @@ function SlotCard({ u, teamId, hasGames }: { u: DepthSlot; teamId: string; hasGa
   return (
     <div className={s.slot}>
       <h3>{LABEL[u.slot] || u.slot}<span>{subtitle}</span></h3>
-      {ps.length ? ps.map((p, i) => <SlotRow key={p.id} p={p} i={i} u={u} teamId={teamId} hasGames={hasGames} />) : <div className={s.caveat}>Nobody listed.</div>}
+      {ps.length ? ps.map((p, i) => <SlotRow key={p.id} p={p} i={i} u={u} hasGames={hasGames} />) : <div className={s.caveat}>Nobody listed.</div>}
       {note && <div className={s.caveat}>{note}</div>}
     </div>
   );
 }
 
-function SlotRow({ p, i, u, teamId, hasGames }: { p: DepthPlayer; i: number; u: DepthSlot; teamId: string; hasGames: boolean }) {
+function SlotRow({ p, i, u, hasGames }: { p: DepthPlayer; i: number; u: DepthSlot; hasGames: boolean }) {
   const start = i < u.starters;
   const label = start ? (u.starters > 1 ? `${u.slot}${i + 1}` : `${u.slot}1`) : u.starters > 1 ? "—" : `${u.slot}${i + 1}`;
   let right: React.ReactNode;
@@ -126,14 +127,14 @@ function SlotRow({ p, i, u, teamId, hasGames }: { p: DepthPlayer; i: number; u: 
     );
   else right = <span className={s.v}>{p.val}<small>{unitOf(u.slot, p.val)}{hasGames && p.last ? ` · ${p.last} last` : ""}</small></span>;
   return (
-    <a className={`${s.dp} ${start ? s.start : s.bench}`} href={`/player.html?id=${p.id}&t=${teamId}`}>
+    <Link className={`${s.dp} ${start ? s.start : s.bench}`} href={playerHref(p.name, p.id)}>
       <span className={s.r}>{label}</span>
       <span className={s.n}>
         {p.no != null ? `#${p.no} ` : ""}{p.name}
         <small>{[p.pos, p.cls].filter(Boolean).join(" · ")}{p.g ? ` · ${p.g} G` : ""}</small>
       </span>
       {right}
-    </a>
+    </Link>
   );
 }
 

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { playerHref } from "@/lib/slug";
 import type { RosterPlayer } from "@/lib/data";
 
 const UNITS: [string, string][] = [["all", "All"], ["offense", "Offense"], ["defense", "Defense"], ["specialTeam", "Special teams"]];
@@ -11,7 +13,7 @@ const inches = (s: string | null) => { const m = (s || "").match(/(\d+)'\s*(\d+)
 
 type Col = { k: string; l: string; cls?: string; str?: boolean; f: (p: RosterPlayer) => React.ReactNode; sv: (p: RosterPlayer) => number | string | null };
 
-export default function Roster({ roster, teamId }: { roster: RosterPlayer[]; teamId: string }) {
+export default function Roster({ roster }: { roster: RosterPlayer[] }) {
   const [unit, setUnit] = useState("all");
   const [q, setQ] = useState("");
   const [sortK, setSortK] = useState("pos");
@@ -19,7 +21,7 @@ export default function Roster({ roster, teamId }: { roster: RosterPlayer[]; tea
 
   const cols: Col[] = [
     { k: "no", l: "#", f: (p) => p.no ?? "", sv: (p) => (p.no == null ? 999 : +p.no) },
-    { k: "name", l: "Player", cls: "l nm", str: true, f: (p) => <a href={`/player.html?id=${p.id}&t=${teamId}`}>{p.name}</a>, sv: (p) => p.name },
+    { k: "name", l: "Player", cls: "l nm", str: true, f: (p) => <Link href={playerHref(p.name, p.id)}>{p.name}</Link>, sv: (p) => p.name },
     { k: "pos", l: "Pos", cls: "c", f: (p) => p.pos || "", sv: (p) => posIx(p.pos) },
     { k: "cls", l: "Class", cls: "c", f: (p) => p.cls || "", sv: (p) => CLS[p.cls || ""] || 9 },
     { k: "ht", l: "Ht", f: (p) => p.ht || "", sv: (p) => inches(p.ht) },

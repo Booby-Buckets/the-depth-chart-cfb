@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { playerHref } from "@/lib/slug";
 import type { TeamGame } from "@/lib/data";
 
 export type LogGroup = {
@@ -9,7 +11,7 @@ export type LogGroup = {
   players: { id: string; name: string; pos: string; es: number[]; esRange: ([number, number] | null)[]; raw: number[]; esTotal: number; rawTotal: number }[];
 };
 
-export default function SnapLog({ games, groups, teamId }: { games: TeamGame[]; groups: LogGroup[]; teamId: string }) {
+export default function SnapLog({ games, groups }: { games: TeamGame[]; groups: LogGroup[] }) {
   const [mode, setMode] = useState<"es" | "raw">("es");
   const total = (k: "tp" | "otp") => games.reduce((sum, g) => sum + (g[k] || 0), 0);
   return (
@@ -55,7 +57,7 @@ export default function SnapLog({ games, groups, teamId }: { games: TeamGame[]; 
                 </tr>,
                 ...rows.map((p) => (
                   <tr key={`${grp.label}-${p.id}`}>
-                    <td className="l nm"><a href={`/player.html?id=${p.id}&t=${teamId}`} style={{ color: "var(--text)", textDecoration: "none" }}>{p.name}</a></td>
+                    <td className="l nm"><Link href={playerHref(p.name, p.id)} style={{ color: "var(--text)", textDecoration: "none" }}>{p.name}</Link></td>
                     <td className="c dim">{p.pos}</td>
                     {p.vals.map((v, i) => {
                       const rng = useEs && grp.rawKey !== "qb" ? p.esRange[i] : null;

@@ -1,6 +1,7 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { slugify } from "./slug";
 
 // The Python build (scripts/build_hub.py) writes public/data/*.json. Server components read
 // the files directly; the same files stay public at /data/* for the legacy pages.
@@ -58,10 +59,7 @@ export type PlayerLite = {
 };
 export const getTeamPlayers = (id: string) => readJson<{ players: PlayerLite[] }>(`players/${id}.json`);
 
-/* ---------- URL slugs: /teams/notre-dame, /teams/miami-oh ---------- */
-export const slugify = (s: string) =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[&'’ʻ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-
+/* ---------- URL slugs (lib/slug.ts): /teams/notre-dame ---------- */
 export async function getTeamIndex() {
   const hub = await getHub();
   const bySlug = new Map<string, HubTeam>(), slugOf = new Map<string, string>();
@@ -84,14 +82,26 @@ export type PlayLogRow = {
   id: string; date: string; wk: string; opp: string; oppName: string; tp: number;
   off: number; qb: number; def: number; st: number; pen: number; es?: number; esTP?: number; esLo?: number; esHi?: number;
 };
+export type PPA = { all: number | null; pass: number | null; rush: number | null; firstDown: number | null; secondDown: number | null; thirdDown: number | null; standardDowns: number | null; passingDowns: number | null };
+export type Usage = { overall: number | null; pass: number | null; rush: number | null; firstDown: number | null; secondDown: number | null; thirdDown: number | null; standardDowns: number | null; passingDowns: number | null };
 export type PlayerFull = PlayerLite & {
-  onRoster?: boolean;
+  onRoster?: boolean; unit?: string; ht?: string | null; wt?: string | null; home?: string | null;
+  ppa?: { avg: PPA; tot: number; plays: number };
+  use?: Usage;
+  recruit?: { year: number; stars: number | null; rating: number | null; ranking: number | null; school: string | null; city: string | null; stateProvince: string | null; position: string | null };
   pi?: { off: number; qb: number; def: number; st: number; pen: number; g: number; log: PlayLogRow[]; es?: number; esTP?: number; esLo?: number; esHi?: number };
 };
 export type TeamGame = { id: string; date: string; wk: string; opp: string; oppName: string; site: "H" | "A" | "N"; tp: number; otp?: number };
 export type PlayersFile = {
   season: number; tid: string; games: TeamGame[];
+  groupAvg: Record<string, { ppa: PPA; use: Usage; n: number; minPerGame: number }>;
   depth: Record<"offense" | "defense" | "special", DepthSlot[]>;
   players: PlayerFull[];
 };
 export const getPlayersFile = (id: string) => readJson<PlayersFile>(`players/${id}.json`);
+
+/** Which team a player is on (every FBS player, from the build's ids.json). */
+export async function getPlayerTeam(pid: string): Promise<string | null> {
+  const ids = await readJson<Record<string, string>>("players/ids.json");
+  return ids[pid] ?? null;
+}

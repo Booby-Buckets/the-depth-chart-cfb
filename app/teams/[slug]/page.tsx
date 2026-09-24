@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getTeamIndex, getTeam, getTeamPlayers, type TeamFile, type PlayerLite, type SchedGame } from "@/lib/data";
 import { fmt, pct, ord, etStamp } from "@/lib/format";
 import { teamColors } from "@/lib/teamColor";
+import { playerHref } from "@/lib/slug";
 import TeamSwitcher from "@/components/team/TeamSwitcher";
 import { RatingChart, RecordOdds } from "@/components/team/Charts";
 import Roster from "@/components/team/Roster";
@@ -91,7 +92,7 @@ export default async function TeamPage({ params }: PageProps<"/teams/[slug]">) {
         </div>
       </section>
 
-      {PL && <Leaders players={PL.players} teamId={t.id} />}
+      {PL && <Leaders players={PL.players} />}
 
       <section id="schedule" className={s.section}>
         <div className="sec-h"><h2>Schedule</h2><p>Game score = the rating that one result implies, after adjusting for opponent and venue</p></div>
@@ -105,7 +106,7 @@ export default async function TeamPage({ params }: PageProps<"/teams/[slug]">) {
 
       <section id="roster" className={s.section}>
         <div className="sec-h"><h2>Roster</h2><p>{D.roster.length} players{M.coach ? ` · Head coach ${M.coach}` : ""}</p></div>
-        {D.roster.length ? <Roster roster={D.roster} teamId={t.id} /> : <p className="note">ESPN hasn&apos;t published this roster yet.</p>}
+        {D.roster.length ? <Roster roster={D.roster} /> : <p className="note">ESPN hasn&apos;t published this roster yet.</p>}
       </section>
 
       <p className="note">
@@ -122,7 +123,7 @@ function Tile({ k, v, sub }: { k: string; v: string; sub: React.ReactNode }) {
 }
 
 /* ---------- team leaders (from the player build) ---------- */
-function Leaders({ players, teamId }: { players: PlayerLite[]; teamId: string }) {
+function Leaders({ players }: { players: PlayerLite[] }) {
   const st = (p: PlayerLite, c: string, k: string) => p.stats[c]?.[k];
   const top = (c: string, k: string) => players.filter((p) => (st(p, c, k) ?? 0) > 0).sort((a, b) => st(b, c, k)! - st(a, c, k)!)[0];
   const cards: [string, PlayerLite | undefined, (p: PlayerLite) => [number, string, string], string][] = [
@@ -143,13 +144,13 @@ function Leaders({ players, teamId }: { players: PlayerLite[]; teamId: string })
           const [v, unit, sub] = f(p!);
           const rk = p!.rk?.[rkKey];
           return (
-            <a key={k} className={s.lead} href={`/player.html?id=${p!.id}&t=${teamId}`}>
+            <Link key={k} className={s.lead} href={playerHref(p!.name, p!.id)}>
               <div className={s.k}>{k}</div>
               <div className={s.n}>{p!.name}</div>
               <div className={s.p}>{p!.pos || ""}{p!.cls ? ` · ${p!.cls}` : ""}{rk ? ` · ${ord(rk[0])} in FBS` : ""}</div>
               <div className={s.v}>{v % 1 ? v.toFixed(1) : v}<small>{unit}</small></div>
               <div className={s.p}>{sub}</div>
-            </a>
+            </Link>
           );
         })}
       </div>
