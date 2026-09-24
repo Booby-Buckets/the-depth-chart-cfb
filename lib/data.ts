@@ -120,3 +120,20 @@ export async function getPlayerTeam(pid: string): Promise<string | null> {
 export type LeaderRow = { id: string; name: string; tid: string; team: string; conf: string; pos: string | null; cls: string | null; group?: string } & Record<string, number | string | null | undefined>;
 export type Leaders = { season: number; groupMin: Record<string, number>; boards: Record<string, LeaderRow[]> };
 export const getLeaders = () => readJson<Leaders>("players/leaders.json");
+
+/* ---------- recruiting (the signing class, joined to this season's production) ---------- */
+export type RecruitRow = {
+  id: string | null; name: string; pos: string | null; stars: number | null; rating: number | null; rank: number | null;
+  hs: string | null; home: string; tid: string; onFile: boolean; name2: string | null;
+  g: number; gs: number; es: number | null; esTP: number | null; line: string;
+};
+export type ClassRow = {
+  tid: string; rank: number; signees: number; five: number; four: number; three: number; avg: number | null; score: number;
+  played: number; started: number; starts: number; snaps: number; top: string;
+};
+export type Recruiting = {
+  season: number; classYear: number; source: string;
+  counts: { signees: number; onFile: number; played: number; started: number };
+  teams: ClassRow[]; recruits: RecruitRow[];
+};
+export const getRecruiting = () => readJson<Recruiting>("recruiting.json");

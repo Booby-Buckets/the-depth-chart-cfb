@@ -370,7 +370,7 @@ def main():
             sl = f"{sl}-{r['id']}"
         seen.add(sl)
         tslug[r["id"]] = sl
-    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players"] \
+    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting"] \
         + [f"{site}/teams/{tslug[r['id']]}" for r in rows] + [f"{site}/depth/{tslug[r['id']]}" for r in rows]
     try:
         urls += [f"{site}/players/{slugify(name) or 'player'}-{pid}"

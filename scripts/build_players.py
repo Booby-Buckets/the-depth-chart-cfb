@@ -18,10 +18,11 @@ CFBD calls: 4 bulk feeds, each at most once per build_hub.CFBD_MAX_AGE. If CFBD 
 reached, player stat blocks are carried over from the last published files instead of
 being dropped.
 """
-import json, os
+import json, os, re
 from build_pbp import build_plays_involved
 from build_starters import build_starters, OL_POS
 from build_advanced import player_advanced, rank_players
+from build_recruiting import build_recruiting
 import snap_model
 
 # ranked stats: (category, stat, label, min per team game to qualify, higher is better)
@@ -287,6 +288,25 @@ def build_player_files(ctx):
             p = player(r["id"], tid)
             p["use"] = {k: r["usage"].get(k) for k in PPA_KEYS if k != "all"} | {"overall": r["usage"].get("overall")}
     if recruits is not None:
+        # CFBD leaves the ESPN id off some recruits (all of Oregon's 2026 class, for one), so fall
+        # back to the name within the team they signed with, and only when exactly one player matches
+        def norm_name(x):
+            x = re.sub(r"[^a-z ]", "", (x or "").lower().replace("-", " "))
+            return " ".join(w for w in x.split() if w not in ("jr", "sr", "ii", "iii", "iv", "v"))
+        by_team_name = {}
+        for pp in P.values():
+            if pp.get("name"):
+                by_team_name.setdefault((pp["tid"], norm_name(pp["name"])), []).append(pp["id"])
+        linked = 0
+        for r in recruits:
+            if r.get("athleteId") in P:
+                continue
+            tid = by_name.get(r.get("committedTo"))
+            hit = by_team_name.get((tid, norm_name(r.get("name")))) if tid else None
+            if hit and len(hit) == 1:
+                r["athleteId"] = hit[0]
+                linked += 1
+        print(f"recruits: {linked} linked to players by name (no usable id from CFBD)")
         for r in recruits:
             pid = r.get("athleteId")
             if pid and pid in P:
@@ -428,6 +448,9 @@ def build_player_files(ctx):
     # --- player id -> team id for every FBS player (resolves /players/<name>-<id> URLs) ---
     with open(os.path.join(outdir, "ids.json"), "w") as f:
         json.dump({p["id"]: p["tid"] for p in P.values() if p["name"]}, f, separators=(",", ":"))
+
+    # --- the recruiting class, joined to what the recruits are doing on the field ---
+    build_recruiting(root, season, teams, P, recruits)
 
     # --- search index + leaderboards (only rewritten when we actually have stats) ---
     have_stats = [p for p in P.values() if p["name"] and (p["stats"] or p.get("ppa"))]
