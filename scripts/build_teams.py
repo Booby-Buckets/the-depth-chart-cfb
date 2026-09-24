@@ -32,6 +32,14 @@ METRICS = [
 ]
 
 
+# CFBD advanced (garbage time excluded): key, label, offense field, defense field
+ADV = [
+    ("epa", "EPA / play", "oEPA", "dEPA"),
+    ("sr", "Success rate", "oSR", "dSR"),
+    ("expl", "Explosiveness", "oExpl", "dExpl"),
+]
+
+
 def _stat_block(cats):
     """ESPN category list -> {cat: {stat: value}}"""
     out = {}
@@ -131,6 +139,13 @@ def build_team_files(ctx):
         stat_ranks[("off", key)] = _rank({t: off_m[t][key] for t in teams}, hi)
         stat_ranks[("def", key)] = _rank({t: def_m[t][key] for t in teams}, not hi)
 
+    # --- CFBD advanced stats (only when build_hub ran with CFBD_KEY): higher is better on
+    # offense, lower on defense ---
+    adv_ranks = {}
+    for _, _, o_k, d_k in ADV:
+        adv_ranks[o_k] = _rank({r["id"]: r.get(o_k) for r in rows}, True)
+        adv_ranks[d_k] = _rank({r["id"]: r.get(d_k) for r in rows}, False)
+
     # --- rating ranks ---
     rk = {k: _rank({r["id"]: r[k] for r in rows}, True) for k in ("off", "def", "sos")}
 
@@ -215,6 +230,12 @@ def build_team_files(ctx):
         coach = (roster.get("coach") or [{}])[0]
 
         stats = []
+        for key, label, o_k, d_k in ADV:
+            if row.get(o_k) is None and row.get(d_k) is None:
+                continue
+            stats.append({"k": key, "l": label, "hi": True, "adv": True,
+                          "off": row.get(o_k), "offRk": adv_ranks[o_k].get(tid),
+                          "def": row.get(d_k), "defRk": adv_ranks[d_k].get(tid)})
         for key, label, _, _, _, hi in METRICS:
             stats.append({"k": key, "l": label, "hi": hi,
                           "off": _r(off_m[tid][key]), "offRk": stat_ranks[("off", key)].get(tid),
