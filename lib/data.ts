@@ -105,3 +105,8 @@ export async function getPlayerTeam(pid: string): Promise<string | null> {
   const ids = await readJson<Record<string, string>>("players/ids.json");
   return ids[pid] ?? null;
 }
+
+/* ---------- national leaderboards ---------- */
+export type LeaderRow = { id: string; name: string; tid: string; team: string; conf: string; pos: string | null; cls: string | null; group?: string } & Record<string, number | string | null | undefined>;
+export type Leaders = { season: number; groupMin: Record<string, number>; boards: Record<string, LeaderRow[]> };
+export const getLeaders = () => readJson<Leaders>("players/leaders.json");

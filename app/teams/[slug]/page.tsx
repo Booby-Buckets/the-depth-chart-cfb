@@ -138,7 +138,7 @@ function Leaders({ players }: { players: PlayerLite[] }) {
   if (!shown.length) return null;
   return (
     <section id="leaders" className={s.section}>
-      <div className="sec-h"><h2>Team Leaders</h2><p><a href="/players.html" style={{ color: "inherit" }}>National leaderboards →</a></p></div>
+      <div className="sec-h"><h2>Team Leaders</h2><p><Link href="/players" style={{ color: "inherit" }}>National leaderboards →</Link></p></div>
       <div className={s.leaders}>
         {shown.map(([k, p, f, rkKey]) => {
           const [v, unit, sub] = f(p!);
