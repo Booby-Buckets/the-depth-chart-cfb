@@ -151,16 +151,20 @@ def build_player_files(ctx):
         if old.get("tid") not in teams:
             continue
         p = player(pid, old["tid"])
+        carried = False
         if stats is None and old.get("stats"):
             p["stats"] = old["stats"]
-            p["name"] = p["name"] or old.get("name")
-            p["pos"] = p["pos"] or old.get("pos")
+            carried = True
         if ppa is None and old.get("ppa"):
             p["ppa"] = old["ppa"]
+            carried = True
         if usage is None and old.get("use"):
             p["use"] = old["use"]
         if recruits is None and old.get("recruit"):
             p["recruit"] = old["recruit"]
+        if carried:  # CFBD-only players (not on ESPN's roster) need their name back too
+            p["name"] = p["name"] or old.get("name")
+            p["pos"] = p["pos"] or old.get("pos")
     if stats is None and ppa is None and not prev:
         print("players: no CFBD data and nothing published yet; writing bios only")
 
