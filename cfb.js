@@ -4,6 +4,7 @@
  *                     (the team colour nudged until it reads on the current theme), and
  *                     re-paints on theme toggle
  *   tip(el, card, x, y, html)  positions a .tip tooltip inside a card
+ *   logo(url, px)     a team logo sized for where it is shown (see below)
  */
 (function () {
   const fmt = (v, d = 1, sign = false) => v == null ? '—' : (sign && v > 0 ? '+' : '') + Number(v).toFixed(d);
@@ -41,5 +42,21 @@
     el.innerHTML = html; el.style.left = (x - b.left) + 'px'; el.style.top = (y - b.top) + 'px'; el.style.opacity = 1;
   }
 
-  window.CFB = { fmt, pct, ord, paintTeam, tip };
+  // Team logos come from ESPN as 500x500 PNGs (20-43 KB each), and the pages drew them at
+  // 20-84 px — the home page alone pulled 162 of them, ~4 MB of logos, and on a phone they
+  // trickled in over 15+ seconds and looked missing while they did. ESPN's resizer serves the
+  // same image at any size (a 64 px logo is ~1.8 KB). Ask for about twice the display size so it
+  // stays sharp on retina screens, snapped to a few sizes so the CDN cache is shared across
+  // pages. Anything that is not an ESPN team logo passes through untouched.
+  const LOGO_SIZES = [48, 96, 128, 192];
+  function logo(url, px) {
+    if (!url) return '';
+    const m = String(url).match(/^https?:\/\/a\.espncdn\.com(\/i\/teamlogos\/[^?#]+)/);
+    if (!m) return url;
+    const want = Math.round((px || 22) * 2);
+    const size = LOGO_SIZES.find(s => s >= want) || LOGO_SIZES[LOGO_SIZES.length - 1];
+    return `https://a.espncdn.com/combiner/i?img=${m[1]}&w=${size}&h=${size}`;
+  }
+
+  window.CFB = { fmt, pct, ord, paintTeam, tip, logo };
 })();

@@ -11,7 +11,7 @@
   <meta property="og:title" content="Player — The Depth Chart CFB">
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <script src="tdc-theme.js?v=4"></script>
-  <script src="cfb.js?v=1"></script>
+  <script src="cfb.js?v=2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tdc-sheets.css?v=1">
   <link rel="stylesheet" href="cfb.css?v=1">
@@ -149,7 +149,7 @@
           <div class="hero-name">${P.name}</div>
           <div class="hero-sub">${bio.map(b => `<span>${b}</span>`).join('')}${recruit}</div>
         </div>
-        <a class="hero-team" href="team.html?id=${tid}"><img src="${M.logo}" alt=""><div><b>${M.name} ${M.mascot || ''}</b><span>${R.w}-${R.l} · TDC #${R.rank}</span></div></a>
+        <a class="hero-team" href="team.html?id=${tid}"><img src="${CFB.logo(M.logo, 40)}" alt=""><div><b>${M.name} ${M.mascot || ''}</b><span>${R.w}-${R.l} · TDC #${R.rank}</span></div></a>
       </div>
       ${tiles.length ? `<div class="tiles" style="--n:${Math.min(6, tiles.length)}">${tiles.map(t => `<div class="tile"><div class="k">${t.k}</div><div class="v">${t.v}</div><div class="s">${t.s || '&nbsp;'}</div></div>`).join('')}</div>` : ''}
     </div>

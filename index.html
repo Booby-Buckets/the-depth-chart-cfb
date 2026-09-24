@@ -13,6 +13,7 @@
   <meta property="og:description" content="Opponent-adjusted college football power ratings for all 138 FBS teams, plus projected spreads for this week.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <script src="tdc-theme.js?v=4"></script>
+  <script src="cfb.js?v=2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tdc-sheets.css?v=1">
   <link rel="stylesheet" href="cfb.css?v=1">
@@ -93,7 +94,7 @@
   try { D = await (await fetch('data/hub.json', {cache:'no-cache'})).json(); }
   catch(e){ $('#slateGrid').innerHTML = '<div class="loading">Couldn’t load the ratings.</div>'; return; }
   const T = Object.fromEntries(D.teams.map(t => [t.id, t]));
-  const logo = id => T[id] ? `<img src="${T[id].logo}" alt="" loading="lazy">` : '<img alt="">';
+  const logo = id => T[id] ? `<img src="${CFB.logo(T[id].logo, 22)}" alt="" loading="lazy" width="22" height="22">` : '<img alt="">';
 
   $('#eyebrow').textContent = `${D.season} Season · ${D.slateLabel || 'Final'}`;
   $('#meta').innerHTML = [

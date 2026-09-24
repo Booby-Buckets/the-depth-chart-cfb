@@ -12,7 +12,7 @@
   <meta property="og:title" content="FBS Teams — The Depth Chart CFB">
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <script src="tdc-theme.js?v=4"></script>
-  <script src="cfb.js?v=1"></script>
+  <script src="cfb.js?v=2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tdc-sheets.css?v=1">
   <link rel="stylesheet" href="cfb.css?v=1">
@@ -147,7 +147,7 @@
       $('#dir').innerHTML = order.map(c => {
         const list = byConf[c].filter(t => !q || (t.name+' '+t.full+' '+t.abbr).toLowerCase().includes(q)).sort((a,b) => a.rank - b.rank);
         if (!list.length) return '';
-        return `<div class="conf"><h3>${c}</h3>${list.map(t => `<a href="team.html?id=${t.id}"><img src="${t.logo}" alt="" loading="lazy"><span>${t.name}</span><span class="r">#${t.rank} · ${t.w}-${t.l}</span><span class="n">${fmt(t.net,1,true)}</span></a>`).join('')}</div>`;
+        return `<div class="conf"><h3>${c}</h3>${list.map(t => `<a href="team.html?id=${t.id}"><img src="${CFB.logo(t.logo, 22)}" alt="" loading="lazy"><span>${t.name}</span><span class="r">#${t.rank} · ${t.w}-${t.l}</span><span class="n">${fmt(t.net,1,true)}</span></a>`).join('')}</div>`;
       }).join('');
     };
     $('#dq').addEventListener('input', draw);
@@ -171,7 +171,7 @@
   app.innerHTML = `
     <div class="hero">
       <div class="hero-band">
-        <img class="hero-logo" src="${M.logo}" alt="${M.name} logo">
+        <img class="hero-logo" src="${CFB.logo(M.logo, 84)}" alt="${M.name} logo">
         <div class="hero-id">
           <div class="hero-eyebrow">${M.conf} · ${D.season}</div>
           <div class="hero-name">${M.name} ${M.mascot || ''}</div>
@@ -307,7 +307,7 @@
   const oppCell = g => {
     const at = g.site === 'A' ? '@' : 'vs';
     const nm = g.oppFbs ? `<a href="team.html?id=${g.opp}">${g.oppName}</a>` : `${g.oppName} <span class="tag">FCS</span>`;
-    return `<td class="l opp"><span class="at">${at}</span><img src="${g.oppLogo}" alt="" loading="lazy">${g.oppRank ? `<span class="rk">${g.oppRank}</span>` : ''}${nm}${g.conf ? ' <span class="tag">CONF</span>' : ''}${g.site === 'N' ? ' <span class="tag" title="Neutral site">NEUTRAL</span>' : ''}</td>`;
+    return `<td class="l opp"><span class="at">${at}</span><img src="${CFB.logo(g.oppLogo, 22)}" alt="" loading="lazy">${g.oppRank ? `<span class="rk">${g.oppRank}</span>` : ''}${nm}${g.conf ? ' <span class="tag">CONF</span>' : ''}${g.site === 'N' ? ' <span class="tag" title="Neutral site">NEUTRAL</span>' : ''}</td>`;
   };
   $('#sched').innerHTML = `<thead><tr><th class="l">Wk</th><th class="l">Date</th><th class="l">Opponent</th><th class="l">Result / TDC line</th><th title="Opponent- and venue-adjusted margin: the rating this single game implies">Game score</th><th class="l">Win chance</th><th class="l">TV</th></tr></thead><tbody>` +
     rows.map(g => {

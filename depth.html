@@ -11,7 +11,7 @@
   <meta property="og:title" content="Depth Charts — The Depth Chart CFB">
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <script src="tdc-theme.js?v=4"></script>
-  <script src="cfb.js?v=1"></script>
+  <script src="cfb.js?v=2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tdc-sheets.css?v=1">
   <link rel="stylesheet" href="cfb.css?v=1">
@@ -89,7 +89,7 @@
     H.teams.forEach(t => (byConf[t.conf] = byConf[t.conf] || []).push(t));
     app.innerHTML = `<header class="page-header"><div class="page-eyebrow">${H.season} Season</div><h1 class="page-h1">Depth Charts</h1>
       <p class="page-sub">Every FBS depth chart, built from who actually plays. Each position is ordered by plays involved, estimated QB snaps and plays made on defense, straight from the play-by-play. No guesswork from a preseason list.</p></header>
-      <section><div class="dir">${Object.keys(byConf).sort().map(c => `<div class="conf"><h3>${c}</h3>${byConf[c].sort((a,b) => a.name.localeCompare(b.name)).map(t => `<a href="depth.html?id=${t.id}"><img src="${t.logo}" alt="" loading="lazy">${t.name}</a>`).join('')}</div>`).join('')}</div></section>`;
+      <section><div class="dir">${Object.keys(byConf).sort().map(c => `<div class="conf"><h3>${c}</h3>${byConf[c].sort((a,b) => a.name.localeCompare(b.name)).map(t => `<a href="depth.html?id=${t.id}"><img src="${CFB.logo(t.logo, 20)}" alt="" loading="lazy">${t.name}</a>`).join('')}</div>`).join('')}</div></section>`;
     return;
   }
 
@@ -126,7 +126,7 @@
   };
 
   app.innerHTML = `
-    <div class="dhead"><img src="${M.logo}" alt=""><div class="t"><div class="e">${M.conf} · Through ${through}</div><h1><a href="team.html?id=${id}" style="text-decoration:none">${M.name} ${M.mascot || ''}</a> Depth Chart</h1></div>${switcher}</div>
+    <div class="dhead"><img src="${CFB.logo(M.logo, 56)}" alt=""><div class="t"><div class="e">${M.conf} · Through ${through}</div><h1><a href="team.html?id=${id}" style="text-decoration:none">${M.name} ${M.mascot || ''}</a> Depth Chart</h1></div>${switcher}</div>
     ${UNITS.map(([k, l]) => `<section class="unit"><div class="sec-h"><h2>${l}</h2><p>${k === 'offense' ? 'Season snap share (share of the team’s plays in games played) with its likely range. Ordered by estimated snaps, latest game counted twice' : k === 'defense' ? 'Season snap share of the opponent’s plays, with its likely range. Ordered by estimated snaps, latest game counted twice' : 'By kicks and punts'}</p></div><div class="slots">${(PL.depth[k] || []).map(slotCard).join('')}</div></section>`).join('')}
     <section id="log"><div class="sec-h"><h2>Snaps by Game</h2><p><span class="tabs" id="logMode" style="display:inline-flex;gap:6px"></span></p></div>
       <div class="sheet-wrap"><table class="sheet dense freeze2" id="logTbl"></table></div></section>
