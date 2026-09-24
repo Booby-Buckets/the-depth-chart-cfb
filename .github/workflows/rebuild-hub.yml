@@ -1,0 +1,69 @@
+name: Rebuild power rankings
+
+# Re-runs scripts/build_hub.py so the ratings, records and "This Week" slate pick up
+# finished games, then commits data/hub.json. The push triggers a Vercel deploy, so
+# the live site refreshes on its own.
+#
+# Schedule (UTC, Aug–Jan only):
+#   • every morning ~6 AM ET: catches weeknight games and rolls the slate to the new week
+#   • Saturday afternoon → Sunday early morning every 2h: finals land as game day plays out
+# CFBD_KEY is optional. Add it as a repo secret (Settings → Secrets and variables →
+# Actions) and the EPA / success-rate columns switch on; without it the job still runs.
+
+on:
+  schedule:
+    - cron: '0 10 * 1,8-12 *'            # daily, ~6 AM ET
+    - cron: '0 19,21,23 * 1,8-12 6'      # Saturday ~3, 5, 7 PM ET
+    - cron: '0 1,3,5,7 * 1,8-12 0'       # Saturday night into Sunday (~9 PM – 3 AM ET)
+  workflow_dispatch: {}                  # manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebuild-hub
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install numpy
+
+      # finished weeks and last season never change — keep them between runs
+      - uses: actions/cache@v4
+        with:
+          path: scripts/cache
+          key: feeds-${{ github.run_id }}
+          restore-keys: feeds-
+
+      - name: Build ratings
+        env:
+          CFBD_KEY: ${{ secrets.CFBD_KEY }}
+        run: python3 scripts/build_hub.py
+
+      - name: Commit if the ratings changed
+        run: |
+          # ignore the "built" timestamp so an idle day doesn't make an empty deploy
+          if git show HEAD:data/hub.json > /tmp/old.json 2>/dev/null && python3 - <<'EOF'
+          import json, sys
+          a, b = json.load(open('/tmp/old.json')), json.load(open('data/hub.json'))
+          a.pop('built', None); b.pop('built', None)
+          sys.exit(0 if a == b else 1)
+          EOF
+          then
+            echo "No rating or slate changes."
+            exit 0
+          fi
+          git config user.name "tdc-cfb-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/hub.json
+          git commit -m "Auto: rebuild power rankings"
+          git push
