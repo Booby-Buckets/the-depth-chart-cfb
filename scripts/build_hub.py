@@ -31,6 +31,7 @@ MARGIN_SD = 14.5        # CFB game margin sd around the spread -> win prob (back
 BLOWOUT_AT, BLOWOUT_KEEP = 24, 0.35
 PRIOR_REGRESS = 0.40
 PRIOR_GAMES = 4.0       # prior is worth ~this many games of evidence
+LEGACY_PRIOR_GAMES = 3.0  # the original points model (solve), kept as published for past seasons
 RATING_SD0 = 4.5        # preseason rating error (pts); shrinks as sqrt(PRIOR_GAMES / (PRIOR_GAMES + games))
 FCS_SD = 9.0            # pooled FCS "team" hides a wide spread of opponents
 CONF_SHORT = {"acc": "ACC", "sec": "SEC", "big10": "Big Ten", "big12": "Big 12", "American": "American",
@@ -175,7 +176,7 @@ def solve(games, teams, prior=None):
     lam = np.zeros(2 * n + 2); target = np.zeros(2 * n + 2)
     for t, i in ix.items():
         p = (prior or {}).get(t)
-        lam[i] = lam[n + i] = PRIOR_GAMES if t != "FCS" else 1.0
+        lam[i] = lam[n + i] = LEGACY_PRIOR_GAMES if t != "FCS" else 1.0
         if p:
             target[i], target[n + i] = p["off"], p["def"]
         elif t != "FCS":
@@ -418,6 +419,7 @@ def main():
     build_player_files({
         "root": ROOT, "season": season, "teams": teams, "rows": rows, "rosters": rosters, "cfbd_get": cfbd_get,
         "games": fbs_games, "get": get, "plays": plays, "player_chart": player_chart,
+        "chart_games": {t: max(1, c["off"]["pass"]["gc"]) for t, c in team_chart.items()},
     })
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
     # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).

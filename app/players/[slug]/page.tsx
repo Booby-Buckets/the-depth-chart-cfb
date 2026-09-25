@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, getCareers, getSeasonPlayers, getSeasonTeamIndex, type HubTeam, type PlayerFull, type PlayersFile } from "@/lib/data";
 import PlayerCharting from "@/components/chart/PlayerCharting";
+import PastCharting from "@/components/chart/PastCharting";
 import Career, { type CareerRow } from "@/components/player/Career";
 import { fmt, ord } from "@/lib/format";
 import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
@@ -163,6 +164,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
 
       {P.adv && <AdvancedTables P={P} />}
       {P.chart && <PlayerCharting ch={P.chart} name={P.name} />}
+      <PastCharting rows={career} name={P.name} />
 
       {career.length > 1 && <Career rows={career} name={P.name} />}
 
@@ -409,6 +411,7 @@ function PastPlayer({ name, pos, career }: { name: string; pos: string | null; c
         <p className="page-sub">{[pos, schools.join(" → ")].filter(Boolean).join(" · ")}. Not on a current FBS roster; here is every season we have.</p>
       </header>
       <Career rows={career} name={name} />
+      <PastCharting rows={career} name={name} open />
     </div>
   );
 }

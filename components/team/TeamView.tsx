@@ -87,7 +87,7 @@ export default function TeamView({ D, players, hubTeams, hubBuilt, slugOf, slug,
         <Stats D={D} rankHeat={rankHeat} />
       </section>
 
-      {D.chart && <TeamCharting ch={D.chart} n={D.fbsTeams} />}
+      {D.chart && <TeamCharting ch={D.chart} n={D.fbsTeams} games={D.schedule.filter((g) => g.completed).length} />}
 
       <section id="roster" className={s.section}>
         <div className="sec-h"><h2>{past ? "Players" : "Roster"}</h2><p>{past ? `${D.roster.length} players who recorded a stat in ${season} (from box scores)` : `${D.roster.length} players${M.coach ? ` · Head coach ${M.coach}` : ""}`}</p></div>

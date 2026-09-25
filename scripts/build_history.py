@@ -285,6 +285,14 @@ def build_season(season, current_pos, careers):
     rank_players(adv, lambda pid: P[pid]["g"])
     for pid, a in adv.items():
         P[pid]["adv"] = a
+    # charting from the play text (spots exist from 2025 on; earlier seasons simply get none)
+    from build_charting import chart_all
+    team_chart, player_chart = chart_all(games, plays, teams)
+    if not any(c["off"]["pass"]["gc"] for c in team_chart.values()):
+        team_chart, player_chart = {}, {}
+    for pid, c in player_chart.items():
+        if pid in P:
+            P[pid]["chart"] = c
 
     # team files: same builder as live, with this season's stats and a box-score roster
     roster = {}
@@ -296,7 +304,7 @@ def build_season(season, current_pos, careers):
         "get": H.get, "ESPN": H.ESPN, "outdir": os.path.join(out, "teams"), "season": season, "built": hub["built"],
         "teams": teams, "rows": rows, "games": games, "rat": S["rat"], "hfa": S["hfa"], "mu": S["mu"], "prior": S["prior"],
         "solve": H.solve, "win_prob": H.win_prob, "compress": H.compress, "rating_sd": H.rating_sd, "margin_sd": H.MARGIN_SD,
-        "team_adv": team_adv, "history_roster": roster,
+        "team_adv": team_adv, "history_roster": roster, "team_chart": team_chart,
     })
 
     # compact player files: season totals, advanced, estimated snaps (no per-game logs)
@@ -310,7 +318,8 @@ def build_season(season, current_pos, careers):
         plist = sorted(by_team.get(tid, []), key=lambda p: p["name"] or "")
         with open(os.path.join(out, "players", f"{tid}.json"), "w") as f:
             json.dump({"season": season, "tid": tid, "players": plist}, f, separators=(",", ":"))
-    write_leaders(os.path.join(out, "players"), season, teams, list(P.values()))
+    write_leaders(os.path.join(out, "players"), season, teams, list(P.values()),
+                  {t: max(1, c["off"]["pass"]["gc"]) for t, c in team_chart.items()} if player_chart else None)
     print(f"season {season}: {len(rows)} teams, {hub['gamesPlayed']} games, {len(P)} players "
           f"({len(adv)} with advanced) in {time.time() - t0:.0f}s")
 

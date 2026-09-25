@@ -46,6 +46,8 @@ export type PassChart = {
   att: number; comp: number; yds: number; td: number; int: number; brk: number;
   adot: number | null; deep: number | null; yac: number; yacPer: number | null; airYds: number;
   grid: Record<"L" | "M" | "R", [number, number, number][]>; dirs: Record<"L" | "M" | "R", number>;
+  gc?: number; // games with at least one charted throw
+  cAtt?: number; cComp?: number; cYds?: number; // attempts / completions / yards on charted throws only
   press?: number | null; sacks?: number;
 };
 export type RushDirs = Record<"L" | "M" | "R", [number, number, number]>; // att, yds, successes
@@ -178,7 +180,7 @@ export const getSeasonTeam = (y: number, id: string) => readJson<TeamFile>(`seas
 export const getSeasonLeaders = (y: number) => readJson<Leaders>(`seasons/${y}/players/leaders.json`);
 
 /** A past season's player file: season totals, advanced, estimated snaps (no per-game logs). */
-export type SeasonPlayer = PlayerLite & { tid: string; g: number; es?: number | null; esTP?: number | null; adv?: PlayerAdv };
+export type SeasonPlayer = PlayerLite & { tid: string; g: number; es?: number | null; esTP?: number | null; adv?: PlayerAdv; chart?: PlayerChart };
 export const getSeasonPlayers = (y: number, tid: string) => readJson<{ season: number; tid: string; players: SeasonPlayer[] }>(`seasons/${y}/players/${tid}.json`);
 
 /** {player id: [[season, team id], ...]} across every built season plus the current one. */

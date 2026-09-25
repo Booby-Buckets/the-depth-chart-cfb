@@ -7,15 +7,22 @@ const ord = (r: number) => r + (r % 100 >= 11 && r % 100 <= 13 ? "th" : ({ 1: "s
 const rk = (r: number | undefined, n: number) => (r ? `${ord(r)} of ${n}` : "");
 
 /** Team page "Charting": the offense's and defense's pass maps, run direction, style numbers. */
-export default function TeamCharting({ ch, n }: { ch: TeamChart; n: number }) {
+export default function TeamCharting({ ch, n, games }: { ch: TeamChart; n: number; games: number }) {
   const O = ch.off, D = ch.def;
-  if (!O.pass.att) return null;
+  if (!O.pass.att || !O.pass.gc) return null;
+  const partial = O.pass.gc < games;
   return (
     <section id="charting" style={{ padding: "28px 0 8px" }}>
       <div className="sec-h">
         <h2>Charting</h2>
         <p>Where the ball goes, read from the play-by-play: air yards, yards after the catch, run direction, pressure and tempo. Ranks run highest to lowest</p>
       </div>
+      {partial && (
+        <p className="note" style={{ marginTop: 0, marginBottom: 14 }}>
+          <b>Partial season.</b> ESPN&apos;s play-by-play has throw and catch spots for {O.pass.gc} of this team&apos;s {games} games, so the maps and
+          air-yard numbers cover those games only. Ranks compare teams on whatever each had charted.
+        </p>
+      )}
       <div className={c.tiles}>
         <Tile k="Avg. depth of throw" v={p1(O.adot)} sub={rk(O.adotRk, n)} />
         <Tile k="YAC per catch" v={p1(O.yacPer)} sub={rk(O.yacPerRk, n)} />

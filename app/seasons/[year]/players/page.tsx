@@ -38,7 +38,7 @@ export default async function SeasonPlayersPage({ params }: PageProps<"/seasons/
         </p>
       </header>
       <Leaderboards initialBoard="passing" initialRows={L.boards.passing} groupMin={L.groupMin} teams={teams} confs={confs}
-        dataUrl={`/data/seasons/${y}/players/leaders.json`} noEpa teamBase={`/seasons/${y}/teams`} />
+        dataUrl={`/data/seasons/${y}/players/leaders.json`} noEpa hasChart={!!L.boards.qbchart} teamBase={`/seasons/${y}/teams`} />
     </div>
   );
 }

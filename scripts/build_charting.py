@@ -144,7 +144,10 @@ def _add_pass(a, r):
     a["int"] += bool(r["int"])
     a["brk"] += r["brk"]
     if r["air"] is not None:
+        a["gs"].add(r["g"])
         a["airN"] += 1
+        a["cComp"] += r["comp"]
+        a["cYds"] += r["yds"] if r["comp"] else 0
         a["airSum"] += r["air"]
         if r["dir"]:
             cell = a["grid"][r["dir"]][_band(r["air"])]
@@ -163,7 +166,7 @@ def _add_pass(a, r):
 
 def _new_pass():
     return {"att": 0, "comp": 0, "yds": 0, "td": 0, "int": 0, "brk": 0, "airN": 0, "airSum": 0, "deep20": 0,
-            "yacN": 0, "yac": 0, "airComp": 0, "grid": _grid(), "dirs": {d: 0 for d in DIRS}}
+            "yacN": 0, "yac": 0, "airComp": 0, "grid": _grid(), "dirs": {d: 0 for d in DIRS}, "gs": set(), "cComp": 0, "cYds": 0}
 
 
 def _new_rush():
@@ -180,7 +183,8 @@ def _finish_pass(a):
            "adot": round(a["airSum"] / a["airN"], 1) if a["airN"] else None,
            "deep": round(a["deep20"] / a["airN"], 3) if a["airN"] else None,
            "yac": a["yac"], "yacPer": round(a["yac"] / a["yacN"], 1) if a["yacN"] else None,
-           "airYds": a["airComp"], "grid": a["grid"], "dirs": a["dirs"]}
+           "airYds": a["airComp"], "grid": a["grid"], "dirs": a["dirs"], "gc": len(a["gs"]),
+           "cAtt": a["airN"], "cComp": a["cComp"], "cYds": a["cYds"]}   # the charted subset (throws with a spot)
     return out
 
 
@@ -197,17 +201,22 @@ def chart_all(games, plays, teams):
                              "def": {"pass": _new_pass(), "rush": _new_rush(), "plays": 0, "sg": 0, "nh": 0, "drop": 0, "press": 0}})
     QB, WR, RB = defaultdict(_new_pass), defaultdict(_new_pass), defaultdict(_new_rush)
     qb_extra = defaultdict(lambda: {"drop": 0, "press": 0, "sacks": 0})
+    # formation / tempo / pressure words only appear in the detailed text, so those rates count
+    # only games that have it (2025 switches format mid-season)
+    detailed = {r["g"] for r in recs if r.get("air") is not None}
     for r in recs:
+        rich = r["g"] in detailed
         for side, tid in (("off", r["off"]), ("def", r["def"])):
             if tid not in teams:
                 continue
             s = T[tid][side]
-            s["plays"] += 1
-            s["sg"] += r["sg"]
-            s["nh"] += r["nh"]
-            if r["kind"] in ("pass", "sack"):
-                s["drop"] += 1
-                s["press"] += r["hur"] or r["kind"] == "sack"
+            if rich:
+                s["plays"] += 1
+                s["sg"] += r["sg"]
+                s["nh"] += r["nh"]
+                if r["kind"] in ("pass", "sack"):
+                    s["drop"] += 1
+                    s["press"] += r["hur"] or r["kind"] == "sack"
             if r["kind"] == "pass":
                 _add_pass(s["pass"], r)
             elif r["kind"] == "rush" and r["dir"]:
@@ -218,7 +227,7 @@ def chart_all(games, plays, teams):
                 _add_pass(QB[r["passer"]], r)
             if r.get("target"):
                 _add_pass(WR[r["target"]], r)
-        if r["kind"] in ("pass", "sack") and r.get("passer"):
+        if rich and r["kind"] in ("pass", "sack") and r.get("passer"):
             e = qb_extra[r["passer"]]
             e["drop"] += 1
             e["press"] += r["hur"] or r["kind"] == "sack"
