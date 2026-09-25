@@ -267,6 +267,7 @@ def build_team_files(ctx):
                       | {"offRk": rk["off"].get(tid), "defRk": rk["def"].get(tid), "sosRk": rk["sos"].get(tid)},
             "history": [{"wk": lbl, "net": round(nets[tid], 1), "rank": rks[tid]} for lbl, nets, rks in snaps],
             "schedule": sched, "outlook": outlook, "stats": stats, "roster": players,
+            **({"chart": ctx["team_chart"][tid]} if (ctx.get("team_chart") or {}).get(tid) else {}),
         }
         with open(os.path.join(OUTDIR, f"{tid}.json"), "w") as f:
             json.dump(out, f, separators=(",", ":"))

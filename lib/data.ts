@@ -40,6 +40,23 @@ export type SchedGame = {
 export type RecordRow = { w: number; l: number; p: number };
 export type TeamStat = { k: string; l: string; hi: boolean; adv?: boolean; grp?: "pbp"; tip?: string; off: number | null; offRk: number | null; def: number | null; defRk: number | null };
 export type RosterPlayer = { id: string; name: string; no: string | null; pos: string | null; unit: string; cls: string | null; ht: string | null; wt: string | null; home: string | null };
+/** Charting from the play-by-play text (scripts/build_charting.py). grid[dir][band] = [att, comp, yds];
+ *  bands: behind the line, 0-4, 5-9, 10-14, 15-19, 20-29, 30+ air yards. */
+export type PassChart = {
+  att: number; comp: number; yds: number; td: number; int: number; brk: number;
+  adot: number | null; deep: number | null; yac: number; yacPer: number | null; airYds: number;
+  grid: Record<"L" | "M" | "R", [number, number, number][]>; dirs: Record<"L" | "M" | "R", number>;
+  press?: number | null; sacks?: number;
+};
+export type RushDirs = Record<"L" | "M" | "R", [number, number, number]>; // att, yds, successes
+export type PlayerChart = { pass?: PassChart; recv?: PassChart; rush?: RushDirs };
+export type TeamChartSide = {
+  pass: PassChart; rush: RushDirs; sg: number | null; nh: number | null; press: number | null;
+  adot: number | null; yacPer: number | null; deep: number | null;
+  adotRk?: number; yacPerRk?: number; deepRk?: number; sgRk?: number; nhRk?: number; pressRk?: number;
+};
+export type TeamChart = { off: TeamChartSide; def: TeamChartSide };
+
 export type TeamFile = {
   season: number; fbsTeams: number; hfa: number;
   meta: HubTeam & { mascot: string | null; color: string | null; alt: string | null; coach: string | null; venue: string | null };
@@ -49,6 +66,7 @@ export type TeamFile = {
   outlook: { remaining: number; expW: number; expL: number; dist: RecordRow[]; confExpW: number; confExpL: number; confDist: RecordRow[]; bowlP: number };
   stats: TeamStat[];
   roster: RosterPlayer[];
+  chart?: TeamChart;
 };
 export const getTeam = (id: string) => readJson<TeamFile>(`teams/${id}.json`);
 
@@ -95,6 +113,7 @@ export type PlayerAdv = {
 };
 export type PlayerFull = PlayerLite & {
   adv?: PlayerAdv;
+  chart?: PlayerChart;
   onRoster?: boolean; unit?: string; ht?: string | null; wt?: string | null; home?: string | null;
   ppa?: { avg: PPA; tot: number; plays: number };
   use?: Usage;

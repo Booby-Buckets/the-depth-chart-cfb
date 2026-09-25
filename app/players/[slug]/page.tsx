@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, getCareers, getSeasonPlayers, getSeasonTeamIndex, type HubTeam, type PlayerFull, type PlayersFile } from "@/lib/data";
+import PlayerCharting from "@/components/chart/PlayerCharting";
 import Career, { type CareerRow } from "@/components/player/Career";
 import { fmt, ord } from "@/lib/format";
 import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
@@ -161,6 +162,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
       )}
 
       {P.adv && <AdvancedTables P={P} />}
+      {P.chart && <PlayerCharting ch={P.chart} name={P.name} />}
 
       {career.length > 1 && <Career rows={career} name={P.name} />}
 

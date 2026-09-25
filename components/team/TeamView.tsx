@@ -1,3 +1,4 @@
+import TeamCharting from "@/components/chart/TeamCharting";
 import Link from "next/link";
 import type { HubTeam, TeamFile, TeamStat, PlayerLite, SchedGame } from "@/lib/data";
 import { fmt, pct, ord, etStamp } from "@/lib/format";
@@ -85,6 +86,8 @@ export default function TeamView({ D, players, hubTeams, hubBuilt, slugOf, slug,
         <div className="sec-h"><h2>Team Stats</h2><p>Hover an advanced stat for what it means. Box-score totals include FCS games and aren&apos;t opponent-adjusted</p></div>
         <Stats D={D} rankHeat={rankHeat} />
       </section>
+
+      {D.chart && <TeamCharting ch={D.chart} n={D.fbsTeams} />}
 
       <section id="roster" className={s.section}>
         <div className="sec-h"><h2>{past ? "Players" : "Roster"}</h2><p>{past ? `${D.roster.length} players who recorded a stat in ${season} (from box scores)` : `${D.roster.length} players${M.coach ? ` · Head coach ${M.coach}` : ""}`}</p></div>

@@ -453,6 +453,10 @@ def build_player_files(ctx):
         for pid, a in adv.items():
             P[pid]["adv"] = a
         print(f"advanced: {len(adv)} FBS players with play-by-play advanced stats")
+    # charting from the play text: target maps, air yards, YAC, run direction (build_charting.py)
+    for pid, c in (ctx.get("player_chart") or {}).items():
+        if pid in P:
+            P[pid]["chart"] = c
 
     # --- FBS ranks for the headline stats ---
     for cat, stat, _, (qc, qs, per_g), _hi in RANKED:
