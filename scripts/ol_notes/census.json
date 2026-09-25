@@ -1,0 +1,1520 @@
+[
+ {
+  "tid": "2005",
+  "domain": "goairforcefalcons.com",
+  "final": "https://goairforcefalcons.com/",
+  "title": "Air Force Academy Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2006",
+  "domain": "gozips.com",
+  "final": "https://gozips.com/",
+  "title": "University of Akron Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "333",
+  "domain": "rolltide.com",
+  "final": "https://rolltide.com/",
+  "title": "Alabama Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2026",
+  "domain": "appstatesports.com",
+  "final": "https://appstatesports.com/",
+  "title": "App State Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "12",
+  "domain": "arizonawildcats.com",
+  "final": "https://arizonawildcats.com/",
+  "title": "University of Arizona Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "9",
+  "domain": "thesundevils.com",
+  "final": "https://sundevils.com/",
+  "title": "Sun Devil Athletics | Arizona State University",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "8",
+  "domain": "arkansasrazorbacks.com",
+  "final": "https://arkansasrazorbacks.com/",
+  "title": "Arkansas Razorbacks | Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "2032",
+  "domain": "astateredwolves.com",
+  "final": "https://astateredwolves.com/",
+  "title": "Arkansas State University - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "349",
+  "domain": "goarmywestpoint.com",
+  "final": "https://goarmywestpoint.com/",
+  "title": "Army West Point - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2",
+  "domain": "auburntigers.com",
+  "final": "https://auburntigers.com/",
+  "title": "Home Page - Auburn Tigers - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "252",
+  "domain": "byucougars.com",
+  "final": "https://byucougars.com/",
+  "title": "Official BYU Athletics Homepage | Teams, News, Schedules, Roster, Stats, And More - BYU At",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "2050",
+  "domain": "ballstatesports.com",
+  "final": "https://ballstatesports.com/",
+  "title": "Ball State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "239",
+  "domain": "baylorbears.com",
+  "final": "https://baylorbears.com/",
+  "title": "Baylor - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "68",
+  "domain": "broncosports.com",
+  "final": "https://broncosports.com/",
+  "title": "Boise State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "103",
+  "domain": "bceagles.com",
+  "final": "https://bceagles.com/",
+  "title": "Boston College Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "189",
+  "domain": "bgsufalcons.com",
+  "final": "https://bgsufalcons.com/",
+  "title": "Bowling Green State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2084",
+  "domain": "ubbulls.com",
+  "final": "https://ubbulls.com/",
+  "title": "University at Buffalo - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "25",
+  "domain": "calbears.com",
+  "final": "https://calbears.com/",
+  "title": "California Golden Bears Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2117",
+  "domain": "cmuchippewas.com",
+  "final": "https://cmuchippewas.com/",
+  "title": "Central Michigan University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2429",
+  "domain": "charlotte49ers.com",
+  "final": "https://charlotte49ers.com/",
+  "title": "Charlotte Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2132",
+  "domain": "gobearcats.com",
+  "final": "https://gobearcats.com/",
+  "title": "Home Page - University of Cincinnati Athletics - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "228",
+  "domain": "clemsontigers.com",
+  "final": "https://clemsontigers.com/",
+  "title": "",
+  "platform": "other",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "324",
+  "domain": "goccusports.com",
+  "final": "https://goccusports.com/",
+  "title": "Coastal Carolina University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "38",
+  "domain": "cubuffs.com",
+  "final": "https://cubuffs.com/",
+  "title": "University of Colorado Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "36",
+  "domain": "csurams.com",
+  "final": "https://csurams.com/",
+  "title": "Colorado State Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "48",
+  "domain": "bluehens.com",
+  "final": "https://bluehens.com/",
+  "title": "University of Delaware Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "150",
+  "domain": "goduke.com",
+  "final": "https://goduke.com/",
+  "title": "Duke University - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "151",
+  "domain": "ecupirates.com",
+  "final": "https://ecupirates.com/",
+  "title": "East Carolina University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2199",
+  "domain": "emueagles.com",
+  "final": "https://emueagles.com/",
+  "title": "Eastern Michigan University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "57",
+  "domain": "floridagators.com",
+  "final": "https://floridagators.com/",
+  "title": "Florida Gators - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2226",
+  "domain": "fausports.com",
+  "final": "https://fausports.com/",
+  "title": "Florida Atlantic University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2229",
+  "domain": "fiusports.com",
+  "final": "https://fiusports.com/",
+  "title": "Gameday",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "52",
+  "domain": "seminoles.com",
+  "final": "https://seminoles.com/",
+  "title": "Florida State University  - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "278",
+  "domain": "gobulldogs.com",
+  "final": "https://gobulldogs.com/",
+  "title": "Fresno State - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "61",
+  "domain": "georgiadogs.com",
+  "final": "https://georgiadogs.com/",
+  "title": "Georgia Bulldogs - University of Georgia Athletics",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "290",
+  "domain": "gseagles.com",
+  "final": "https://gseagles.com/",
+  "title": "Georgia Southern University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2247",
+  "domain": "georgiastatesports.com",
+  "final": "https://georgiastatesports.com/",
+  "title": "Game Week",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "59",
+  "domain": "ramblinwreck.com",
+  "final": "https://ramblinwreck.com/",
+  "title": "Home Page - Georgia Tech Yellow Jackets",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "62",
+  "domain": "hawaiiathletics.com",
+  "final": "https://hawaiiathletics.com/",
+  "title": "University of Hawai'i at Manoa Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "248",
+  "domain": "uhcougars.com",
+  "final": "https://uhcougars.com/",
+  "title": "University of Houston Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "356",
+  "domain": "fightingillini.com",
+  "final": "https://fightingillini.com/",
+  "title": "University of Illinois Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "84",
+  "domain": "iuhoosiers.com",
+  "final": "https://iuhoosiers.com/",
+  "title": "Indiana University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2294",
+  "domain": "hawkeyesports.com",
+  "final": "https://hawkeyesports.com/",
+  "title": "Home Page - Iowa Hawkeyes Athletics - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "66",
+  "domain": "cyclones.com",
+  "final": "https://cyclones.com/",
+  "title": "Iowa State Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "55",
+  "domain": "jaxstatesports.com",
+  "final": "https://jaxstatesports.com/",
+  "title": "Jacksonville State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "256",
+  "domain": "jmusports.com",
+  "final": "https://jmusports.com/",
+  "title": "James Madison University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2305",
+  "domain": "kuathletics.com",
+  "final": "https://kuathletics.com/",
+  "title": "University of Kansas - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2306",
+  "domain": "kstatesports.com",
+  "final": "https://www.kstatesports.com:443/",
+  "title": "Kansas State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "338",
+  "domain": "ksuowls.com",
+  "final": "https://ksuowls.com/",
+  "title": "Kennesaw State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2309",
+  "domain": "kentstatesports.com",
+  "final": "https://kentstatesports.com/",
+  "title": "Kent State Golden Flashes - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "96",
+  "domain": "ukathletics.com",
+  "final": "https://ukathletics.com/",
+  "title": "UK Athletics",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "99",
+  "domain": "lsusports.net",
+  "final": "https://lsusports.net/",
+  "title": "",
+  "platform": "other",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "2335",
+  "domain": "libertyflames.com",
+  "final": "https://libertyflames.com/",
+  "title": "Liberty University - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "309",
+  "domain": "ragincajuns.com",
+  "final": "https://ragincajuns.com/",
+  "title": "Louisiana Ragin&#x27; Cajuns - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2348",
+  "domain": "latechsports.com",
+  "final": "https://latechsports.com/",
+  "title": "LA Tech Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "97",
+  "domain": "gocards.com",
+  "final": "https://gocards.com/",
+  "title": "University of Louisville Athletic - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "276",
+  "domain": "herdzone.com",
+  "final": "https://herdzone.com/",
+  "title": "Marshall University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "120",
+  "domain": "umterps.com",
+  "final": "https://umterps.com/",
+  "title": "University of Maryland Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "113",
+  "domain": "umassathletics.com",
+  "final": "https://umassathletics.com/",
+  "title": "University of Massachusetts Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "235",
+  "domain": "gotigersgo.com",
+  "final": "https://gotigersgo.com/",
+  "title": "University of Memphis Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2390",
+  "domain": "miamihurricanes.com",
+  "final": "https://miamihurricanes.com/",
+  "title": "Home Page - Miami Hurricanes",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "193",
+  "domain": "miamiredhawks.com",
+  "final": "https://miamiredhawks.com/",
+  "title": "Miami University RedHawks - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "130",
+  "domain": "mgoblue.com",
+  "final": "https://mgoblue.com/",
+  "title": "University of Michigan Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "127",
+  "domain": "msuspartans.com",
+  "final": "https://msuspartans.com/",
+  "title": "Michigan State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2393",
+  "domain": "goblueraiders.com",
+  "final": "https://goblueraiders.com/",
+  "title": "Middle Tennessee State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "135",
+  "domain": "gophersports.com",
+  "final": "https://gophersports.com/",
+  "title": "University of Minnesota Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "344",
+  "domain": "hailstate.com",
+  "final": "https://hailstate.com/",
+  "title": "Mississippi State - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "142",
+  "domain": "mutigers.com",
+  "final": "https://mutigers.com/",
+  "title": "",
+  "platform": "other",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "2623",
+  "domain": "missouristatebears.com",
+  "final": "https://missouristatebears.com/",
+  "title": "Missouri State  - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "152",
+  "domain": "gopack.com",
+  "final": "https://gopack.com/",
+  "title": "NC State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2426",
+  "domain": "navysports.com",
+  "final": "https://navysports.com/",
+  "title": "Naval Academy Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "158",
+  "domain": "huskers.com",
+  "final": "https://huskers.com/",
+  "title": "Home Page - University of Nebraska - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "2440",
+  "domain": "nevadawolfpack.com",
+  "final": "https://nevadawolfpack.com/",
+  "title": "University of Nevada Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "167",
+  "domain": "golobos.com",
+  "final": "https://golobos.com/",
+  "title": "Home Page - New Mexico Lobos - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "166",
+  "domain": "nmstatesports.com",
+  "final": "https://nmstatesports.com/",
+  "title": "New Mexico State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "153",
+  "domain": "goheels.com",
+  "final": "https://goheels.com/",
+  "title": "University of North Carolina Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2449",
+  "domain": "gobison.com",
+  "final": "https://gobison.com/",
+  "title": "NDSU  - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "249",
+  "domain": "meangreensports.com",
+  "final": "https://meangreensports.com/",
+  "title": "University of North Texas Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2459",
+  "domain": "niuhuskies.com",
+  "final": "https://niuhuskies.com/",
+  "title": "NIU Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "77",
+  "domain": "nusports.com",
+  "final": "https://nusports.com/",
+  "title": "Home Page - Northwestern Wildcats - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "87",
+  "domain": "fightingirish.com",
+  "final": "https://fightingirish.com/",
+  "title": "Home Page - Notre Dame Fighting Irish - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "195",
+  "domain": "ohiobobcats.com",
+  "final": "https://ohiobobcats.com/",
+  "title": "Ohio University - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "194",
+  "domain": "ohiostatebuckeyes.com",
+  "final": "https://ohiostatebuckeyes.com/",
+  "title": "Ohio State | Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "201",
+  "domain": "soonersports.com",
+  "final": "https://soonersports.com/",
+  "title": "University of Oklahoma - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "197",
+  "domain": "okstate.com",
+  "final": "https://okstate.com/",
+  "title": "Oklahoma State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "295",
+  "domain": "odusports.com",
+  "final": "https://odusports.com/",
+  "title": "Home Page - Old Dominion Athletics",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "145",
+  "domain": "olemisssports.com",
+  "final": "https://olemisssports.com/",
+  "title": "Ole Miss Athletics - Hotty Toddy",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2483",
+  "domain": "goducks.com",
+  "final": "https://goducks.com/",
+  "title": "University of Oregon Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "204",
+  "domain": "osubeavers.com",
+  "final": "https://osubeavers.com/",
+  "title": "Oregon State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "213",
+  "domain": "gopsusports.com",
+  "final": "https://gopsusports.com/",
+  "title": "Home Page - Penn State - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "221",
+  "domain": "pittsburghpanthers.com",
+  "final": "https://pittsburghpanthers.com/",
+  "title": "Pitt Panthers #H2P - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2509",
+  "domain": "purduesports.com",
+  "final": "https://purduesports.com/",
+  "title": "Home Page - Purdue Boilermakers - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "242",
+  "domain": "riceowls.com",
+  "final": "https://riceowls.com/",
+  "title": "Rice University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "164",
+  "domain": "scarletknights.com",
+  "final": "https://scarletknights.com/",
+  "title": "Rutgers University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2567",
+  "domain": "smumustangs.com",
+  "final": "https://smumustangs.com/",
+  "title": "SMU Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "16",
+  "domain": "hornetsports.com",
+  "final": "https://hornetsports.com/",
+  "title": "Sacramento State - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2534",
+  "domain": "gobearkats.com",
+  "final": "https://gobearkats.com/",
+  "title": "Sam Houston Athletics",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "21",
+  "domain": "goaztecs.com",
+  "final": "https://goaztecs.com/",
+  "title": "San Diego State Aztecs - Official Athletics Website - San Diego State Aztecs",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "23",
+  "domain": "sjsuspartans.com",
+  "final": "https://sjsuspartans.com/",
+  "title": "Home Page - SJSU Athletics - Official Athletics Website - San Jose State Spartans",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "6",
+  "domain": "usajaguars.com",
+  "final": "https://usajaguars.com/",
+  "title": "University of South Alabama Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2579",
+  "domain": "gamecocksonline.com",
+  "final": "https://gamecocksonline.com/",
+  "title": "University of South Carolina Athletics &#8211; Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "58",
+  "domain": "gousfbulls.com",
+  "final": "https://gousfbulls.com/",
+  "title": "USF Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2572",
+  "domain": "southernmiss.com",
+  "final": "https://southernmiss.com/",
+  "title": "Southern Miss - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "24",
+  "domain": "gostanford.com",
+  "final": "https://gostanford.com/",
+  "title": "Home Page - Stanford Cardinal - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "183",
+  "domain": "cuse.com",
+  "final": "https://cuse.com/",
+  "title": "Syracuse University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2628",
+  "domain": "gofrogs.com",
+  "final": "https://gofrogs.com/",
+  "title": "TCU Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "218",
+  "domain": "owlsports.com",
+  "final": "https://owlsports.com/",
+  "title": "Temple - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2633",
+  "domain": "utsports.com",
+  "final": "https://utsports.com/",
+  "title": "University of Tennessee Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "251",
+  "domain": "texassports.com",
+  "final": "https://texaslonghorns.com/",
+  "title": "University of Texas Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "245",
+  "domain": "12thman.com",
+  "final": "https://12thman.com/",
+  "title": "Home Page - Texas A&amp;M Aggies - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "326",
+  "domain": "txst.com",
+  "final": "https://txst.com/",
+  "title": "TXST Gameday",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2641",
+  "domain": "texastech.com",
+  "final": "https://texastech.com/",
+  "title": "Texas Tech Red Raiders - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2649",
+  "domain": "utrockets.com",
+  "final": "https://utrockets.com/",
+  "title": "University of Toledo Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2653",
+  "domain": "troytrojans.com",
+  "final": "https://troytrojans.com/",
+  "title": "Troy University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2655",
+  "domain": "tulanegreenwave.com",
+  "final": "https://tulanegreenwave.com/",
+  "title": "Tulane University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "202",
+  "domain": "tulsahurricane.com",
+  "final": "https://tulsahurricane.com/",
+  "title": "Tulsa - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "5",
+  "domain": "uabsports.com",
+  "final": "https://uabsports.com/",
+  "title": "UAB Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2116",
+  "domain": "ucfknights.com",
+  "final": "https://ucfknights.com/",
+  "title": "",
+  "platform": "other",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "26",
+  "domain": "uclabruins.com",
+  "final": "https://uclabruins.com/",
+  "title": "",
+  "platform": "other",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "41",
+  "domain": "uconnhuskies.com",
+  "final": "https://uconnhuskies.com/",
+  "title": "University of Connecticut Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2433",
+  "domain": "ulmwarhawks.com",
+  "final": "https://ulmwarhawks.com/",
+  "title": "University of Louisiana Monroe Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2439",
+  "domain": "unlvrebels.com",
+  "final": "https://unlvrebels.com/",
+  "title": "University of Nevada Las Vegas Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "30",
+  "domain": "usctrojans.com",
+  "final": "https://usctrojans.com/",
+  "title": "USC Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2638",
+  "domain": "utepminers.com",
+  "final": "https://utepminers.com/splash.aspx?id=splash_1032",
+  "title": "MW+ UTEP subscribe - UTEP Miners - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2636",
+  "domain": "goutsa.com",
+  "final": "https://goutsa.com/",
+  "title": "Home Page - UTSA Athletics - Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "254",
+  "domain": "utahutes.com",
+  "final": "https://utahutes.com/",
+  "title": "University of Utah Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "328",
+  "domain": "utahstateaggies.com",
+  "final": "https://utahstateaggies.com/",
+  "title": "Utah State University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "238",
+  "domain": "vucommodores.com",
+  "final": "https://vucommodores.com/",
+  "title": "Home Page - Vanderbilt Commodores | Official Athletics Website",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "258",
+  "domain": "virginiasports.com",
+  "final": "https://virginiasports.com/",
+  "title": "Home Page - Virginia Cavaliers Official Athletic Site",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "259",
+  "domain": "hokiesports.com",
+  "final": "https://hokiesports.com/",
+  "title": "Home Page - Virginia Tech Athletics",
+  "platform": "wmt",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "154",
+  "domain": "godeacs.com",
+  "final": "https://godeacs.com/",
+  "title": "Wake Forest University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "264",
+  "domain": "gohuskies.com",
+  "final": "https://gohuskies.com/",
+  "title": "University of Washington Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "265",
+  "domain": "wsucougars.com",
+  "final": "https://wsucougars.com/",
+  "title": "Home Page - Washington State University Athletics - Official Athletics Site",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": true
+  }
+ },
+ {
+  "tid": "277",
+  "domain": "wvusports.com",
+  "final": "https://wvusports.com/",
+  "title": "West Virginia University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "98",
+  "domain": "wkusports.com",
+  "final": "https://wkusports.com/",
+  "title": "Western Kentucky University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2711",
+  "domain": "wmubroncos.com",
+  "final": "https://wmubroncos.com/splash.aspx?id=splash_58",
+  "title": "Boise - Pack Waldo - Western Michigan University Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "275",
+  "domain": "uwbadgers.com",
+  "final": "https://uwbadgers.com/",
+  "title": "Wisconsin Badgers | Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ },
+ {
+  "tid": "2751",
+  "domain": "gowyo.com",
+  "final": "https://gowyo.com/",
+  "title": "University of Wyoming Athletics - Official Athletics Website",
+  "platform": "sidearm",
+  "allowed": {
+   "/sports/football/schedule": true,
+   "/documents/x.pdf": false
+  }
+ }
+]

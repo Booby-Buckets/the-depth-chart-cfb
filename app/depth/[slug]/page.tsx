@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
-import { getTeamIndex, getTeam, getPlayersFile, type DepthSlot, type DepthPlayer, type PlayersFile } from "@/lib/data";
+import { getTeamIndex, getTeam, getPlayersFile, getOlPositions, type DepthSlot, type DepthPlayer, type PlayersFile, type OlSlots } from "@/lib/data";
 import { teamColors } from "@/lib/teamColor";
 import { playerHref } from "@/lib/slug";
 import TeamSwitcher from "@/components/team/TeamSwitcher";
@@ -52,8 +52,16 @@ const share = (v: number, t: number) => Math.round((v / t) * 100);
 export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) {
   const { slug } = await params;
   const { idx, t } = await resolve(slug);
-  const [PL, TM] = await Promise.all([getPlayersFile(t.id), getTeam(t.id)]);
+  const [PL, TM, OLP] = await Promise.all([getPlayersFile(t.id), getTeam(t.id), getOlPositions().then((o) => o[t.id])]);
   const M = TM.meta, G = PL.games;
+  // O-line spots from the school's own game notes: the latest game's starters, else its listed depth chart
+  let ol: OlSpots | null = null;
+  if (OLP?.kind === "starters") {
+    const last = [...G].reverse().find((g) => OLP.games[g.id]);
+    if (last) ol = { slots: OLP.games[last.id], source: OLP.source, caption: `Spots as ${M.name}’s game notes list them for ${last.wk} vs ${last.oppName}.` };
+  } else if (OLP?.kind === "depth") {
+    ol = { slots: OLP.depth, source: OLP.source, caption: `Spots from ${M.name}’s listed depth chart${OLP.asOf ? ` (${OLP.asOf})` : ""}.` };
+  }
   const through = G.length ? G[G.length - 1].wk : "preseason";
   const teamOptions = [...idx.hub.teams].sort((a, b) => a.name.localeCompare(b.name)).map((x) => ({ slug: idx.slugOf.get(x.id)!, name: x.name }));
 
@@ -73,7 +81,7 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
         <section key={k} className={s.unit}>
           <div className="sec-h"><h2>{label}</h2><p>{sub}</p></div>
           <div className={s.slots}>
-            {(PL.depth[k] || []).map((u) => <SlotCard key={u.slot} u={u} hasGames={G.length > 0} />)}
+            {(PL.depth[k] || []).map((u) => <SlotCard key={u.slot} u={u} hasGames={G.length > 0} ol={u.slot === "OL" ? ol : null} />)}
           </div>
         </section>
       ))}
@@ -90,13 +98,19 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
         season it never saw, it&apos;s typically within 5 snaps a game for running backs and 9–10 for other positions, and within
         about 10–15% over a season. The ranges shown are where the real number landed 80% of the time in that test. They narrow as
         the season goes on, and are widest for part-time players in a single game. Blocking tight ends and receivers who rarely see
-        the ball get underestimated. Offensive linemen leave no trace in the play-by-play, so the line is listed in roster order.
+        the ball get underestimated. Offensive linemen leave no trace in the play-by-play, so the line comes from each game&apos;s
+        starting lineup. Where a school&apos;s game notes list its starters by spot, and its website allows automated access, the
+        line shows who played left tackle through right tackle.
       </p>
     </div>
   );
 }
 
-function SlotCard({ u, hasGames }: { u: DepthSlot; hasGames: boolean }) {
+type OlSpots = { slots: OlSlots; source: string; caption: string };
+const SPOTS = ["LT", "LG", "C", "RG", "RT"] as const;
+
+function SlotCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol?: OlSpots | null }) {
+  if (ol) return <OlCard u={u} hasGames={hasGames} ol={ol} />;
   const ps = u.players.filter((p, i) => u.basis === "roster" || p.val > 0 || i < u.starters);
   const note =
     u.slot === "OL" && u.basis === "starts" ? "From each game’s starting lineup. Starting linemen play nearly every snap (NFL median: 100%), so a start counts as about 97% of the team’s plays." :
@@ -112,9 +126,36 @@ function SlotCard({ u, hasGames }: { u: DepthSlot; hasGames: boolean }) {
   );
 }
 
-function SlotRow({ p, i, u, hasGames }: { p: DepthPlayer; i: number; u: DepthSlot; hasGames: boolean }) {
-  const start = i < u.starters;
-  const label = start ? (u.starters > 1 ? `${u.slot}${i + 1}` : `${u.slot}1`) : u.starters > 1 ? "—" : `${u.slot}${i + 1}`;
+/** The line by spot (LT, LG, C, RG, RT), then everyone else who has started. */
+function OlCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol: OlSpots }) {
+  const byId = new Map(u.players.map((p) => [p.id, p]));
+  const taken = new Set(Object.values(ol.slots));
+  const rest = u.players.filter((p) => !taken.has(p.id) && p.val > 0);
+  return (
+    <div className={s.slot}>
+      <h3>{LABEL.OL}<span>by spot · starts · snap share</span></h3>
+      {SPOTS.map((sp) => {
+        const id = ol.slots[sp];
+        const p = byId.get(id);
+        return p ? <SlotRow key={sp} p={p} i={0} u={u} hasGames={hasGames} spot={sp} /> : (
+          <div key={sp} className={`${s.dp} ${s.start}`}>
+            <span className={s.r}>{sp}</span>
+            <span className={s.n}>{id.replace(/^\?/, "")}<small>not on ESPN’s roster</small></span>
+            <span className={s.v} />
+          </div>
+        );
+      })}
+      {rest.map((p, i) => <SlotRow key={p.id} p={p} i={u.starters + i} u={u} hasGames={hasGames} />)}
+      <div className={s.caveat}>
+        {ol.caption} <a href={ol.source} target="_blank" rel="noopener noreferrer">Source PDF</a>. Snap share: a start counts as about 97% of the team’s plays.
+      </div>
+    </div>
+  );
+}
+
+function SlotRow({ p, i, u, hasGames, spot }: { p: DepthPlayer; i: number; u: DepthSlot; hasGames: boolean; spot?: string }) {
+  const start = spot != null || i < u.starters;
+  const label = spot ?? (start ? (u.starters > 1 ? `${u.slot}${i + 1}` : `${u.slot}1`) : u.starters > 1 ? "—" : `${u.slot}${i + 1}`);
   let right: React.ReactNode;
   if (u.basis === "roster") right = <span className={s.v}><small>{p.cls || ""}</small></span>;
   else if ((MODELED.includes(u.slot) || u.slot === "QB") && p.tp && p.val)

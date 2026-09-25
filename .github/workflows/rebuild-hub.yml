@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - run: pip install numpy
+      - run: pip install numpy pypdf
 
       # finished weeks and last season never change — keep them between runs
       - uses: actions/cache@v4
@@ -48,6 +48,11 @@ jobs:
         env:
           CFBD_KEY: ${{ secrets.CFBD_KEY }}
         run: python3 scripts/build_hub.py
+
+      # O-line starters by position (LT/LG/C/RG/RT) from school game notes, only for schools whose
+      # robots.txt allows it (scripts/ol_notes/census.json). Best effort: never fails the run.
+      - name: O-line positions from game notes
+        run: timeout 420 python3 scripts/build_ol_notes.py || echo "ol notes skipped"
 
       - name: Commit if the ratings changed
         run: |

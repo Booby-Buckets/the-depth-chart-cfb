@@ -110,6 +110,14 @@ export type PlayersFile = {
 };
 export const getPlayersFile = (id: string) => readJson<PlayersFile>(`players/${id}.json`);
 
+/** O-line starters by spot from the school's own game notes (scripts/build_ol_notes.py). A value
+ *  is a player id, or "?Name" for a starter ESPN's roster doesn't list. */
+export type OlSlots = Record<"LT" | "LG" | "C" | "RG" | "RT", string>;
+export type OlPositions = Record<string,
+  | { kind: "starters"; source: string; notes: string; games: Record<string, OlSlots> }
+  | { kind: "depth"; source: string; notes: string; asOf: string | null; depth: OlSlots }>;
+export const getOlPositions = () => readJson<OlPositions>("ol_positions.json").catch(() => ({}) as OlPositions);
+
 /** Which team a player is on (every FBS player, from the build's ids.json). */
 export async function getPlayerTeam(pid: string): Promise<string | null> {
   const ids = await readJson<Record<string, string>>("players/ids.json");
