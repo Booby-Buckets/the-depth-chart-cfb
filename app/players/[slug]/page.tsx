@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, getCareers, getSeasonPlayers, getSeasonTeamIndex, type HubTeam, type PlayerFull, type PlayersFile } from "@/lib/data";
 import PlayerCharting from "@/components/chart/PlayerCharting";
 import PastCharting from "@/components/chart/PastCharting";
+import { PlayerHandCharted } from "@/components/chart/HandCharted";
 import Career, { type CareerRow } from "@/components/player/Career";
 import { fmt, ord } from "@/lib/format";
 import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
@@ -164,6 +165,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
 
       {P.adv && <AdvancedTables P={P} />}
       {P.chart && <PlayerCharting ch={P.chart} name={P.name} />}
+      {P.hand && <PlayerHandCharted h={P.hand} />}
       <PastCharting rows={career} name={P.name} />
 
       {career.length > 1 && <Career rows={career} name={P.name} />}

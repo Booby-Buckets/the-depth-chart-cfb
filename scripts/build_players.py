@@ -477,6 +477,9 @@ def build_player_files(ctx):
     for pid, c in (ctx.get("player_chart") or {}).items():
         if pid in P:
             P[pid]["chart"] = c
+    for pid, h in (ctx.get("player_hand") or {}).items():   # hand-charted (Tier 2 tool)
+        if pid in P:
+            P[pid]["hand"] = h
 
     # --- FBS ranks for the headline stats ---
     for cat, stat, _, (qc, qs, per_g), _hi in RANKED:

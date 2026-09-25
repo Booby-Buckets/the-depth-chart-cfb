@@ -268,6 +268,7 @@ def build_team_files(ctx):
             "history": [{"wk": lbl, "net": round(nets[tid], 1), "rank": rks[tid]} for lbl, nets, rks in snaps],
             "schedule": sched, "outlook": outlook, "stats": stats, "roster": players,
             **({"chart": ctx["team_chart"][tid]} if (ctx.get("team_chart") or {}).get(tid) else {}),
+            **({"hand": ctx["team_hand"][tid]} if (ctx.get("team_hand") or {}).get(tid) else {}),
         }
         with open(os.path.join(OUTDIR, f"{tid}.json"), "w") as f:
             json.dump(out, f, separators=(",", ":"))

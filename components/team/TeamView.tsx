@@ -1,4 +1,5 @@
 import TeamCharting from "@/components/chart/TeamCharting";
+import { TeamHandCharted } from "@/components/chart/HandCharted";
 import Link from "next/link";
 import type { HubTeam, TeamFile, TeamStat, PlayerLite, SchedGame } from "@/lib/data";
 import { fmt, pct, ord, etStamp } from "@/lib/format";
@@ -88,6 +89,7 @@ export default function TeamView({ D, players, hubTeams, hubBuilt, slugOf, slug,
       </section>
 
       {D.chart && <TeamCharting ch={D.chart} n={D.fbsTeams} games={D.schedule.filter((g) => g.completed).length} />}
+      {D.hand && <TeamHandCharted h={D.hand} />}
 
       <section id="roster" className={s.section}>
         <div className="sec-h"><h2>{past ? "Players" : "Roster"}</h2><p>{past ? `${D.roster.length} players who recorded a stat in ${season} (from box scores)` : `${D.roster.length} players${M.coach ? ` · Head coach ${M.coach}` : ""}`}</p></div>

@@ -59,6 +59,25 @@ export type TeamChartSide = {
 };
 export type TeamChart = { off: TeamChartSide; def: TeamChartSide };
 
+/** Hand-charted plays from the owner's /chart tool (scripts/build_handchart.py). Field coords:
+ *  x = yards from the left sideline (0-53.3), y = yards past the line of scrimmage. */
+export type Split = [att: number, comp: number, yds: number];
+export type HandPass = {
+  n: number; att: number; comp: number; yds: number;
+  pts: [lx: number | null, ly: number | null, tx: number | null, ty: number | null, res: string][];
+  platform: Record<string, number>; pressure: Record<string, number>; pSrc: Record<string, number>;
+  route: Record<string, number>; cov: Record<string, number>; window?: Record<string, number>;
+  split: { clean: Split; pressured: Split; pa: Split; nopa: Split };
+  pa: number; rpo: number; screen: number; motion: number; drop: number; contested: number; throwaway: number; bt: number;
+};
+export type HandRush = {
+  n: number; yds: number; concept: Record<string, [number, number]>; gap: Record<string, [number, number]>;
+  box: Record<string, [number, number]>; bt: number; pts: [poaX: number | null, cx: number | null, cy: number | null, yds: number][];
+  ybcAvg: number | null; yac: number | null;
+};
+export type PlayerHand = { pass?: HandPass; recv?: HandPass; rush?: HandRush };
+export type TeamHand = { off: { pass?: HandPass; rush?: HandRush }; def: { pass?: HandPass; rush?: HandRush } };
+
 export type TeamFile = {
   season: number; fbsTeams: number; hfa: number;
   meta: HubTeam & { mascot: string | null; color: string | null; alt: string | null; coach: string | null; venue: string | null };
@@ -69,6 +88,7 @@ export type TeamFile = {
   stats: TeamStat[];
   roster: RosterPlayer[];
   chart?: TeamChart;
+  hand?: TeamHand;
 };
 export const getTeam = (id: string) => readJson<TeamFile>(`teams/${id}.json`);
 
@@ -116,6 +136,7 @@ export type PlayerAdv = {
 export type PlayerFull = PlayerLite & {
   adv?: PlayerAdv;
   chart?: PlayerChart;
+  hand?: PlayerHand;
   onRoster?: boolean; unit?: string; ht?: string | null; wt?: string | null; home?: string | null;
   ppa?: { avg: PPA; tot: number; plays: number };
   use?: Usage;

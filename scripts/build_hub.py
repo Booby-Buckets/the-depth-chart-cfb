@@ -407,18 +407,20 @@ def main():
     team_adv = rank_teams(team_advanced(fbs_games, plays, teams))
     from build_charting import chart_all
     team_chart, player_chart = chart_all(fbs_games, plays, teams)
+    from build_handchart import build_handchart          # the owner's hand-charted plays (/chart)
+    team_hand, player_hand = build_handchart(season, plays)
     print(f"advanced: {len(team_adv)} teams from {sum(1 for v in plays.values() if v)} games of play-by-play")
 
     rosters = build_team_files({
         "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "public", "data", "teams"), "season": season, "built": out["built"],
         "teams": teams, "rows": rows, "games": fbs_games, "rat": rat, "hfa": hfa, "mu": mu, "prior": prior,
         "solve": solve_fn, "win_prob": win_prob, "compress": compress, "game_spread": game_spread,
-        "rating_sd": rating_sd, "margin_sd": MARGIN_SD, "team_adv": team_adv, "team_chart": team_chart,
+        "rating_sd": rating_sd, "margin_sd": MARGIN_SD, "team_adv": team_adv, "team_chart": team_chart, "team_hand": team_hand,
     })
     from build_players import build_player_files
     build_player_files({
         "root": ROOT, "season": season, "teams": teams, "rows": rows, "rosters": rosters, "cfbd_get": cfbd_get,
-        "games": fbs_games, "get": get, "plays": plays, "player_chart": player_chart,
+        "games": fbs_games, "get": get, "plays": plays, "player_chart": player_chart, "player_hand": player_hand,
         "chart_games": {t: max(1, c["off"]["pass"]["gc"]) for t, c in team_chart.items()},
     })
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
