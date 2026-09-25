@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: PageProps<"/depth/[slug]">): 
 }
 
 const UNITS: ["offense" | "defense" | "special", string, string][] = [
-  ["offense", "Offense", "Season snap share (share of the team’s plays in games played) with its likely range. Ordered by estimated snaps, latest game counted twice"],
-  ["defense", "Defense", "Season snap share of the opponent’s plays, with its likely range. Ordered by estimated snaps, latest game counted twice"],
+  ["offense", "Offense", "Season snap share: share of all the team’s offensive plays this season, with its likely range. Ordered by estimated snaps, latest game counted twice"],
+  ["defense", "Defense", "Season snap share: share of all the opponents’ plays this season, with its likely range. Ordered by estimated snaps, latest game counted twice"],
   ["special", "Special Teams", "By kicks and punts"],
 ];
 const LABEL: Record<string, string> = {
@@ -81,7 +81,8 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
         <section key={k} className={s.unit}>
           <div className="sec-h"><h2>{label}</h2><p>{sub}</p></div>
           <div className={s.slots}>
-            {(PL.depth[k] || []).map((u) => <SlotCard key={u.slot} u={u} hasGames={G.length > 0} ol={u.slot === "OL" ? ol : null} />)}
+            {(PL.depth[k] || []).map((u) => <SlotCard key={u.slot} u={u} hasGames={G.length > 0} ol={u.slot === "OL" ? ol : null}
+              seasonPlays={G.reduce((a, g) => a + ((k === "defense" ? g.otp : g.tp) || 0), 0)} />)}
           </div>
         </section>
       ))}
@@ -109,8 +110,8 @@ export default async function DepthPage({ params }: PageProps<"/depth/[slug]">) 
 type OlSpots = { slots: OlSlots; source: string; caption: string };
 const SPOTS = ["LT", "LG", "C", "RG", "RT"] as const;
 
-function SlotCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol?: OlSpots | null }) {
-  if (ol) return <OlCard u={u} hasGames={hasGames} ol={ol} />;
+function SlotCard({ u, hasGames, ol, seasonPlays }: { u: DepthSlot; hasGames: boolean; ol?: OlSpots | null; seasonPlays: number }) {
+  if (ol) return <OlCard u={u} hasGames={hasGames} ol={ol} seasonPlays={seasonPlays} />;
   const ps = u.players.filter((p, i) => u.basis === "roster" || p.val > 0 || i < u.starters);
   const note =
     u.slot === "OL" && u.basis === "starts" ? "From each game’s starting lineup. Starting linemen play nearly every snap (NFL median: 100%), so a start counts as about 97% of the team’s plays." :
@@ -120,14 +121,14 @@ function SlotCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol?: O
   return (
     <div className={s.slot}>
       <h3>{LABEL[u.slot] || u.slot}<span>{subtitle}</span></h3>
-      {ps.length ? ps.map((p, i) => <SlotRow key={p.id} p={p} i={i} u={u} hasGames={hasGames} />) : <div className={s.caveat}>Nobody listed.</div>}
+      {ps.length ? ps.map((p, i) => <SlotRow key={p.id} p={p} i={i} u={u} hasGames={hasGames} seasonPlays={seasonPlays} />) : <div className={s.caveat}>Nobody listed.</div>}
       {note && <div className={s.caveat}>{note}</div>}
     </div>
   );
 }
 
 /** The line by spot (LT, LG, C, RG, RT), then everyone else who has started. */
-function OlCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol: OlSpots }) {
+function OlCard({ u, hasGames, ol, seasonPlays }: { u: DepthSlot; hasGames: boolean; ol: OlSpots; seasonPlays: number }) {
   const byId = new Map(u.players.map((p) => [p.id, p]));
   const taken = new Set(Object.values(ol.slots));
   const rest = u.players.filter((p) => !taken.has(p.id) && p.val > 0);
@@ -137,7 +138,7 @@ function OlCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol: OlSp
       {SPOTS.map((sp) => {
         const id = ol.slots[sp];
         const p = byId.get(id);
-        return p ? <SlotRow key={sp} p={p} i={0} u={u} hasGames={hasGames} spot={sp} /> : (
+        return p ? <SlotRow key={sp} p={p} i={0} u={u} hasGames={hasGames} spot={sp} seasonPlays={seasonPlays} /> : (
           <div key={sp} className={`${s.dp} ${s.start}`}>
             <span className={s.r}>{sp}</span>
             <span className={s.n}>{id.replace(/^\?/, "")}<small>not on ESPN’s roster</small></span>
@@ -145,7 +146,7 @@ function OlCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol: OlSp
           </div>
         );
       })}
-      {rest.map((p, i) => <SlotRow key={p.id} p={p} i={u.starters + i} u={u} hasGames={hasGames} />)}
+      {rest.map((p, i) => <SlotRow key={p.id} p={p} i={u.starters + i} u={u} hasGames={hasGames} seasonPlays={seasonPlays} />)}
       <div className={s.caveat}>
         {ol.caption} <a href={ol.source} target="_blank" rel="noopener noreferrer">Source PDF</a>. Snap share: a start counts as about 97% of the team’s plays.
       </div>
@@ -153,7 +154,10 @@ function OlCard({ u, hasGames, ol }: { u: DepthSlot; hasGames: boolean; ol: OlSp
   );
 }
 
-function SlotRow({ p, i, u, hasGames, spot }: { p: DepthPlayer; i: number; u: DepthSlot; hasGames: boolean; spot?: string }) {
+function SlotRow({ p, i, u, hasGames, spot, seasonPlays }: { p: DepthPlayer; i: number; u: DepthSlot; hasGames: boolean; spot?: string; seasonPlays: number }) {
+  // share of ALL the team's plays this season, so a backup who played one game isn't shown
+  // as if he played a third of every game
+  const tot = seasonPlays || p.tp;
   const start = spot != null || i < u.starters;
   const label = spot ?? (start ? (u.starters > 1 ? `${u.slot}${i + 1}` : `${u.slot}1`) : u.starters > 1 ? "—" : `${u.slot}${i + 1}`);
   let right: React.ReactNode;
@@ -161,9 +165,9 @@ function SlotRow({ p, i, u, hasGames, spot }: { p: DepthPlayer; i: number; u: De
   else if ((MODELED.includes(u.slot) || u.slot === "QB") && p.tp && p.val)
     right = (
       <span className={s.v}>
-        {share(p.val, p.tp)}%
+        {share(p.val, tot)}%
         <small>
-          {p.lo != null && p.hi != null ? `${share(p.lo, p.tp)}–${share(p.hi, p.tp)}% · ` : ""}
+          {p.lo != null && p.hi != null ? `${share(p.lo, tot)}–${share(p.hi, tot)}% · ` : ""}
           {u.slot === "QB" ? `${p.val} snaps` : `~${p.val} est.`}
         </small>
       </span>
