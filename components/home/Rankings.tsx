@@ -28,7 +28,7 @@ function columns(hasAdvanced: boolean, slugs: Record<string, string>, teamBase: 
     { k: "off", l: "Off", heat: true, tip: "Points scored above average vs average defense", f: (t) => fmt(t.off, 1, true) },
     { k: "def", l: "Def", heat: true, tip: "Points allowed below average vs average offense", f: (t) => fmt(t.def, 1, true) },
     { k: "sos", l: "SOS", heat: true, tip: "Average rating of opponents played", f: (t) => fmt(t.sos, 1, true) },
-    { k: "prior", l: "Preseason", cls: "dim", tip: "Last season’s final rating, regressed 40% to average", f: (t) => fmt(t.prior, 1, true) },
+    { k: "prior", l: "Preseason", cls: "dim", tip: "The rating each team started the season with", f: (t) => fmt(t.prior, 1, true) },
     { k: "delta", l: "Δ", tip: "Rating change since the preseason",
       f: (t) => t.delta == null ? "—" : <span className={t.delta > 0 ? "up" : t.delta < 0 ? "dn" : ""}>{fmt(t.delta, 1, true)}</span> },
   ];

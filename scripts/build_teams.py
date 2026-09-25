@@ -170,7 +170,7 @@ def build_team_files(ctx):
         snaps.append((label_of[wk], nets, _rank(nets, True)))
 
     def net_of(tid):
-        return rat[tid if tid in teams else "FCS"]
+        return rat.get(tid) or rat["FCS"]
 
     for tid, info in teams.items():
         row = row_of[tid]
@@ -203,8 +203,8 @@ def build_team_files(ctx):
                           # what rating this one game implies: margin, adjusted for venue and opponent
                           "score": round((cpf - cpa) - site_adj + op["net"], 1)})
             else:
-                spread = me["net"] - op["net"] + site_adj
-                opk = opp if opp in teams else "FCS"
+                spread = ctx["game_spread"](rat, g, hfa) * (1 if home else -1) if "game_spread" in ctx else me["net"] - op["net"] + site_adj
+                opk = opp if opp in rat else "FCS"
                 sd_rest = (margin_sd ** 2 + rating_sd(rat[opk], opk) ** 2) ** 0.5
                 p = win_prob(spread, (sd_rest ** 2 + my_sd ** 2) ** 0.5)
                 e.update({"line": round(spread, 1), "win": round(p, 3),

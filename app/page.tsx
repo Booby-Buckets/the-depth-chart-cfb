@@ -26,7 +26,8 @@ export default async function Home() {
         <h1 className="page-h1">FBS Power Rankings</h1>
         <p className="page-sub">
           Every FBS team rated in points: how much it would beat an average FBS team by on a neutral field. The rating
-          adjusts for opponent, dampens blowouts, and leans on last season early on. That lean fades with every game played.
+          adjusts for opponent, reads the play-by-play as well as the score, and starts from a preseason projection that
+          fades with every game played.
         </p>
         <div className="meta">
           <div>FBS teams<b>{hub.teams.length}</b></div>
@@ -49,9 +50,13 @@ export default async function Home() {
         <Rankings teams={hub.teams} hasAdvanced={hub.hasAdvanced} slugs={slugs} />
         <p className="note">
           <b>How the rating works.</b> Each game&apos;s points are modelled as offense against the opposing defense, with{" "}
-          {fmt(hub.hfa, 1)} points of home field solved from the data. Margins past 24 count only 35%, so a 63–7 cupcake win
-          can&apos;t set a ranking. FCS opponents are pooled into one team. Until a team has played a few games, its rating stays
-          close to its preseason number (last season&apos;s final rating, pulled 40% toward average).
+          {fmt(hub.hfa, 1)} points of home field solved from the data. A game counts 70% on the final score and 30% on the
+          score its play-by-play says it should have been (success rate, yards per play, explosive plays, turnovers; garbage
+          time dropped), which takes some of the luck out. Every FCS opponent gets its own rating from its own games. The
+          preseason rating projects each team from its last two seasons, how much production returns (the quarterback
+          most of all) and what transfers bring in, and it fades as games are played. Tested week by week on every game
+          since 2019, predicting each week from only the games before it, the spread misses the final margin by 12.6
+          points on average. The closing betting line misses by 12.2.
         </p>
       </section>
     </div>

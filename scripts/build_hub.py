@@ -13,7 +13,7 @@ so Net = Off + Def is a neutral-field point margin vs an average FBS team.
     rating regressed 40% to the mean; the pull fades as games are played.
 Raw feeds are cached in scripts/cache/ so re-runs are cheap.
 """
-import json, os, re, sys, math, time, unicodedata, urllib.request, urllib.error, datetime
+import json, os, re, sys, math, time, statistics, unicodedata, urllib.request, urllib.error, datetime
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,11 +27,11 @@ ESPN = "https://site.web.api.espn.com/apis/site/v2/sports/football/college-footb
 ESPN_WEB = "https://site.web.api.espn.com/apis/v2/sports/football/college-football"
 CFBD = "https://api.collegefootballdata.com"
 HFA_PRIOR = 2.5         # home-field points, also solved for
-MARGIN_SD = 14.0        # CFB game margin sd around the spread -> win prob
+MARGIN_SD = 14.5        # CFB game margin sd around the spread -> win prob (backtested, spread_model.py)
 BLOWOUT_AT, BLOWOUT_KEEP = 24, 0.35
 PRIOR_REGRESS = 0.40
-PRIOR_GAMES = 3.0       # prior is worth ~this many games of evidence
-RATING_SD0 = 6.0        # preseason rating error (pts); shrinks as sqrt(PRIOR_GAMES / (PRIOR_GAMES + games))
+PRIOR_GAMES = 4.0       # prior is worth ~this many games of evidence
+RATING_SD0 = 4.5        # preseason rating error (pts); shrinks as sqrt(PRIOR_GAMES / (PRIOR_GAMES + games))
 FCS_SD = 9.0            # pooled FCS "team" hides a wide spread of opponents
 CONF_SHORT = {"acc": "ACC", "sec": "SEC", "big10": "Big Ten", "big12": "Big 12", "American": "American",
               "usa": "CUSA", "midam": "MAC", "mwest": "Mountain West", "pac12": "Pac-12", "belt": "Sun Belt",
@@ -90,8 +90,8 @@ def fbs_teams(season):
 
 
 # ---------- games ----------
-def season_games(season, finished_season):
-    """All FBS-involved games for a season. finished_season=True caches forever."""
+def season_games(season, finished_season, group=80):
+    """All FBS-involved games for a season (group=81: FCS games instead). finished_season=True caches forever."""
     sb = get(f"{ESPN}/scoreboard?groups=80&dates={season}&limit=1", f"cal_{season}.json",
              max_age=None if finished_season else 6 * 3600)
     cal = sb["leagues"][0]["calendar"]
@@ -111,8 +111,8 @@ def season_games(season, finished_season):
         done = finished_season or end < now - datetime.timedelta(days=2)
         soon = start < now + datetime.timedelta(days=8)
         # finished weeks never change; this week's scores refresh fast; far-future schedules twice a day
-        d = get(f"{ESPN}/scoreboard?groups=80&seasontype={w['type']}&week={w['week']}&dates={season}&limit=400",
-                f"sb_{season}_{w['type']}_{w['week']}.json", max_age=None if done else 1800 if soon else 12 * 3600)
+        d = get(f"{ESPN}/scoreboard?groups={group}&seasontype={w['type']}&week={w['week']}&dates={season}&limit=400",
+                f"sb{'' if group == 80 else group}_{season}_{w['type']}_{w['week']}.json", max_age=None if done else 1800 if soon else 12 * 3600)
         for ev in d.get("events", []):
             if not ev.get("id") or not ev.get("competitions"):
                 continue  # ESPN occasionally returns an empty placeholder event (2014 week 1)
@@ -268,18 +268,24 @@ def rate_season(season, finished=False, with_cfbd=True):
     if len(teams) < 115:
         sys.exit(f"Refusing to write: only {len(teams)} FBS teams found for {season}.")
 
-    # prior from last season's final ratings
-    prev_teams = fbs_teams(season - 1)
-    prev_games, _ = season_games(season - 1, finished_season=True)
-    prev, _, _ = solve(prev_games, prev_teams)
-    prior = {}
-    for t, r in prev.items():
-        if t in teams:
-            prior[t] = {"off": r["off"] * (1 - PRIOR_REGRESS), "def": r["def"] * (1 - PRIOR_REGRESS), "net": r["net"] * (1 - PRIOR_REGRESS)}
-
     games, weeks = season_games(season, finished_season=finished)
     fbs_games = [g for g in games if g["home"] in teams or g["away"] in teams]
-    rat, mu, hfa = solve(fbs_games, teams, prior)
+    model_prior = os.path.join(ROOT, "scripts", f"model_prior_{season}.json")
+    if os.path.exists(model_prior):
+        # the backtested game model (spread_model.py): every FCS team rated, efficiency blend,
+        # regression prior written by `model_backtest.py --write-prior <season>`
+        prior, rat, mu, hfa, solve_fn = model_ratings(season, finished, teams, fbs_games, model_prior)
+    else:
+        # past seasons (build_history.py): the original points model, prior from last season
+        prev_teams = fbs_teams(season - 1)
+        prev_games, _ = season_games(season - 1, finished_season=True)
+        prev, _, _ = solve(prev_games, prev_teams)
+        prior = {}
+        for t, r in prev.items():
+            if t in teams:
+                prior[t] = {"off": r["off"] * (1 - PRIOR_REGRESS), "def": r["def"] * (1 - PRIOR_REGRESS), "net": r["net"] * (1 - PRIOR_REGRESS)}
+        rat, mu, hfa = solve(fbs_games, teams, prior)
+        solve_fn = solve
     adv = cfbd_advanced(season, teams) if with_cfbd else {}
 
     # records + SOS (avg opponent net) from completed games
@@ -313,14 +319,53 @@ def rate_season(season, finished=False, with_cfbd=True):
     spread_net = max(r["net"] for r in rows) - min(r["net"] for r in rows)
     if not (25 < spread_net < 90):
         sys.exit(f"Refusing to write: implausible rating spread {spread_net:.1f} for {season}")
-    return {"teams": teams, "prior": prior, "games": fbs_games, "rat": rat, "mu": mu, "hfa": hfa, "rows": rows, "adv": adv}
+    return {"teams": teams, "prior": prior, "games": fbs_games, "rat": rat, "mu": mu, "hfa": hfa, "rows": rows, "adv": adv,
+            "solve": solve_fn}
+
+
+def model_ratings(season, finished, teams, fbs_games, prior_path):
+    """Ratings from spread_model.fit, scaled by its k so a rating gap IS the neutral-site spread.
+    Returns (prior, rat, mu, hfa, solve_fn); rat also holds every FCS opponent, plus "FCS" = their mean."""
+    from spread_model import PARAMS, fit, attach_eff
+    from build_pbp import load_plays
+    from game_features import game_features
+    P, k = PARAMS, PARAMS["k"]
+    prior = json.load(open(prior_path))["prior"]
+    ids = {g["id"] for g in fbs_games}
+    fcs_games = [g for g in season_games(season, finished_season=finished, group=81)[0] if g["id"] not in ids]
+    load_plays(get, fbs_games)                      # cached; main() reuses it
+    attach_eff(fbs_games, game_features(season, fbs_games))
+
+    def solve_fn(gs, teams_, prior_=None):
+        last = max(((g["type"], g["week"]) for g in gs), default=(0, 0))
+        done = [g for g in gs if g["completed"]] + [g for g in fcs_games if g["completed"] and (g["type"], g["week"]) <= last]
+        r, mu_, hfa_ = fit(done, teams_, prior, P)
+        for v in r.values():
+            v["off"] *= k; v["def"] *= k; v["net"] *= k
+        other = [v for t, v in r.items() if t not in teams_ and v["gp"] >= 2]
+        r["FCS"] = {s: statistics.mean(v[s] for v in other) if other else -20.0 for s in ("off", "def", "net")} | {"gp": 0}
+        return r, mu_, hfa_
+
+    rat, mu, hfa = solve_fn(fbs_games, teams)
+    shown = {t: {s: p[s] * k for s in ("off", "def", "net")} for t, p in prior.items() if t in teams}
+    return shown, rat, mu, hfa, solve_fn
+
+
+def team_rating(rat, tid):
+    return rat.get(tid) or rat["FCS"]
+
+
+def game_spread(rat, g, hfa):
+    """Home team's expected margin. Bowls are pulled 25% toward even (opt-outs, coaching exits)."""
+    d = team_rating(rat, g["home"])["net"] - team_rating(rat, g["away"])["net"]
+    return d * (0.75 if g.get("type") == 3 else 1.0) + (0 if g["neutral"] else hfa)
 
 
 def main():
     today = datetime.date.today()
     season = int(sys.argv[1]) if len(sys.argv) > 1 else (today.year if today.month >= 7 else today.year - 1)
     S = rate_season(season)
-    teams, prior, fbs_games, rat, mu, hfa, rows, adv = (S[k] for k in ("teams", "prior", "games", "rat", "mu", "hfa", "rows", "adv"))
+    teams, prior, fbs_games, rat, mu, hfa, rows, adv, solve_fn = (S[k] for k in ("teams", "prior", "games", "rat", "mu", "hfa", "rows", "adv", "solve"))
 
     rank_of = {r["id"]: r["rank"] for r in rows}
 
@@ -332,9 +377,9 @@ def main():
         wk = (first["type"], first["week"])
         slate_label = first["weekLabel"]
         for g in sorted([g for g in fbs_games if (g["type"], g["week"]) == wk], key=lambda g: g["date"]):
-            hk, ak = (g["home"] if g["home"] in teams else "FCS"), (g["away"] if g["away"] in teams else "FCS")
+            hk, ak = (g["home"] if g["home"] in rat else "FCS"), (g["away"] if g["away"] in rat else "FCS")
             h, a = rat[hk], rat[ak]
-            spread = h["net"] - a["net"] + (0 if g["neutral"] else hfa)
+            spread = game_spread(rat, g, hfa)
             slate.append({
                 "id": g["id"], "date": g["date"], "neutral": g["neutral"], "completed": g["completed"], "detail": g["detail"],
                 "tv": g["tv"], "home": g["home"], "away": g["away"], "homeName": g["homeName"], "awayName": g["awayName"],
@@ -364,7 +409,7 @@ def main():
     rosters = build_team_files({
         "get": get, "ESPN": ESPN, "outdir": os.path.join(ROOT, "public", "data", "teams"), "season": season, "built": out["built"],
         "teams": teams, "rows": rows, "games": fbs_games, "rat": rat, "hfa": hfa, "mu": mu, "prior": prior,
-        "solve": solve, "win_prob": win_prob, "compress": compress,
+        "solve": solve_fn, "win_prob": win_prob, "compress": compress, "game_spread": game_spread,
         "rating_sd": rating_sd, "margin_sd": MARGIN_SD, "team_adv": team_adv,
     })
     from build_players import build_player_files
