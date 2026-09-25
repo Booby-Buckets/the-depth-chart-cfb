@@ -160,6 +160,19 @@ def snap_group(pos):
     return next((g for g, ps in SNAP_GROUPS.items() if pos in ps), None)
 
 
+def team_season_plays(team_plays, game_info):
+    """({tid: offensive plays this season}, {tid: opponents' offensive plays}) over completed games."""
+    off, dfn = {}, {}
+    for (gid, tid), n in team_plays.items():
+        g = game_info.get(gid)
+        if not g:
+            continue
+        off[tid] = off.get(tid, 0) + n
+        opp = g["away"] if g["home"] == tid else g["home"]
+        dfn[opp] = dfn.get(opp, 0) + n
+    return off, dfn
+
+
 def estimate_snaps(P, team_plays, game_info):
     """ESTIMATED snaps per player-game ("es" on each log row, season total on pi).
     QB: the play-by-play estimate (every offensive play credited to the QB on the field).
@@ -202,12 +215,17 @@ def estimate_snaps(P, team_plays, game_info):
             b = snap_model.band(grp, row["es"], 1)
             if b:
                 row["esLo"], row["esHi"] = b[0], min(plays, b[1])
+    # season denominators: ALL the team's plays (or its opponents' for defenders), not just the
+    # games a player appeared in, so a backup's one-game cameo isn't read as a third of every game
+    season_off, season_def = team_season_plays(team_plays, game_info)
     for p in P.values():
         pi = p.get("pi")
         if pi and any("es" in r for r in pi["log"]):
             pi["es"] = sum(r.get("es", 0) for r in pi["log"])
-            pi["esTP"] = sum(r.get("esTP", r.get("tp", 0)) for r in pi["log"] if "es" in r)
             grp = "QB" if p.get("pos") == "QB" else snap_group(p.get("pos"))
+            defense = grp in ("DL", "LB", "DB") or (grp is None and p.get("pos") not in OL_POS and p.get("pos") != "QB")
+            played = sum(r.get("esTP", r.get("tp", 0)) for r in pi["log"] if "es" in r)
+            pi["esTP"] = max(played, (season_def if defense else season_off).get(p["tid"], 0))
             if p.get("pos") in OL_POS:
                 pi["esLo"] = sum(r.get("esLo", 0) for r in pi["log"] if "es" in r)
                 pi["esHi"] = sum(r.get("esHi", 0) for r in pi["log"] if "es" in r)
