@@ -218,6 +218,47 @@ def estimate_snaps(P, team_plays, game_info):
                     pi["esLo"], pi["esHi"] = b[0], min(pi["esTP"], b[1])
 
 
+def write_leaders(outdir, season, teams, have_stats):
+    """National leaderboards: top 300 per stat board, EPA top 150 per position group."""
+    def base(p):
+        t = teams[p["tid"]]
+        return {"id": p["id"], "name": p["name"], "tid": p["tid"], "team": t["name"], "conf": t["conf"], "pos": p.get("pos"), "cls": p.get("cls")}
+
+    def st(p, cat, k):
+        return p["stats"].get(cat, {}).get(k)
+
+    def epa(p, k):
+        return (p.get("ppa") or {}).get("avg", {}).get(k)
+
+    boards = {}
+    q = [p for p in have_stats if st(p, "passing", "ATT")]
+    boards["passing"] = [base(p) | {"att": st(p, "passing", "ATT"), "cmp": st(p, "passing", "COMPLETIONS"), "pct": st(p, "passing", "PCT"),
+                                    "yds": st(p, "passing", "YDS"), "td": st(p, "passing", "TD"), "int": st(p, "passing", "INT"),
+                                    "ypa": st(p, "passing", "YPA"), "epa": epa(p, "pass")}
+                         for p in sorted(q, key=lambda p: -(st(p, "passing", "YDS") or 0))[:300]]
+    q = [p for p in have_stats if st(p, "rushing", "CAR")]
+    boards["rushing"] = [base(p) | {"car": st(p, "rushing", "CAR"), "yds": st(p, "rushing", "YDS"), "ypc": st(p, "rushing", "YPC"),
+                                    "td": st(p, "rushing", "TD"), "long": st(p, "rushing", "LONG"), "epa": epa(p, "rush")}
+                         for p in sorted(q, key=lambda p: -(st(p, "rushing", "YDS") or 0))[:300]]
+    q = [p for p in have_stats if st(p, "receiving", "REC")]
+    boards["receiving"] = [base(p) | {"rec": st(p, "receiving", "REC"), "yds": st(p, "receiving", "YDS"), "ypr": st(p, "receiving", "YPR"),
+                                      "td": st(p, "receiving", "TD"), "long": st(p, "receiving", "LONG"),
+                                      "use": (p.get("use") or {}).get("pass")}
+                           for p in sorted(q, key=lambda p: -(st(p, "receiving", "YDS") or 0))[:300]]
+    q = [p for p in have_stats if st(p, "defensive", "TOT")]
+    boards["defense"] = [base(p) | {"tot": st(p, "defensive", "TOT"), "solo": st(p, "defensive", "SOLO"), "tfl": st(p, "defensive", "TFL"),
+                                    "sacks": st(p, "defensive", "SACKS"), "int": st(p, "interceptions", "INT") or 0,
+                                    "pd": st(p, "defensive", "PD"), "qbh": st(p, "defensive", "QB HUR")}
+                         for p in sorted(q, key=lambda p: -(st(p, "defensive", "TOT") or 0))[:300]]
+    q = [p for p in have_stats if "ppa.all" in (p.get("rk") or {})]
+    boards["epa"] = [base(p) | {"group": _group(p["pos"]), "plays": p["ppa"]["plays"], "epa": epa(p, "all"),
+                                "epaPass": epa(p, "pass"), "epaRush": epa(p, "rush"), "use": (p.get("use") or {}).get("overall")}
+                     for g in GROUPS
+                     for p in sorted((p for p in q if _group(p["pos"]) == g), key=lambda p: -(epa(p, "all") or -9))[:150]]
+    with open(os.path.join(outdir, "leaders.json"), "w") as f:
+        json.dump({"season": season, "groupMin": GROUP_MIN, "boards": boards}, f, separators=(",", ":"))
+
+
 def build_player_files(ctx):
     root, season, teams, rows, rosters, cfbd_get = (ctx[k] for k in ("root", "season", "teams", "rows", "rosters", "cfbd_get"))
     games_list, get, pbp_plays = ctx["games"], ctx["get"], ctx.get("plays")
@@ -459,43 +500,7 @@ def build_player_files(ctx):
     with open(os.path.join(outdir, "index.json"), "w") as f:
         json.dump([[p["id"], p["name"], p["tid"], p["pos"]] for p in sorted(have_stats, key=lambda p: p["name"])], f, separators=(",", ":"))
 
-    def base(p):
-        t = teams[p["tid"]]
-        return {"id": p["id"], "name": p["name"], "tid": p["tid"], "team": t["name"], "conf": t["conf"], "pos": p["pos"], "cls": p["cls"]}
-
-    def st(p, cat, k):
-        return p["stats"].get(cat, {}).get(k)
-
-    def epa(p, k):
-        return (p.get("ppa") or {}).get("avg", {}).get(k)
-
-    boards = {}
-    q = [p for p in have_stats if st(p, "passing", "ATT")]
-    boards["passing"] = [base(p) | {"att": st(p, "passing", "ATT"), "cmp": st(p, "passing", "COMPLETIONS"), "pct": st(p, "passing", "PCT"),
-                                    "yds": st(p, "passing", "YDS"), "td": st(p, "passing", "TD"), "int": st(p, "passing", "INT"),
-                                    "ypa": st(p, "passing", "YPA"), "epa": epa(p, "pass")}
-                         for p in sorted(q, key=lambda p: -(st(p, "passing", "YDS") or 0))[:300]]
-    q = [p for p in have_stats if st(p, "rushing", "CAR")]
-    boards["rushing"] = [base(p) | {"car": st(p, "rushing", "CAR"), "yds": st(p, "rushing", "YDS"), "ypc": st(p, "rushing", "YPC"),
-                                    "td": st(p, "rushing", "TD"), "long": st(p, "rushing", "LONG"), "epa": epa(p, "rush")}
-                         for p in sorted(q, key=lambda p: -(st(p, "rushing", "YDS") or 0))[:300]]
-    q = [p for p in have_stats if st(p, "receiving", "REC")]
-    boards["receiving"] = [base(p) | {"rec": st(p, "receiving", "REC"), "yds": st(p, "receiving", "YDS"), "ypr": st(p, "receiving", "YPR"),
-                                      "td": st(p, "receiving", "TD"), "long": st(p, "receiving", "LONG"),
-                                      "use": (p.get("use") or {}).get("pass")}
-                           for p in sorted(q, key=lambda p: -(st(p, "receiving", "YDS") or 0))[:300]]
-    q = [p for p in have_stats if st(p, "defensive", "TOT")]
-    boards["defense"] = [base(p) | {"tot": st(p, "defensive", "TOT"), "solo": st(p, "defensive", "SOLO"), "tfl": st(p, "defensive", "TFL"),
-                                    "sacks": st(p, "defensive", "SACKS"), "int": st(p, "interceptions", "INT") or 0,
-                                    "pd": st(p, "defensive", "PD"), "qbh": st(p, "defensive", "QB HUR")}
-                         for p in sorted(q, key=lambda p: -(st(p, "defensive", "TOT") or 0))[:300]]
-    q = [p for p in have_stats if "ppa.all" in p.get("rk", {})]
-    boards["epa"] = [base(p) | {"group": _group(p["pos"]), "plays": p["ppa"]["plays"], "epa": epa(p, "all"),
-                                "epaPass": epa(p, "pass"), "epaRush": epa(p, "rush"), "use": (p.get("use") or {}).get("overall")}
-                     for g in GROUPS
-                     for p in sorted((p for p in q if _group(p["pos"]) == g), key=lambda p: -(epa(p, "all") or -9))[:150]]
-    with open(os.path.join(outdir, "leaders.json"), "w") as f:
-        json.dump({"season": season, "groupMin": GROUP_MIN, "boards": boards}, f, separators=(",", ":"))
+    write_leaders(outdir, season, teams, have_stats)
     n_stats = sum(1 for p in P.values() if p["stats"])
     print(f"wrote player files: {len(P)} FBS players ({n_stats} with stats, {sum(1 for p in P.values() if p.get('ppa'))} with EPA), "
           f"{len(have_stats)} searchable")

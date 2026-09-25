@@ -1,5 +1,5 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { slugify } from "./slug";
 
@@ -137,3 +137,35 @@ export type Recruiting = {
   teams: ClassRow[]; recruits: RecruitRow[];
 };
 export const getRecruiting = () => readJson<Recruiting>("recruiting.json");
+
+/* ---------- past seasons (scripts/build_history.py → public/data/seasons/<year>/) ---------- */
+
+/** Built past seasons, newest first (the current season is not in this list). */
+export async function getPastSeasons(): Promise<number[]> {
+  try {
+    return (await readdir(path.join(DATA, "seasons"))).filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a);
+  } catch { return []; }
+}
+export const getSeasonHub = (y: number) => readJson<Hub & { final?: boolean; defenseFrom?: string | null }>(`seasons/${y}/hub.json`);
+export const getSeasonTeam = (y: number, id: string) => readJson<TeamFile>(`seasons/${y}/teams/${id}.json`);
+export const getSeasonLeaders = (y: number) => readJson<Leaders>(`seasons/${y}/players/leaders.json`);
+
+/** A past season's player file: season totals, advanced, estimated snaps (no per-game logs). */
+export type SeasonPlayer = PlayerLite & { tid: string; g: number; es?: number | null; esTP?: number | null; adv?: PlayerAdv };
+export const getSeasonPlayers = (y: number, tid: string) => readJson<{ season: number; tid: string; players: SeasonPlayer[] }>(`seasons/${y}/players/${tid}.json`);
+
+/** {player id: [[season, team id], ...]} across every built season plus the current one. */
+export const getCareers = () => readJson<Record<string, [number, string][]>>("careers.json").catch(() => ({} as Record<string, [number, string][]>));
+
+/** The team index (slugs) for a past season: same slug rule, that season's FBS teams. */
+export async function getSeasonTeamIndex(y: number) {
+  const hub = await getSeasonHub(y);
+  const bySlug = new Map<string, HubTeam>(), slugOf = new Map<string, string>();
+  for (const t of hub.teams) {
+    let s = slugify(t.name);
+    if (bySlug.has(s)) s = `${s}-${t.id}`;
+    bySlug.set(s, t);
+    slugOf.set(t.id, s);
+  }
+  return { hub, bySlug, slugOf };
+}

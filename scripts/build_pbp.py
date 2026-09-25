@@ -15,7 +15,7 @@ the depth chart page's note):
   pen  penalties charged (the only box-score trace most linemen leave)
 Per team per game it also records offensive scrimmage plays, so shares can be computed.
 """
-import os
+import json, os
 from concurrent.futures import ThreadPoolExecutor
 
 CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football"
@@ -33,23 +33,54 @@ def _ref_id(ref):
     return ref.rsplit("/", 1)[-1].split("?", 1)[0]
 
 
-def load_plays(get, games):
-    """{game_id: [play, ...]} for every completed game (ESPN core API, cached forever once final)."""
+def _trim(p):
+    """Keep only what the builds read, in the same shape ESPN sends (a full game is ~0.9 MB,
+    trimmed ~50 KB; twelve seasons of history would otherwise be ~8 GB of cache)."""
+    return {
+        "sequenceNumber": p.get("sequenceNumber"), "type": {"text": (p.get("type") or {}).get("text")},
+        "text": p.get("text"), "statYardage": p.get("statYardage"), "period": {"number": (p.get("period") or {}).get("number")},
+        "homeScore": p.get("homeScore"), "awayScore": p.get("awayScore"),
+        "start": {k: (p.get("start") or {}).get(k) for k in ("down", "distance", "yardsToEndzone")},
+        "teamParticipants": [{"type": t.get("type"), "id": t.get("id")} for t in p.get("teamParticipants") or []],
+        "participants": [{"type": x.get("type"), "athlete": {"$ref": _ref_id(x["athlete"]["$ref"])}}
+                         for x in p.get("participants") or [] if x.get("athlete")],
+    }
+
+
+def load_plays(get, games, cache_dir=None):
+    """{game_id: [play, ...]} for every completed game (ESPN core API). Cached forever once final,
+    trimmed to the fields we use (pbp_<id>.json)."""
     done = [g for g in games if g["completed"]]
+    cache_dir = cache_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 
     def fetch(g):
-        url = f"{CORE}/events/{g['id']}/competitions/{g['id']}/plays?limit=500"
+        gid = g["id"]
+        path = os.path.join(cache_dir, f"pbp_{gid}.json")
+        if os.path.exists(path):
+            with open(path) as f:
+                return gid, json.load(f)
+        old = os.path.join(cache_dir, f"plays_{gid}.json")  # full-size cache from before trimming
         try:
-            d = get(url, f"plays_{g['id']}.json", max_age=None)
+            if os.path.exists(old):
+                with open(old) as f:
+                    items = json.load(f).get("items", [])
+            else:
+                url = f"{CORE}/events/{gid}/competitions/{gid}/plays?limit=500"
+                d = get(url)
+                items = d.get("items", [])
+                page, pages = 1, d.get("pageCount", 1)
+                while page < pages:  # rare: games with more than 500 plays
+                    page += 1
+                    items += get(url + f"&page={page}").get("items", [])
         except Exception as e:
-            print(f"pbp: game {g['id']} unavailable ({e})")
-            return g["id"], []
-        items = d.get("items", [])
-        page, pages = 1, d.get("pageCount", 1)
-        while page < pages:  # rare: games with more than 500 plays
-            page += 1
-            items += get(url + f"&page={page}", f"plays_{g['id']}_p{page}.json", max_age=None).get("items", [])
-        return g["id"], sorted(items, key=lambda p: int(p.get("sequenceNumber") or 0))
+            print(f"pbp: game {gid} unavailable ({e})")
+            return gid, []
+        items = sorted((_trim(p) for p in items), key=lambda p: int(p.get("sequenceNumber") or 0))
+        with open(path, "w") as f:
+            json.dump(items, f, separators=(",", ":"))
+        if os.path.exists(old):
+            os.remove(old)
+        return gid, items
 
     with ThreadPoolExecutor(8) as ex:
         return dict(ex.map(fetch, done))

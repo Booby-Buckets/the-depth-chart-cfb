@@ -26,8 +26,9 @@ const BOARDS: Record<string, { l: string; sort: string; cols: Col[] }> = {
 const GROUPS = ["QB", "RB", "WR/TE"];
 const VIEW_KEY = "cfb_players_view";
 
-export default function Leaderboards({ initialBoard, initialRows, groupMin, teams, confs }: {
+export default function Leaderboards({ initialBoard, initialRows, groupMin, teams, confs, dataUrl = "/data/players/leaders.json", noEpa = false, teamBase = "/teams" }: {
   initialBoard: string; initialRows: LeaderRow[]; groupMin: Record<string, number>; teams: Record<string, TeamInfo>; confs: string[];
+  dataUrl?: string; noEpa?: boolean; teamBase?: string;
 }) {
   const [boards, setBoards] = useState<Record<string, LeaderRow[]>>({ [initialBoard]: initialRows });
   const [board, setBoard] = useState(initialBoard);
@@ -39,7 +40,7 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
   // the other boards come from the same static file the build writes, fetched once when needed
   async function loadAll() {
     if (Object.keys(boards).length > 1) return boards;
-    const all = (await (await fetch("/data/players/leaders.json")).json()).boards as Record<string, LeaderRow[]>;
+    const all = (await (await fetch(dataUrl)).json()).boards as Record<string, LeaderRow[]>;
     setBoards(all);
     return all;
   }
@@ -53,9 +54,9 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
     let saved: { board?: string; grp?: string } = {};
     try { saved = JSON.parse(localStorage.getItem(VIEW_KEY) || "{}"); } catch {}
     const b = saved.board;
-    if (!b || b === initialBoard || !BOARDS[b]) return;
+    if (!b || b === initialBoard || !BOARDS[b] || (noEpa && b === "epa")) return;
     let live = true;
-    fetch("/data/players/leaders.json").then((r) => r.json()).then((d) => {
+    fetch(dataUrl).then((r) => r.json()).then((d) => {
       if (!live) return;
       setBoards(d.boards);
       setBoard(b);
@@ -63,7 +64,7 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
       if (saved.grp && GROUPS.includes(saved.grp)) setGrp(saved.grp);
     }).catch(() => {});
     return () => { live = false; };
-  }, [initialBoard]);
+  }, [initialBoard, dataUrl, noEpa]);
 
   const B = BOARDS[board];
   const loaded = boards[board];
@@ -93,7 +94,7 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
     <section style={{ padding: "28px 0 8px" }}>
       <div className="controls">
         <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {Object.entries(BOARDS).map(([k, b]) => <button key={k} className={`chip ${k === board ? "on" : ""}`} onClick={() => pick(k)}>{b.l}</button>)}
+          {Object.entries(BOARDS).filter(([k]) => !(noEpa && k === "epa")).map(([k, b]) => <button key={k} className={`chip ${k === board ? "on" : ""}`} onClick={() => pick(k)}>{b.l}</button>)}
         </span>
         {board === "epa" && (
           <span style={{ display: "flex", gap: 6 }}>
@@ -131,7 +132,7 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
                     <img src={logo(teams[r.tid]?.logo, 20)} alt="" loading="lazy" />{r.name}
                   </Link>
                 </td>
-                <td className="l dim">{teams[r.tid] ? <Link href={`/teams/${teams[r.tid].slug}`} style={{ color: "inherit", textDecoration: "none" }}>{r.team}</Link> : r.team}</td>
+                <td className="l dim">{teams[r.tid] ? <Link href={`${teamBase}/${teams[r.tid].slug}`} style={{ color: "inherit", textDecoration: "none" }}>{r.team}</Link> : r.team}</td>
                 <td className="c">{r.pos || ""}</td>
                 <td className="c dim">{r.cls || ""}</td>
                 {B.cols.map(([k, , f]) => (

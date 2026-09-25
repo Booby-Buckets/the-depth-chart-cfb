@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
-import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, type PlayerFull, type PlayersFile } from "@/lib/data";
+import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, getCareers, getSeasonPlayers, getSeasonTeamIndex, type HubTeam, type PlayerFull, type PlayersFile } from "@/lib/data";
+import Career, { type CareerRow } from "@/components/player/Career";
 import { fmt, ord } from "@/lib/format";
 import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
 import { teamColors } from "@/lib/teamColor";
@@ -17,20 +18,63 @@ async function load(slug: string) {
   const pid = playerIdFromSlug(slug);
   if (!pid) notFound();
   const tid = await getPlayerTeam(pid);
-  if (!tid) notFound();
+  if (!tid) {
+    // not on a current roster: a past player we have seasons for gets a career page
+    const past = await loadCareerOnly(pid);
+    if (!past) notFound();
+    if (slug !== playerSlug(past.name, pid)) permanentRedirect(playerHref(past.name, pid));
+    return { kind: "past" as const, ...past };
+  }
   const [PL, TM, idx] = await Promise.all([getPlayersFile(tid), getTeam(tid), getTeamIndex()]);
   const P = PL.players.find((p) => p.id === pid);
   if (!P) notFound();
   if (slug !== playerSlug(P.name, pid)) permanentRedirect(playerHref(P.name, pid)); // bare id or a renamed slug -> canonical URL
-  return { P, PL, TM, teamSlug: idx.slugOf.get(tid)! };
+  const career = await careerRows(pid, { season: idx.hub.season, tid, P, team: idx.hub.teams.find((t) => t.id === tid) ?? null, teamSlug: idx.slugOf.get(tid) ?? null });
+  return { kind: "current" as const, P, PL, TM, teamSlug: idx.slugOf.get(tid)!, career };
+}
+
+/** Every season we have for a player, newest first (the current season from the live files). */
+async function careerRows(pid: string, cur: { season: number; tid: string; P: PlayerFull; team: HubTeam | null; teamSlug: string | null } | null): Promise<CareerRow[]> {
+  const careers = await getCareers();
+  const seasons = (careers[pid] || []).filter(([y]) => !cur || y !== cur.season).sort((a, b) => b[0] - a[0]);
+  const rows: CareerRow[] = [];
+  if (cur) {
+    const pi = cur.P.pi;
+    rows.push({ season: cur.season, current: true, team: cur.team, teamSlug: cur.teamSlug,
+      p: { ...cur.P, tid: cur.tid, g: pi?.g ?? 0, es: pi?.es ?? null, esTP: pi?.esTP ?? null } });
+  }
+  for (const [y, t] of seasons) {
+    try {
+      const [file, idx] = await Promise.all([getSeasonPlayers(y, t), getSeasonTeamIndex(y)]);
+      const p = file.players.find((x) => x.id === pid);
+      if (p) rows.push({ season: y, current: false, team: idx.hub.teams.find((x) => x.id === t) ?? null, teamSlug: idx.slugOf.get(t) ?? null, p,
+        pbpDefense: idx.hub.defenseFrom === "play-by-play" });
+    } catch { /* a season we haven't built */ }
+  }
+  return rows;
+}
+
+async function loadCareerOnly(pid: string) {
+  const rows = await careerRows(pid, null);
+  if (!rows.length) return null;
+  return { name: rows[0].p.name, pos: rows[0].p.pos, career: rows };
 }
 
 export async function generateMetadata({ params }: PageProps<"/players/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const { P, TM } = await load(slug);
+  const L = await load(slug);
+  if (L.kind === "past") {
+    const r = L.career, last = r[0], first = r[r.length - 1];
+    return {
+      title: `${L.name} — ${last.team?.name ?? ""} ${L.pos || ""} (${first.season === last.season ? first.season : `${first.season}–${last.season}`})`.replace(/\s+/g, " "),
+      description: `${L.name}'s college career, ${first.season}–${last.season}: season-by-season stats, snap share and advanced numbers.`,
+      alternates: { canonical: playerHref(L.name, playerIdFromSlug(slug)!) },
+    };
+  }
+  const { P, TM } = L;
   return {
     title: `${P.name} — ${TM.meta.name} ${P.pos || ""}`.trim(),
-    description: `${P.name}, ${TM.meta.full} ${P.pos || ""}: ${TM.season} stats ranked across FBS, EPA per play by situation, estimated snap share, and the position room.`,
+    description: `${P.name}, ${TM.meta.full} ${P.pos || ""}: ${TM.season} stats ranked across FBS, EPA per play by situation, estimated snap share, career history, and the position room.`,
     alternates: { canonical: playerHref(P.name, P.id) },
   };
 }
@@ -41,7 +85,9 @@ const n0 = (v: number | null | undefined) => (v == null ? "—" : v % 1 ? v.toFi
 
 export default async function PlayerPage({ params }: PageProps<"/players/[slug]">) {
   const { slug } = await params;
-  const { P, PL, TM, teamSlug } = await load(slug);
+  const L = await load(slug);
+  if (L.kind === "past") return <PastPlayer name={L.name} pos={L.pos} career={L.career} />;
+  const { P, PL, TM, teamSlug, career } = L;
   const M = TM.meta, R = TM.rating;
   const group = Object.keys(GROUPS).find((g) => GROUPS[g].includes(P.pos || ""));
   const st = (c: string, k: string) => P.stats[c]?.[k];
@@ -115,6 +161,8 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
       )}
 
       {P.adv && <AdvancedTables P={P} />}
+
+      {career.length > 1 && <Career rows={career} name={P.name} />}
 
       <section className={s.section}>
         <div className="sec-h"><h2>{PL.season} Season Stats</h2><p>FBS rank among qualifying players</p></div>
@@ -344,5 +392,21 @@ function AdvancedTables({ P }: { P: PlayerFull }) {
         })}
       </div>
     </section>
+  );
+}
+
+/* ---------- a player who's no longer on an FBS roster: their career from past seasons ---------- */
+function PastPlayer({ name, pos, career }: { name: string; pos: string | null; career: CareerRow[] }) {
+  const last = career[0], first = career[career.length - 1];
+  const schools = [...new Map(career.filter((r) => r.team).map((r) => [r.team!.id, r.team!.name])).values()];
+  return (
+    <div className="col">
+      <header className="page-header">
+        <div className="page-eyebrow">College career · {first.season === last.season ? first.season : `${first.season}–${last.season}`}</div>
+        <h1 className="page-h1">{name}</h1>
+        <p className="page-sub">{[pos, schools.join(" → ")].filter(Boolean).join(" · ")}. Not on a current FBS roster; here is every season we have.</p>
+      </header>
+      <Career rows={career} name={name} />
+    </div>
   );
 }

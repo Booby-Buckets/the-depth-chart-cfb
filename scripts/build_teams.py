@@ -119,8 +119,17 @@ def build_team_files(ctx):
     n = len(rows)
 
     # --- ESPN per-team feeds (parallel; cached) ---
+    history = ctx.get("history_roster")  # past seasons: roster from box scores, stats by season
+
     def fetch(tid):
         info = get(f"{ESPN}/teams/{tid}", f"team_{tid}.json", max_age=7 * 86400)
+        if history is not None:
+            try:
+                stats = get(f"{ESPN}/teams/{tid}/statistics?season={season}", f"stats_{season}_{tid}.json", max_age=None)
+            except Exception as e:  # e.g. a 2020 team that canceled its season: no stats to show
+                print(f"team stats unavailable for {tid} in {season} ({e})")
+                stats = {}
+            return tid, info, {"athletes": []}, stats
         roster = get(f"{ESPN}/teams/{tid}/roster", f"roster_{season}_{tid}.json", max_age=20 * 3600)
         stats = get(f"{ESPN}/teams/{tid}/statistics", f"stats_{season}_{tid}.json", max_age=3 * 3600)
         return tid, info, roster, stats
@@ -217,7 +226,7 @@ def build_team_files(ctx):
         }
 
         # roster
-        players = []
+        players = list((history or {}).get(tid, []))
         for grp in roster.get("athletes", []):
             for a in grp.get("items", []):
                 pos = a.get("position") or {}

@@ -1,0 +1,9 @@
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--bg); color: var(--text); text-decoration: none; display: block; }
+.card:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.year { font-family: var(--font-display), Georgia, serif; font-weight: 800; font-size: 30px; line-height: 1; }
+.lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin: 6px 0 10px; }
+.top { list-style: none; display: grid; gap: 6px; }
+.top li { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: center; font-size: 13px; font-weight: 650; }
+.top img { width: 20px; height: 20px; object-fit: contain; }
+.top span { font-size: 11px; color: var(--text3); font-weight: 600; font-variant-numeric: tabular-nums; }

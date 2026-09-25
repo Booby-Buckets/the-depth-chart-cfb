@@ -104,6 +104,7 @@ def season_games(season, finished_season):
             wk = int(w["value"])
             weeks.append({"type": stype, "week": wk, "label": w.get("label"), "start": w.get("startDate"), "end": w.get("endDate")})
     now = datetime.datetime.now(datetime.timezone.utc)
+    seen = set()
     for w in weeks:
         start = datetime.datetime.fromisoformat(w["start"].replace("Z", "+00:00"))
         end = datetime.datetime.fromisoformat(w["end"].replace("Z", "+00:00"))
@@ -113,6 +114,11 @@ def season_games(season, finished_season):
         d = get(f"{ESPN}/scoreboard?groups=80&seasontype={w['type']}&week={w['week']}&dates={season}&limit=400",
                 f"sb_{season}_{w['type']}_{w['week']}.json", max_age=None if done else 1800 if soon else 12 * 3600)
         for ev in d.get("events", []):
+            if not ev.get("id") or not ev.get("competitions"):
+                continue  # ESPN occasionally returns an empty placeholder event (2014 week 1)
+            if ev["id"] in seen:
+                continue  # ESPN lists playoff games under both the "Bowls" and "CFP" weeks
+            seen.add(ev["id"])
             c = ev["competitions"][0]
             side = {x["homeAway"]: x for x in c["competitors"]}
             if "home" not in side or "away" not in side:
@@ -254,14 +260,13 @@ def cfbd_advanced(season, teams):
     return out
 
 
-def main():
-    today = datetime.date.today()
-    season = int(sys.argv[1]) if len(sys.argv) > 1 else (today.year if today.month >= 7 else today.year - 1)
-
+def rate_season(season, finished=False, with_cfbd=True):
+    """Ratings, records and SOS for one season: the shared core of the live build and the
+    history backfill (build_history.py). finished=True caches every week's scores forever."""
     teams = fbs_teams(season)
     print(f"{season}: {len(teams)} FBS teams")
-    if len(teams) < 120:
-        sys.exit(f"Refusing to write: only {len(teams)} FBS teams found (expected ~138).")
+    if len(teams) < 115:
+        sys.exit(f"Refusing to write: only {len(teams)} FBS teams found for {season}.")
 
     # prior from last season's final ratings
     prev_teams = fbs_teams(season - 1)
@@ -272,10 +277,10 @@ def main():
         if t in teams:
             prior[t] = {"off": r["off"] * (1 - PRIOR_REGRESS), "def": r["def"] * (1 - PRIOR_REGRESS), "net": r["net"] * (1 - PRIOR_REGRESS)}
 
-    games, weeks = season_games(season, finished_season=False)
+    games, weeks = season_games(season, finished_season=finished)
     fbs_games = [g for g in games if g["home"] in teams or g["away"] in teams]
     rat, mu, hfa = solve(fbs_games, teams, prior)
-    adv = cfbd_advanced(season, teams)
+    adv = cfbd_advanced(season, teams) if with_cfbd else {}
 
     # records + SOS (avg opponent net) from completed games
     rec = {t: {"w": 0, "l": 0, "cw": 0, "cl": 0, "opp": []} for t in teams}
@@ -305,6 +310,18 @@ def main():
     rows.sort(key=lambda r: -r["net"])
     for i, r in enumerate(rows):
         r["rank"] = i + 1
+    spread_net = max(r["net"] for r in rows) - min(r["net"] for r in rows)
+    if not (25 < spread_net < 90):
+        sys.exit(f"Refusing to write: implausible rating spread {spread_net:.1f} for {season}")
+    return {"teams": teams, "prior": prior, "games": fbs_games, "rat": rat, "mu": mu, "hfa": hfa, "rows": rows, "adv": adv}
+
+
+def main():
+    today = datetime.date.today()
+    season = int(sys.argv[1]) if len(sys.argv) > 1 else (today.year if today.month >= 7 else today.year - 1)
+    S = rate_season(season)
+    teams, prior, fbs_games, rat, mu, hfa, rows, adv = (S[k] for k in ("teams", "prior", "games", "rat", "mu", "hfa", "rows", "adv"))
+
     rank_of = {r["id"]: r["rank"] for r in rows}
 
     # this week's slate: the earliest week that still has unplayed FBS games
@@ -326,11 +343,6 @@ def main():
                 "spread": round(spread, 1), "homeWin": round(win_prob(spread, game_sd(rat, hk, ak)), 3),
                 "total": round(2 * mu + h["off"] - a["def"] + a["off"] - h["def"], 1),
             })
-
-    # sanity: ratings must look like CFB point margins
-    spread_net = max(r["net"] for r in rows) - min(r["net"] for r in rows)
-    if not (25 < spread_net < 90):
-        sys.exit(f"Refusing to write: implausible rating spread {spread_net:.1f}")
 
     out = {
         "season": season, "built": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes"),
@@ -372,6 +384,24 @@ def main():
         tslug[r["id"]] = sl
     urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting"] \
         + [f"{site}/teams/{tslug[r['id']]}" for r in rows] + [f"{site}/depth/{tslug[r['id']]}" for r in rows]
+    # past seasons (scripts/build_history.py): rankings, leaderboards, every team's season
+    seasons_dir = os.path.join(ROOT, "public", "data", "seasons")
+    past = sorted((int(d) for d in os.listdir(seasons_dir) if d.isdigit()), reverse=True) if os.path.isdir(seasons_dir) else []
+    if past:
+        urls.append(f"{site}/seasons")
+    for y in past:
+        try:
+            ph = json.load(open(os.path.join(seasons_dir, str(y), "hub.json")))
+        except (OSError, ValueError):
+            continue
+        urls += [f"{site}/seasons/{y}", f"{site}/seasons/{y}/players"]
+        pseen = set()
+        for t in ph["teams"]:
+            sl = slugify(t["name"])
+            if sl in pseen:
+                sl = f"{sl}-{t['id']}"
+            pseen.add(sl)
+            urls.append(f"{site}/seasons/{y}/teams/{sl}")
     try:
         urls += [f"{site}/players/{slugify(name) or 'player'}-{pid}"
                  for pid, name, _, _ in json.load(open(os.path.join(ROOT, "public", "data", "players", "index.json")))]

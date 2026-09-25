@@ -15,12 +15,12 @@ type Row = HubTeam & { delta: number | null };
 
 const pctCell = (v?: number) => (v == null ? "—" : (v * 100).toFixed(1) + "%");
 
-function columns(hasAdvanced: boolean, slugs: Record<string, string>): Col[] {
+function columns(hasAdvanced: boolean, slugs: Record<string, string>, teamBase: string): Col[] {
   const cols: Col[] = [
     { k: "rank", l: "RK", cls: "rk", f: (t) => t.rank },
     { k: "name", l: "Team", cls: "l nm", str: true, sv: (t) => t.name,
       // eslint-disable-next-line @next/next/no-img-element
-      f: (t) => <Link href={`/teams/${slugs[t.id]}`}><img src={logo(t.logo, 20)} alt="" loading="lazy" />{t.name}</Link> },
+      f: (t) => <Link href={`${teamBase}/${slugs[t.id]}`}><img src={logo(t.logo, 20)} alt="" loading="lazy" />{t.name}</Link> },
     { k: "conf", l: "Conf", cls: "l dim", str: true, f: (t) => t.conf },
     { k: "w", l: "W-L", cls: "c", f: (t) => `${t.w}-${t.l}`, sv: (t) => t.w - t.l + t.w * 0.01 },
     { k: "cw", l: "Conf", cls: "c dim", f: (t) => (t.confAbbr === "ind" ? "—" : `${t.cw}-${t.cl}`), sv: (t) => t.cw - t.cl },
@@ -41,9 +41,9 @@ function columns(hasAdvanced: boolean, slugs: Record<string, string>): Col[] {
   return cols;
 }
 
-export default function Rankings({ teams, hasAdvanced, slugs }: { teams: HubTeam[]; hasAdvanced: boolean; slugs: Record<string, string> }) {
+export default function Rankings({ teams, hasAdvanced, slugs, teamBase = "/teams" }: { teams: HubTeam[]; hasAdvanced: boolean; slugs: Record<string, string>; teamBase?: string }) {
   const rows: Row[] = useMemo(() => teams.map((t) => ({ ...t, delta: t.prior == null ? null : +(t.net - t.prior).toFixed(1) })), [teams]);
-  const cols = useMemo(() => columns(hasAdvanced, slugs), [hasAdvanced, slugs]);
+  const cols = useMemo(() => columns(hasAdvanced, slugs, teamBase), [hasAdvanced, slugs, teamBase]);
   const confs = useMemo(() => [...new Set(teams.map((t) => t.conf))].sort(), [teams]);
   const [conf, setConf] = useState("");
   const [q, setQ] = useState("");

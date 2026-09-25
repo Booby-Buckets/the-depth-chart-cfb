@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getTeamIndex } from "@/lib/data";
+import { getPastSeasons, getTeamIndex } from "@/lib/data";
+import SeasonPicker from "@/components/SeasonPicker";
 import { fmt, etStamp } from "@/lib/format";
 import Slate from "@/components/home/Slate";
 import Rankings from "@/components/home/Rankings";
@@ -12,13 +13,16 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const { hub, slugOf } = await getTeamIndex();
+  const [{ hub, slugOf }, years] = await Promise.all([getTeamIndex(), getPastSeasons()]);
   const logos = Object.fromEntries(hub.teams.map((t) => [t.id, t.logo]));
   const slugs = Object.fromEntries(slugOf);
   return (
     <div className="col">
       <header className="page-header">
-        <div className="page-eyebrow">{hub.season} Season · {hub.slateLabel || "Final"}</div>
+        <div className="page-eyebrow" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <span>{hub.season} Season · {hub.slateLabel || "Final"}</span>
+          {years.length > 0 && <SeasonPicker years={years} current={null} basePath="/seasons" />}
+        </div>
         <h1 className="page-h1">FBS Power Rankings</h1>
         <p className="page-sub">
           Every FBS team rated in points: how much it would beat an average FBS team by on a neutral field. The rating

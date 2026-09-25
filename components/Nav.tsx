@@ -11,6 +11,7 @@ const LINKS: { href: string; label: string; match: (p: string) => boolean }[] = 
   { href: "/depth", label: "Depth Charts", match: (p) => p.startsWith("/depth") },
   { href: "/players", label: "Players", match: (p) => p.startsWith("/players") },
   { href: "/recruiting", label: "Recruiting", match: (p) => p.startsWith("/recruiting") },
+  { href: "/seasons", label: "Past Seasons", match: (p) => p.startsWith("/seasons") },
 ];
 const SOON = ["Portal"];
 

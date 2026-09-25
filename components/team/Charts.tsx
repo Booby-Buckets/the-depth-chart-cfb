@@ -18,7 +18,9 @@ function useTip() {
 }
 
 /* ---------- rating after every week (single series, team colour) ---------- */
-export function RatingChart({ history: h, fbsTeams }: { history: HistoryPoint[]; fbsTeams: number }) {
+export function RatingChart({ history: h, fbsTeams, title = "Rating by week", summary }: {
+  history: HistoryPoint[]; fbsTeams: number; title?: string; summary?: React.ReactNode;
+}) {
   const { card, show, hide, el } = useTip();
   const W = 560, H = 210, pl = 34, pr = 70, pt = 14, pb = 26;
   const vals = h.map((p) => p.net), lo = Math.min(0, ...vals) - 3, hi = Math.max(0, ...vals) + 3;
@@ -30,10 +32,12 @@ export function RatingChart({ history: h, fbsTeams }: { history: HistoryPoint[];
   const moved = first.rank - last.rank;
   return (
     <div className={`${c.card} ${c.chart}`} ref={card}>
-      <h3>Rating by week</h3>
+      <h3>{title}</h3>
       <div className={c.big}>
-        <b>{fmt(last.net, 1, true)}</b> now, {fmt(first.net, 1, true)} preseason ·{" "}
-        {moved === 0 ? "rank unchanged" : `${moved > 0 ? "up" : "down"} ${Math.abs(moved)} spot${Math.abs(moved) === 1 ? "" : "s"} since preseason`}
+        {summary ?? <>
+          <b>{fmt(last.net, 1, true)}</b> now, {fmt(first.net, 1, true)} preseason ·{" "}
+          {moved === 0 ? "rank unchanged" : `${moved > 0 ? "up" : "down"} ${Math.abs(moved)} spot${Math.abs(moved) === 1 ? "" : "s"} since preseason`}
+        </>}
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TDC rating by week" onMouseLeave={hide}>
         {ticks.map((v) => (
