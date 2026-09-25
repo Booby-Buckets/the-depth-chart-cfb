@@ -236,7 +236,10 @@ def estimate_snaps(P, team_plays, game_info):
                     pi["esLo"], pi["esHi"] = b[0], min(pi["esTP"], b[1])
 
 
-def write_leaders(outdir, season, teams, have_stats):
+CHART_MIN = {"qb": 10, "rcv": 4}   # charted throws / targets per team game to qualify for a charting board
+
+
+def write_leaders(outdir, season, teams, have_stats, team_games=None):
     """National leaderboards: top 300 per stat board, EPA top 150 per position group."""
     def base(p):
         t = teams[p["tid"]]
@@ -273,8 +276,21 @@ def write_leaders(outdir, season, teams, have_stats):
                                 "epaPass": epa(p, "pass"), "epaRush": epa(p, "rush"), "use": (p.get("use") or {}).get("overall")}
                      for g in GROUPS
                      for p in sorted((p for p in q if _group(p["pos"]) == g), key=lambda p: -(epa(p, "all") or -9))[:150]]
+    # charting boards (build_charting.py): rate stats, so a per-team-game minimum like the EPA board
+    if team_games:
+        def ch(p, k):
+            return (p.get("chart") or {}).get(k)
+        q = [p for p in have_stats if ch(p, "pass") and ch(p, "pass")["att"] >= CHART_MIN["qb"] * team_games.get(p["tid"], 1)]
+        boards["qbchart"] = [base(p) | {"att": c["att"], "adot": c["adot"], "deep": c["deep"], "airYds": c["airYds"],
+                                        "yacPer": c["yacPer"], "press": c.get("press"), "sacks": c.get("sacks"),
+                                        "pct": round(c["comp"] / c["att"], 3) if c["att"] else None}
+                             for p in sorted(q, key=lambda p: -(ch(p, "pass")["adot"] or 0)) for c in [ch(p, "pass")]]
+        q = [p for p in have_stats if ch(p, "recv") and ch(p, "recv")["att"] >= CHART_MIN["rcv"] * team_games.get(p["tid"], 1)]
+        boards["rcvchart"] = [base(p) | {"tgt": c["att"], "rec": c["comp"], "pct": round(c["comp"] / c["att"], 3) if c["att"] else None,
+                                         "adot": c["adot"], "yacPer": c["yacPer"], "yac": c["yac"], "airYds": c["airYds"], "deep": c["deep"]}
+                              for p in sorted(q, key=lambda p: -(ch(p, "recv")["yacPer"] or 0)) for c in [ch(p, "recv")]]
     with open(os.path.join(outdir, "leaders.json"), "w") as f:
-        json.dump({"season": season, "groupMin": GROUP_MIN, "boards": boards}, f, separators=(",", ":"))
+        json.dump({"season": season, "groupMin": GROUP_MIN, "chartMin": CHART_MIN, "boards": boards}, f, separators=(",", ":"))
 
 
 def build_player_files(ctx):
@@ -522,7 +538,7 @@ def build_player_files(ctx):
     with open(os.path.join(outdir, "index.json"), "w") as f:
         json.dump([[p["id"], p["name"], p["tid"], p["pos"]] for p in sorted(have_stats, key=lambda p: p["name"])], f, separators=(",", ":"))
 
-    write_leaders(outdir, season, teams, have_stats)
+    write_leaders(outdir, season, teams, have_stats, games)
     n_stats = sum(1 for p in P.values() if p["stats"])
     print(f"wrote player files: {len(P)} FBS players ({n_stats} with stats, {sum(1 for p in P.values() if p.get('ppa'))} with EPA), "
           f"{len(have_stats)} searchable")
