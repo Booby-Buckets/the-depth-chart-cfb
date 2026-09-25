@@ -48,7 +48,12 @@ export type PassChart = {
   grid: Record<"L" | "M" | "R", [number, number, number][]>; dirs: Record<"L" | "M" | "R", number>;
   gc?: number; // games with at least one charted throw
   cAtt?: number; cComp?: number; cYds?: number; // attempts / completions / yards on charted throws only
+  zones?: Partial<Record<"own" | "opp" | "rz" | "gl", ZoneChart>>; // by where the ball was snapped
   press?: number | null; sacks?: number;
+};
+export type ZoneChart = {
+  att: number; comp: number; yds: number; td: number; int: number; adot: number | null; deep: number | null;
+  yacPer: number | null; cAtt: number; grid: Record<"L" | "M" | "R", [number, number, number][]>;
 };
 export type RushDirs = Record<"L" | "M" | "R", [number, number, number]>; // att, yds, successes
 export type PlayerChart = { pass?: PassChart; recv?: PassChart; rush?: RushDirs };

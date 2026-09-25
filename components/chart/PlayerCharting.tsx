@@ -1,5 +1,6 @@
 import type { PlayerChart } from "@/lib/data";
-import { PassMap, RunDir, Tile, chartStyles as c } from "./PassMap";
+import { RunDir, Tile, chartStyles as c } from "./PassMap";
+import FieldMap from "./FieldMap";
 
 const p1 = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
 const pc = (v: number | null | undefined) => (v == null ? "—" : Math.round(v * 100) + "%");
@@ -33,7 +34,7 @@ export default function PlayerCharting({ ch, name, season }: { ch: PlayerChart; 
             <Tile k="Pressured" v={pc(qb.press)} sub={`hurried or sacked · ${qb.sacks ?? 0} sack${qb.sacks === 1 ? "" : "s"}`} />
           </div>
           <div className={c.wrap} style={{ marginBottom: 22 }}>
-            <PassMap c={qb} title="Where he throws" noun="throws" note="Interceptions count where they were picked." />
+            <FieldMap c={qb} title="Where he throws" noun="throws" />
           </div>
         </>
       )}
@@ -48,7 +49,7 @@ export default function PlayerCharting({ ch, name, season }: { ch: PlayerChart; 
             <Tile k="Deep targets" v={pc(rc.deep)} sub="20+ air yards" />
           </div>
           <div className={c.wrap} style={{ marginBottom: 22 }}>
-            <PassMap c={rc} title="Where he's targeted" noun="targets" />
+            <FieldMap c={rc} title="Where he's targeted" noun="targets" />
           </div>
         </>
       )}

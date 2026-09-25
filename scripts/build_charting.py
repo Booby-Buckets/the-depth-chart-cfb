@@ -101,7 +101,7 @@ def parse_game(g, items):
         ytg = (p.get("start") or {}).get("yardsToEndzone")
         if not off or ytg is None:
             continue
-        r = {"g": g["id"], "off": off, "def": dfn, "yds": p.get("statYardage") or 0,
+        r = {"g": g["id"], "off": off, "def": dfn, "yds": p.get("statYardage") or 0, "ytg": ytg,
              "sg": "Shotgun" in text, "nh": "No Huddle" in text, "hur": "hurried" in text, "down": (p.get("start") or {}).get("down")}
         if t in RUSH_T:
             m = RE_RUSHDIR.search(text)
@@ -136,7 +136,52 @@ def _grid():
     return {d: [[0, 0, 0] for _ in BANDS] for d in DIRS}
 
 
+ZONES = ("own", "opp", "rz", "gl")   # own half (61+ to go... i.e. >50), opponent 21-50, red zone <=20, inside the 10
+
+
+def zones_of(ytg):
+    if ytg is None:
+        return ()
+    if ytg > 50:
+        return ("own",)
+    if ytg > 20:
+        return ("opp",)
+    return ("rz", "gl") if ytg <= 10 else ("rz",)
+
+
+def _new_zone():
+    return {"att": 0, "comp": 0, "yds": 0, "td": 0, "int": 0, "airN": 0, "airSum": 0, "deep20": 0, "yacN": 0, "yac": 0, "grid": _grid()}
+
+
+def _add_zone(z, r):
+    z["att"] += 1
+    z["comp"] += r["comp"]
+    z["yds"] += r["yds"] if r["comp"] else 0
+    z["td"] += bool(r["td"])
+    z["int"] += bool(r["int"])
+    if r["air"] is not None:
+        z["airN"] += 1
+        z["airSum"] += r["air"]
+        z["deep20"] += r["air"] >= 20
+        if r["dir"]:
+            cell = z["grid"][r["dir"]][_band(r["air"])]
+            cell[0] += 1; cell[1] += r["comp"]; cell[2] += r["yds"] if r["comp"] else 0
+    if "yac" in r:
+        z["yacN"] += 1
+        z["yac"] += r["yac"]
+
+
+def _finish_zone(z):
+    return {"att": z["att"], "comp": z["comp"], "yds": z["yds"], "td": z["td"], "int": z["int"],
+            "adot": round(z["airSum"] / z["airN"], 1) if z["airN"] else None,
+            "deep": round(z["deep20"] / z["airN"], 3) if z["airN"] else None,
+            "yacPer": round(z["yac"] / z["yacN"], 1) if z["yacN"] else None,
+            "cAtt": z["airN"], "grid": z["grid"]}
+
+
 def _add_pass(a, r):
+    for zn in zones_of(r.get("ytg")):
+        _add_zone(a["zones"].setdefault(zn, _new_zone()), r)
     a["att"] += 1
     a["comp"] += r["comp"]
     a["yds"] += r["yds"] if r["comp"] else 0
@@ -166,7 +211,7 @@ def _add_pass(a, r):
 
 def _new_pass():
     return {"att": 0, "comp": 0, "yds": 0, "td": 0, "int": 0, "brk": 0, "airN": 0, "airSum": 0, "deep20": 0,
-            "yacN": 0, "yac": 0, "airComp": 0, "grid": _grid(), "dirs": {d: 0 for d in DIRS}, "gs": set(), "cComp": 0, "cYds": 0}
+            "yacN": 0, "yac": 0, "airComp": 0, "grid": _grid(), "dirs": {d: 0 for d in DIRS}, "gs": set(), "cComp": 0, "cYds": 0, "zones": {}}
 
 
 def _new_rush():
@@ -184,7 +229,8 @@ def _finish_pass(a):
            "deep": round(a["deep20"] / a["airN"], 3) if a["airN"] else None,
            "yac": a["yac"], "yacPer": round(a["yac"] / a["yacN"], 1) if a["yacN"] else None,
            "airYds": a["airComp"], "grid": a["grid"], "dirs": a["dirs"], "gc": len(a["gs"]),
-           "cAtt": a["airN"], "cComp": a["cComp"], "cYds": a["cYds"]}   # the charted subset (throws with a spot)
+           "cAtt": a["airN"], "cComp": a["cComp"], "cYds": a["cYds"],   # the charted subset (throws with a spot)
+           "zones": {k: _finish_zone(v) for k, v in a["zones"].items() if v["airN"]}}
     return out
 
 

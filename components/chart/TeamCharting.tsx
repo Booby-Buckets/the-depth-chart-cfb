@@ -1,5 +1,6 @@
 import type { TeamChart } from "@/lib/data";
-import { PassMap, RunDir, Tile, chartStyles as c } from "./PassMap";
+import { RunDir, Tile, chartStyles as c } from "./PassMap";
+import FieldMap from "./FieldMap";
 
 const p1 = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
 const pc = (v: number | null | undefined) => (v == null ? "—" : Math.round(v * 100) + "%");
@@ -34,8 +35,8 @@ export default function TeamCharting({ ch, n, games }: { ch: TeamChart; n: numbe
         <Tile k="Defense: YAC allowed" v={p1(D.yacPer)} sub={D.yacPerRk ? `${rk(D.yacPerRk, n)} (1st = most)` : ""} />
       </div>
       <div className={c.wrap} style={{ marginBottom: 22 }}>
-        <PassMap c={O.pass} title="Offense: where it throws" noun="throws" />
-        <PassMap c={D.pass} title="Defense: where it's thrown on" noun="throws" />
+        <FieldMap c={O.pass} title="Offense: where it throws" noun="throws" />
+        <FieldMap c={D.pass} title="Defense: where it's thrown on" noun="throws" />
       </div>
       <div className={c.wrap}>
         <RunDir r={O.rush} title="Offense: run direction" />

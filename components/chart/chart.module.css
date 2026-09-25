@@ -31,3 +31,14 @@
 .tile .k { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); }
 .tile .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tile small { display: block; font-size: 11px; color: var(--text3); }
+/* FieldMap: the throw heat map on a drawn field */
+.zchips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.zstats { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--text2); margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+.zstats b { color: var(--text); font-size: 15px; margin-right: 3px; }
+.fieldWrap { width: 100%; max-width: 620px; margin: 0 auto; }
+.fieldSvg { width: 100%; height: auto; display: block; border-radius: 6px; transform-origin: 50% 100%; transition: transform .35s ease; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.hit rect:hover { fill: rgba(255,255,255,.12); }
+.fieldFoot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.legend { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text3); margin-right: auto; }
+.legend i { width: 90px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #337f43, #ff6a2b); }
+.legend b { order: 3; font-weight: 500; }
