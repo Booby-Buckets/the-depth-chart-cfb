@@ -16,7 +16,7 @@ export default async function PlaysPage({ searchParams }: PageProps<"/plays">) {
   const { hub } = await getTeamIndex();
   let seasons: number[] = [];
   try {
-    seasons = (await readdir(path.join(process.cwd(), "public", "data", "plays"))).filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a);
+    seasons = (await readdir(path.join(process.cwd(), "data", "plays"))).filter((d) => /^\d{4}$/.test(d)).map(Number).sort((a, b) => b - a);
   } catch { seasons = [hub.season]; }
   const teams = hub.teams.map((t) => ({ id: t.id, name: t.name, abbr: t.abbr, logo: t.logo })).sort((a, b) => a.name.localeCompare(b.name));
   return (

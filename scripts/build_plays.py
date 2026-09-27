@@ -11,12 +11,12 @@ Win probability added uses the same model as the live pages (lib/livewp.ts): the
 text has no clock, so plays are spread evenly across their quarter when it's missing.
 
     python3 scripts/build_plays.py --fit            # refit ep_model.json from the cache
-    python3 scripts/build_plays.py 2026 2025        # write public/data/plays/<season>/
+    python3 scripts/build_plays.py 2026 2025        # write data/plays/<season>/
 
-Output per season: g/<game id>.json (the game's plays, compact rows) and index.json (games by
+Output per season, in data/plays/<season>/ (gzipped; not public): g/<game id>.json.gz (the game's plays, compact rows) and index.json.gz (games by
 team + the season's top plays by EPA, WPA and yards, for searches across every team).
 """
-import glob, json, math, os, re, sys
+import glob, gzip, json, math, os, re, sys
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -24,6 +24,17 @@ ROOT = os.path.dirname(HERE)
 CACHE = os.path.join(HERE, "cache")
 EP_FILE = os.path.join(HERE, "ep_model.json")
 DATA = os.path.join(ROOT, "public", "data")
+PLAYS = os.path.join(ROOT, "data", "plays")        # not public: only /api/plays reads these (gzipped, ~7x smaller)
+
+
+def _wgz(path, obj):
+    with gzip.open(path, "wt", encoding="utf8", compresslevel=9) as f:
+        json.dump(obj, f, separators=(",", ":"))
+
+
+def _rgz(path):
+    with gzip.open(path, "rt", encoding="utf8") as f:
+        return json.load(f)
 
 DIST = [(1, 1), (2, 2), (3, 3), (4, 6), (7, 10), (11, 99)]
 NO_STATE = re.compile(r"kickoff|extra point|two-point|timeout|end (of )?(period|half|game|quarter)|coin toss|^$", re.I)
@@ -291,7 +302,7 @@ def game_rows(gid, m, plays):
 
 def build(season):
     meta = {g: m for g, m in game_meta().items() if m["season"] == season}
-    out = os.path.join(DATA, "plays", str(season))
+    out = os.path.join(PLAYS, str(season))
     os.makedirs(os.path.join(out, "g"), exist_ok=True)
     games, top = {}, []
     by_team = defaultdict(list)
@@ -302,8 +313,7 @@ def build(season):
         rows = game_rows(gid, m, json.load(open(path)))
         if not rows:
             continue
-        with open(os.path.join(out, "g", f"{gid}.json"), "w") as f:
-            json.dump(rows, f, separators=(",", ":"))
+        _wgz(os.path.join(out, "g", f"{gid}.json.gz"), rows)
         games[gid] = [m["home"], m["away"], m["wk"], m["date"]]
         by_team[m["home"]].append(gid); by_team[m["away"]].append(gid)
         top += [[gid] + r for r in rows if r[7] in ("pass", "rush", "sack", "fg")]
@@ -322,8 +332,7 @@ def build(season):
         if fn[0].isdigit():
             for g in json.load(open(os.path.join(tdir, fn))).get("schedule") or []:
                 names.setdefault(g["opp"], [g["oppName"], g["oppName"][:4].upper()])
-    with open(os.path.join(out, "index.json"), "w") as f:
-        json.dump({"season": season, "games": games, "teams": by_team, "names": names, "top": list(keep.values())}, f, separators=(",", ":"))
+    _wgz(os.path.join(out, "index.json.gz"), {"season": season, "games": games, "teams": by_team, "names": names, "top": list(keep.values())})
     print(f"plays {season}: {len(games)} games, {len(top)} plays, mean EPA {sum(epas) / max(1, len(epas)):+.3f}, {len(keep)} top plays")
 
 
@@ -333,12 +342,12 @@ def enrich_leaders(season, current):
     of targets, from the charting grid), and EPA totals for passing / rushing / receiving."""
     pdir = os.path.join(DATA, "players") if current else os.path.join(DATA, "seasons", str(season), "players")
     lp = os.path.join(pdir, "leaders.json")
-    gdir = os.path.join(DATA, "plays", str(season), "g")
+    gdir = os.path.join(PLAYS, str(season), "g")
     if not os.path.exists(lp) or not os.path.isdir(gdir):
         return
     tot = defaultdict(lambda: {"passEpa": 0.0, "rushEpa": 0.0, "recEpa": 0.0, "tgt": 0, "rec": 0, "recYds": 0})
     for fn in os.listdir(gdir):
-        for r in json.load(open(os.path.join(gdir, fn))):
+        for r in _rgz(os.path.join(gdir, fn)):
             epa, typ, pids, roles, res = r[9], r[7], r[12], r[13], r[14]
             if typ not in ("pass", "rush", "sack"):
                 continue

@@ -1,11 +1,12 @@
 import { readFile } from "node:fs/promises";
+import { gunzipSync } from "node:zlib";
 import path from "node:path";
 
 /* The Play Finder's search: every play of a season with our EPA and win probability added
-   (scripts/build_plays.py → public/data/plays/<season>/). A team or player search reads that
+   (scripts/build_plays.py → data/plays/<season>/, gzipped). A team or player search reads that
    team's games; a search across every team reads the season's precomputed standout plays. */
 
-const PLAYS = path.join(process.cwd(), "public", "data", "plays");     // kept narrow so the function only bundles these files
+const PLAYS = path.join(process.cwd(), "data", "plays");     // gzipped, outside public/ (only this route reads them)
 const HUB = path.join(process.cwd(), "public", "data", "hub.json");
 const IDS = path.join(process.cwd(), "public", "data", "players", "ids.json");
 const CAREERS = path.join(process.cwd(), "public", "data", "careers.json");
@@ -16,7 +17,8 @@ type Index = { season: number; games: Record<string, [string, string, string, st
 const cache = new Map<string, unknown>();
 async function json<T>(file: string): Promise<T> {
   if (cache.has(file)) return cache.get(file) as T;
-  const v = JSON.parse(await readFile(file, "utf8")) as T;
+  const buf = await readFile(file);
+  const v = JSON.parse((file.endsWith(".gz") ? gunzipSync(buf) : buf).toString("utf8")) as T;
   if (cache.size > 400) cache.clear();
   cache.set(file, v);
   return v;
@@ -29,7 +31,7 @@ export async function GET(req: Request) {
   const season = Number(u.get("season") || 0);
   if (!/^\d{4}$/.test(String(season))) return Response.json({ error: "season" }, { status: 400 });
   let idx: Index;
-  try { idx = await json<Index>(path.join(PLAYS, String(season), "index.json")); } catch { return Response.json({ error: "no plays for that season" }, { status: 404 }); }
+  try { idx = await json<Index>(path.join(PLAYS, String(season), "index.json.gz")); } catch { return Response.json({ error: "no plays for that season" }, { status: 404 }); }
 
   const team = u.get("team") || "", side = u.get("side") || "off", player = u.get("player") || "";
   const type = u.get("type") || "", week = u.get("week") || "", down = num(u.get("down")), q = num(u.get("q"));
@@ -48,7 +50,7 @@ export async function GET(req: Request) {
   }
   if (tid) {
     for (const g of idx.teams[tid] || []) {
-      try { for (const r of await json<Row[]>(path.join(PLAYS, String(season), "g", `${g}.json`))) pool.push([g, r]); } catch { /* missing game */ }
+      try { for (const r of await json<Row[]>(path.join(PLAYS, String(season), "g", `${g}.json.gz`))) pool.push([g, r]); } catch { /* missing game */ }
     }
   } else {
     pool = idx.top.map(([g, ...r]) => [g, r as unknown as Row]);
