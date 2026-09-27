@@ -262,6 +262,8 @@ def build_season(season, current_pos, careers):
     # compact player files: season totals, advanced, estimated snaps, box-score game logs
     for pid, gl in game_logs(box, lambda pid, tid: pid in P and P[pid]["tid"] == tid).items():
         P[pid]["gl"] = gl
+    from game_score import rate_all
+    rate_all(P.values())
     by_team = {}
     for p in P.values():
         pi_ = p.pop("pi", None) or {}

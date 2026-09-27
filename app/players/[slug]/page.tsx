@@ -72,7 +72,7 @@ async function gameLogs(career: CareerRow[], curSchedule: SchedGame[] | null): P
     const slugs = r.current ? idx.slugOf : (await getSeasonTeamIndex(r.season)).slugOf;
     const rows = sched.filter((g) => g.completed).map((g) => ({
       id: g.id, date: g.date, wk: g.week, site: g.site, opp: g.opp, oppName: g.oppName, oppLogo: g.oppLogo || null,
-      oppSlug: g.oppFbs ? slugs.get(g.opp) ?? null : null, res: g.res ?? null, pf: g.pf ?? null, pa: g.pa ?? null, line: gl[g.id] ?? null,
+      oppSlug: g.oppFbs ? slugs.get(g.opp) ?? null : null, res: g.res ?? null, pf: g.pf ?? null, pa: g.pa ?? null, line: gl[g.id] ?? null, gs: r.p.gr?.[g.id] ?? null,
     }));
     if (rows.some((x) => x.line)) out.push({ season: r.season, team: r.team.name, rows });
   }

@@ -450,6 +450,8 @@ def build_player_files(ctx):
     box = load_box(get, CACHE, games_list, refresh={g["id"] for g in games_list if g["date"] >= cutoff})
     for pid, gl in game_logs(box, lambda pid, tid: pid in P and P[pid]["tid"] == tid).items():
         P[pid]["gl"] = gl
+    from game_score import rate_all
+    rate_all(P.values())   # 0–10 game scores (game_score.py)
     print(f"game logs: {sum(1 for p in P.values() if p.get('gl'))} players with box-score lines")
 
     # --- who started each game (ESPN per-game rosters): the only trace offensive linemen leave ---

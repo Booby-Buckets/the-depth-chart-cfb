@@ -10,7 +10,7 @@ import { logo } from "@/lib/logo";
 export type GameLine = Record<string, Record<string, number>>;
 export type GameLogRow = {
   id: string; date: string; wk: string; site: "H" | "A" | "N"; opp: string; oppName: string; oppLogo: string | null;
-  oppSlug: string | null; res: "W" | "L" | null; pf: number | null; pa: number | null; line: GameLine | null;
+  oppSlug: string | null; res: "W" | "L" | null; pf: number | null; pa: number | null; line: GameLine | null; gs: number | null;
 };
 export type GameLogSeason = { season: number; team: string; rows: GameLogRow[] };
 
@@ -86,6 +86,9 @@ function totals(rows: GameLogRow[]): GameLine {
   }
   return t;
 }
+/** Game score cell colour: the same red-to-green steps the stat sheets use. */
+const gsHeat = (v: number) => "c" + (v >= 8.5 ? 4 : v >= 7.5 ? 3 : v >= 6 ? 2 : v >= 4.5 ? 1 : 0);
+const GS_TIP = "Game score, 0–10: the whole box line (yards, TDs, turnovers, tackles, sacks, kicks...) against every game played at the same position since 2014. 6.0 = a typical game, 8.0 = top 10%, 10 = one of the best in 200";
 const show = (v: number | null, f?: (v: number) => string) => (v == null ? "·" : f ? f(v) : Number.isInteger(v) ? String(v) : v.toFixed(1));
 
 function groupsFor(rows: GameLogRow[]) {
@@ -110,13 +113,17 @@ export default function GameLog({ seasons, name }: { seasons: GameLogSeason[]; n
   const groups = groupsFor(played);
   const cols = groups.flatMap((g) => g.cols);
   const T = totals(played);
+  const rated = cur.rows.filter((r) => r.gs != null);
+  const hasGs = rated.length > 0;
+  const avgGs = hasGs ? rated.reduce((a, r) => a + r.gs!, 0) / rated.length : null;
+  const best = hasGs ? rated.reduce((a, r) => (r.gs! > a.gs! ? r : a)) : null;
   const colTotal = (c: Col) => (c.sum === "max" || c.sum === undefined ? c.v(T) : typeof c.sum === "function" ? c.sum(T) : c.v(T));
 
   return (
     <section style={{ padding: "28px 0 8px" }} id="gamelog">
       <div className="sec-h">
         <h2>Game Log</h2>
-        <p>{name}&apos;s box score, game by game, from ESPN. Click a result for the full game</p>
+        <p>{name}&apos;s box score, game by game, from ESPN, with a 0–10 game score for each (hover it for how it works). Click a result for the full game</p>
       </div>
       {seasons.length > 1 && (
         <div role="group" aria-label="Season" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
@@ -127,6 +134,13 @@ export default function GameLog({ seasons, name }: { seasons: GameLogSeason[]; n
           ))}
         </div>
       )}
+      {hasGs && (
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13, color: "var(--text2)", marginBottom: 10 }}>
+          <span><b style={{ color: "var(--text)" }}>{avgGs!.toFixed(1)}</b> avg. game score</span>
+          <span>Best: <b style={{ color: "var(--text)" }}>{best!.gs!.toFixed(1)}</b> {best!.site === "A" ? "at" : "vs"} {best!.oppName} ({best!.wk})</span>
+          <span><b style={{ color: "var(--text)" }}>{rated.filter((r) => r.gs! >= 8).length}</b> of {rated.length} games at 8.0+</span>
+        </div>
+      )}
       {!groups.length ? (
         <div style={{ color: "var(--text3)", fontSize: 13 }}>No box-score stats in {cur.season}.</div>
       ) : (
@@ -134,11 +148,12 @@ export default function GameLog({ seasons, name }: { seasons: GameLogSeason[]; n
           <table className="sheet dense">
             <thead>
               <tr>
-                <th className="l" colSpan={3} />
+                <th className="l" colSpan={hasGs ? 4 : 3} />
                 {groups.map((g) => <th key={g.key} colSpan={g.cols.length} className="c" style={{ borderBottom: "1px solid var(--border)" }}>{g.name}</th>)}
               </tr>
               <tr>
                 <th className="l">Wk</th><th className="l">Opponent</th><th className="l">Result</th>
+                {hasGs && <th className="c" title={GS_TIP}>Game score</th>}
                 {cols.map((c, k) => <th key={k} title={c.tip}>{c.label}</th>)}
               </tr>
             </thead>
@@ -159,12 +174,14 @@ export default function GameLog({ seasons, name }: { seasons: GameLogSeason[]; n
                       <b style={{ color: r.res === "W" ? "var(--turf)" : "var(--red)" }}>{r.res}</b> {r.pf}–{r.pa}
                     </Link> : "—"}
                   </td>
+                  {hasGs && <td className={`c strong ${r.gs != null ? gsHeat(r.gs) : ""}`} title={r.gs != null ? GS_TIP : "Not enough of a role that game to rate"}>{r.gs != null ? r.gs.toFixed(1) : "—"}</td>}
                   {r.line ? cols.map((c, k) => <td key={k}>{show(c.v(r.line!), c.fmt)}</td>)
                     : <td colSpan={cols.length} className="c dim">no stats recorded</td>}
                 </tr>
               ))}
               <tr>
                 <td className="l strong" colSpan={3}>{cur.season} · {played.length} game{played.length === 1 ? "" : "s"}</td>
+                {hasGs && <td className={`c strong ${avgGs != null ? gsHeat(avgGs) : ""}`} title="Average game score">{avgGs != null ? avgGs.toFixed(1) : "—"}</td>}
                 {cols.map((c, k) => <td key={k} className="strong">{show(colTotal(c), c.fmt)}</td>)}
               </tr>
             </tbody>

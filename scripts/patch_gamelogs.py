@@ -8,6 +8,7 @@ cached box scores, without rebuilding the season. build_history.py writes them o
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from box import load_box, game_logs
+from game_score import rate_all
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "scripts", "cache")
@@ -40,6 +41,7 @@ def patch(y, d=None, get=no_fetch):
             if p["id"] in gl:
                 p["gl"] = gl[p["id"]]
                 n += 1
+        rate_all(f["players"])
         with open(os.path.join(d, "players", fn), "w") as fh:
             json.dump(f, fh, separators=(",", ":"))
     print(f"{y}: {len(games)} games, {sum(1 for r in box.values() if r)} box scores, {n} players with game logs")
