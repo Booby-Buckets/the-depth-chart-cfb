@@ -23,11 +23,7 @@ def fetch_export(season):
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.load(r).get("plays") or []
     except Exception as e:
-        for pid, cv in COV.items():
-        if cv["tgt"] >= 3:
-            player_hand[pid]["cover"] = {**cv, "window": dict(cv["window"]),
-                                         "ypt": round(cv["yds"] / cv["tgt"], 1), "compPct": round(cv["comp"] / cv["tgt"], 3)}
-    print(f"handchart: export unavailable ({e}); skipping")
+        print(f"handchart: export unavailable ({e}); skipping")
         return []
 
 
@@ -167,6 +163,10 @@ def build_handchart(season, plays):
             f = _finish(a)
             if f:
                 player_hand[pid][key] = f
+    for pid, cv in COV.items():
+        if cv["tgt"] >= 3:
+            player_hand[pid]["cover"] = {**cv, "window": dict(cv["window"]),
+                                         "ypt": round(cv["yds"] / cv["tgt"], 1), "compPct": round(cv["comp"] / cv["tgt"], 3)}
     for pid, cv in COV.items():
         if cv["tgt"] >= 3:
             player_hand[pid]["cover"] = {**cv, "window": dict(cv["window"]),
