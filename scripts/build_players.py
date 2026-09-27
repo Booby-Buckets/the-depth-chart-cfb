@@ -445,11 +445,13 @@ def build_player_files(ctx):
         p["pi"] = {k: rec[k] for k in ("off", "qb", "def", "st", "pen")} | {"g": len(log), "log": log}
 
     # --- per-game box-score lines (ESPN): the player page's game log ---
-    from box import load_box, game_logs
+    from box import load_box, game_logs, freshen_stats
     cutoff = time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime(time.time() - 3 * 86400))
     box = load_box(get, CACHE, games_list, refresh={g["id"] for g in games_list if g["date"] >= cutoff})
     for pid, gl in game_logs(box, lambda pid, tid: pid in P and P[pid]["tid"] == tid).items():
         P[pid]["gl"] = gl
+    fresher = sum(1 for p in P.values() if p.get("gl") and freshen_stats(p.setdefault("stats", {}), p["gl"]))
+    print(f"game logs: box scores ahead of the season feed for {fresher} players (their totals now come from the box scores)")
     from game_score import rate_all
     rate_all(P.values())   # 0–10 game scores (game_score.py)
     print(f"game logs: {sum(1 for p in P.values() if p.get('gl'))} players with box-score lines")

@@ -6,22 +6,27 @@ import type { LeaderRow } from "@/lib/data";
 import { fmt } from "@/lib/format";
 import { playerHref } from "@/lib/slug";
 import { logo } from "@/lib/logo";
+import st from "./players.module.css";
 
 type TeamInfo = { slug: string; logo: string; name: string };
 type Fmt = (v: number | null | undefined) => string;
-type Col = [key: string, label: string, f: Fmt, invert?: boolean];
+type Col = [key: string, label: string, f: Fmt, invert?: boolean, vol?: boolean];   // vol = a count: drawn boxed
 
 const pc: Fmt = (v) => (v == null ? "—" : (v * 100).toFixed(1) + "%");
 const n0: Fmt = (v) => (v == null ? "—" : v % 1 ? v.toFixed(1) : String(v));
 const e2: Fmt = (v) => (v == null ? "—" : fmt(v, 2, true));
 const share: Fmt = (v) => (v == null ? "—" : Math.round(v * 100) + "%");
 const d1: Fmt = (v) => (v == null ? "—" : v.toFixed(1));
+const sp: Fmt = (v) => (v == null ? "—" : (v > 0 ? "+" : "") + (v * 100).toFixed(1) + "%");   // signed percent (CROE)
+const s1: Fmt = (v) => (v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(1));               // signed total (EPA)
+const V = true;
 
-const BOARDS: Record<string, { l: string; sort: string; cols: Col[] }> = {
-  passing: { l: "Passing", sort: "yds", cols: [["att", "Att", n0], ["cmp", "Cmp", n0], ["pct", "Cmp %", pc], ["yds", "Yards", n0], ["td", "TD", n0], ["int", "INT", n0, true], ["ypa", "Y/A", n0], ["epa", "EPA/dropback", e2]] },
-  rushing: { l: "Rushing", sort: "yds", cols: [["car", "Car", n0], ["yds", "Yards", n0], ["ypc", "Y/C", n0], ["td", "TD", n0], ["long", "Long", n0], ["epa", "EPA/rush", e2]] },
-  receiving: { l: "Receiving", sort: "yds", cols: [["rec", "Rec", n0], ["yds", "Yards", n0], ["ypr", "Y/R", n0], ["td", "TD", n0], ["long", "Long", n0], ["use", "Target share", share]] },
-  defense: { l: "Defense", sort: "tot", cols: [["tot", "Tackles", n0], ["solo", "Solo", n0], ["tfl", "TFL", n0], ["sacks", "Sacks", n0], ["int", "INT", n0], ["pd", "PD", n0], ["qbh", "QB hurries", n0]] },
+const BOARDS: Record<string, { l: string; sort: string; cols: Col[]; tips?: Record<string, string> }> = {
+  passing: { l: "Passing", sort: "yds", cols: [["att", "Att", n0, false, V], ["cmp", "Cmp", n0, false, V], ["pct", "Cmp %", pc], ["yds", "Yards", n0], ["td", "TD", n0, false, V], ["int", "INT", n0, true, V], ["ypa", "Y/A", n0], ["passEpa", "Pass EPA", s1], ["epa", "EPA/dropback", e2]] },
+  rushing: { l: "Rushing", sort: "yds", cols: [["car", "Car", n0, false, V], ["yds", "Yards", n0], ["ypc", "Y/C", n0], ["td", "TD", n0, false, V], ["long", "Long", n0], ["rushEpa", "Rush EPA", s1], ["epa", "EPA/rush", e2]] },
+  receiving: { l: "Receiving", sort: "yds", cols: [["tgt", "Tgt", n0, false, V], ["rec", "Rec", n0, false, V], ["yds", "Yards", n0], ["td", "TD", n0, false, V], ["ypr", "Yds/Rec", d1], ["catchPct", "Catch %", pc], ["croe", "CROE", sp], ["recEpa", "Rec EPA", s1], ["use", "Tgt share", share]],
+    tips: { croe: "Catch rate over expected: catches vs. what the average FBS receiver catches on targets of the same depth and direction", recEpa: "Expected points added on every target, summed (our EP model)", tgt: "Targets: passes thrown to the player, from the play-by-play" } },
+  defense: { l: "Defense", sort: "tot", cols: [["tot", "Tackles", n0, false, V], ["solo", "Solo", n0, false, V], ["tfl", "TFL", n0, false, V], ["sacks", "Sacks", n0, false, V], ["int", "INT", n0, false, V], ["pd", "PD", n0, false, V], ["qbh", "QB hurries", n0, false, V]] },
   epa: { l: "EPA per play", sort: "epa", cols: [["plays", "Plays", n0], ["epa", "EPA/play", e2], ["epaPass", "Pass", e2], ["epaRush", "Rush", e2], ["use", "Usage", share]] },
   qbchart: { l: "QB charting", sort: "adot", cols: [["att", "Charted att", n0], ["pct", "Cmp %", pc], ["adot", "aDOT", d1], ["deep", "Deep %", share], ["airYds", "Air yds", n0], ["yacPer", "YAC/cmp", d1], ["press", "Pressured", share, true], ["sacks", "Sacks", n0, true]] },
   coverage: { l: "Coverage & pressure", sort: "pd", cols: [["pbu", "PBU", n0], ["int", "INT", n0], ["pd", "Passes defended", n0], ["hur", "QB hurries", n0], ["sacks", "Sacks", n0], ["tac", "Tkl after catch", n0], ["tacPer", "Yds/catch tackled", d1, true], ["yacPer", "YAC on those", d1, true]] },
@@ -116,12 +121,12 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
         <span className="count">{loaded ? <><strong>{Math.min(100, rows.length)}</strong> of {rows.length} shown</> : "Loading…"}</span>
       </div>
       <div className="sheet-wrap">
-        <table className="sheet dense freeze2" style={{ ["--c1" as string]: "44px", ["--c2" as string]: "190px" }}>
+        <table className={`sheet dense freeze2 ${st.pro}`} style={{ ["--c1" as string]: "44px", ["--c2" as string]: "190px" }}>
           <thead>
             <tr>
               <th className="rk">RK</th><th className="l">Player</th><th className="l">Team</th><th className="c">Pos</th><th className="c">Class</th>
               {B.cols.map(([k, l]) => (
-                <th key={k} className={`sort ${k === sortK ? "on" : ""}`} onClick={() => { if (k === sortK) setDir(-dir); else { setSortK(k); setDir(-1); } }}>
+                <th key={k} className={`sort ${k === sortK ? `on ${st.sorted}` : ""}`} title={B.tips?.[k]} onClick={() => { if (k === sortK) setDir(-dir); else { setSortK(k); setDir(-1); } }}>
                   {l}{k === sortK && <span className="ar">{dir < 0 ? "▼" : "▲"}</span>}
                 </th>
               ))}
@@ -130,7 +135,7 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
           <tbody>
             {rows.slice(0, 100).map((r, i) => (
               <tr key={`${r.id}-${r.group ?? ""}`}>
-                <td className="rk">{i + 1}</td>
+                <td className={`rk ${st.rk}`}>{String(i + 1).padStart(2, "0")}</td>
                 <td className="l nm">
                   <Link href={playerHref(r.name, r.id)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -140,8 +145,10 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
                 <td className="l dim">{teams[r.tid] ? <Link href={`${teamBase}/${teams[r.tid].slug}`} style={{ color: "inherit", textDecoration: "none" }}>{r.team}</Link> : r.team}</td>
                 <td className="c">{r.pos || ""}</td>
                 <td className="c dim">{r.cls || ""}</td>
-                {B.cols.map(([k, , f]) => (
-                  <td key={k} className={`${k === sortK ? "strong " : ""}${heat[k] ? heat[k](r[k] as number) : ""}`}>{f(r[k] as number)}</td>
+                {B.cols.map(([k, , f, , vol]) => (
+                  <td key={k} className={`${k === sortK ? `strong ${st.sorted} ` : ""}${!vol && heat[k] ? heat[k](r[k] as number) : ""}`}>
+                    {vol && r[k] != null ? <span className={st.box}>{f(r[k] as number)}</span> : f(r[k] as number)}
+                  </td>
                 ))}
               </tr>
             ))}

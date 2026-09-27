@@ -8,3 +8,10 @@
 .hits img { width: 22px; height: 22px; object-fit: contain; }
 .hits span { font-size: 11.5px; color: var(--text3); font-weight: 600; }
 .none { display: block; padding: 10px 12px; font-size: 12.5px; color: var(--text3); }
+
+/* "pro" leaderboard look: boxed counts, zero-padded ranks, a shaded sort column */
+.pro td { vertical-align: middle; }
+.rk { font-variant-numeric: tabular-nums; color: var(--accent) !important; font-weight: 700; }
+.box { display: inline-block; min-width: 30px; padding: 1px 6px; border: 1.5px solid color-mix(in srgb, var(--accent) 70%, transparent); border-radius: 5px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.5; }
+.pro tbody tr td.sorted { background-color: color-mix(in srgb, var(--text) 7%, transparent); }
+.pro thead th.sorted { background-color: color-mix(in srgb, var(--text) 9%, var(--bg2)); }

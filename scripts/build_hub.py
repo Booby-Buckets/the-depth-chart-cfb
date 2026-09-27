@@ -428,6 +428,12 @@ def main():
         build_awards.main()
     except Exception as e:
         print(f"awards: skipped ({e})")
+    try:   # the Play Finder: every play with EPA / WPA, + play-based leaderboard columns
+        import build_plays
+        build_plays.build(season)
+        build_plays.enrich_leaders(season, True)
+    except Exception as e:
+        print(f"plays: skipped ({e})")
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
     # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).
     site = "https://www.thedepthchartcfb.com"
