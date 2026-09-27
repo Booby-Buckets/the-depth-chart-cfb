@@ -423,6 +423,11 @@ def main():
         "games": fbs_games, "get": get, "plays": plays, "player_chart": player_chart, "player_hand": player_hand,
         "chart_games": {t: max(1, c["off"]["pass"]["gc"]) for t, c in team_chart.items()},
     })
+    try:   # award projections read the player + team files just written
+        import build_awards
+        build_awards.main()
+    except Exception as e:
+        print(f"awards: skipped ({e})")
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
     # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).
     site = "https://www.thedepthchartcfb.com"
@@ -433,7 +438,7 @@ def main():
             sl = f"{sl}-{r['id']}"
         seen.add(sl)
         tslug[r["id"]] = sl
-    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting"] \
+    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting", f"{site}/awards"] \
         + [f"{site}/teams/{tslug[r['id']]}" for r in rows] + [f"{site}/depth/{tslug[r['id']]}" for r in rows]
     # past seasons (scripts/build_history.py): rankings, leaderboards, every team's season
     seasons_dir = os.path.join(ROOT, "public", "data", "seasons")

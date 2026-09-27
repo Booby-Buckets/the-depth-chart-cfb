@@ -226,3 +226,8 @@ export async function getSeasonTeamIndex(y: number) {
   }
   return { hub, bySlug, slugOf };
 }
+
+/** Award projections (scripts/build_awards.py). */
+export type AwardRow = { id: string; name: string; tid: string; team: string; rank: number; rec: string; pos: string | null; cls: string | null; line: string; p?: number; score?: number; rel?: number };
+export type Awards = { season: number; built: string; gamesPlayed: number; heisman: AwardRow[]; awards: { key: string; name: string; for: string; list: AwardRow[] }[] };
+export const getAwards = () => readJson<Awards>("awards.json");
