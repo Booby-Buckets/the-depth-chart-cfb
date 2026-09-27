@@ -56,7 +56,8 @@ export type ZoneChart = {
   yacPer: number | null; cAtt: number; grid: Record<"L" | "M" | "R", [number, number, number][]>;
 };
 export type RushDirs = Record<"L" | "M" | "R", [number, number, number]>; // att, yds, successes
-export type PlayerChart = { pass?: PassChart; recv?: PassChart; rush?: RushDirs };
+export type DefChart = { pbu: number; int: number; pd: number; hur: number; tac: number; tacYds: number; tacPer: number | null; yacN: number; yac: number; yacPer: number | null; cov: number };
+export type PlayerChart = { pass?: PassChart; recv?: PassChart; rush?: RushDirs; def?: DefChart };
 export type TeamChartSide = {
   pass: PassChart; rush: RushDirs; sg: number | null; nh: number | null; press: number | null;
   adot: number | null; yacPer: number | null; deep: number | null;
@@ -80,7 +81,8 @@ export type HandRush = {
   box: Record<string, [number, number]>; bt: number; pts: [poaX: number | null, cx: number | null, cy: number | null, yds: number][];
   ybcAvg: number | null; yac: number | null;
 };
-export type PlayerHand = { pass?: HandPass; recv?: HandPass; rush?: HandRush };
+export type HandCover = { n: number; tgt: number; comp: number; yds: number; td: number; int: number; pbu: number; ypt: number; compPct: number; window: Record<string, number> };
+export type PlayerHand = { pass?: HandPass; recv?: HandPass; rush?: HandRush; cover?: HandCover };
 export type TeamHand = { off: { pass?: HandPass; rush?: HandRush }; def: { pass?: HandPass; rush?: HandRush } };
 
 export type TeamFile = {

@@ -24,9 +24,10 @@ const BOARDS: Record<string, { l: string; sort: string; cols: Col[] }> = {
   defense: { l: "Defense", sort: "tot", cols: [["tot", "Tackles", n0], ["solo", "Solo", n0], ["tfl", "TFL", n0], ["sacks", "Sacks", n0], ["int", "INT", n0], ["pd", "PD", n0], ["qbh", "QB hurries", n0]] },
   epa: { l: "EPA per play", sort: "epa", cols: [["plays", "Plays", n0], ["epa", "EPA/play", e2], ["epaPass", "Pass", e2], ["epaRush", "Rush", e2], ["use", "Usage", share]] },
   qbchart: { l: "QB charting", sort: "adot", cols: [["att", "Charted att", n0], ["pct", "Cmp %", pc], ["adot", "aDOT", d1], ["deep", "Deep %", share], ["airYds", "Air yds", n0], ["yacPer", "YAC/cmp", d1], ["press", "Pressured", share, true], ["sacks", "Sacks", n0, true]] },
+  coverage: { l: "Coverage & pressure", sort: "pd", cols: [["pbu", "PBU", n0], ["int", "INT", n0], ["pd", "Passes defended", n0], ["hur", "QB hurries", n0], ["sacks", "Sacks", n0], ["tac", "Tkl after catch", n0], ["tacPer", "Yds/catch tackled", d1, true], ["yacPer", "YAC on those", d1, true]] },
   rcvchart: { l: "Receiver charting", sort: "yacPer", cols: [["tgt", "Charted tgt", n0], ["rec", "Rec", n0], ["pct", "Catch %", pc], ["adot", "aDOT", d1], ["deep", "Deep tgt %", share], ["airYds", "Air yds", n0], ["yac", "YAC", n0], ["yacPer", "YAC/rec", d1]] },
 };
-const CHART_BOARDS = ["qbchart", "rcvchart"];
+const CHART_BOARDS = ["qbchart", "rcvchart", "coverage"];
 const GROUPS = ["QB", "RB", "WR/TE"];
 const VIEW_KEY = "cfb_players_view";
 
@@ -152,6 +153,8 @@ export default function Leaderboards({ initialBoard, initialRows, groupMin, team
           ? `EPA per play among ${grp}s with ${groupMin[grp]}+ plays per team game. Early in the season a handful of big plays can top this list, so check the play count.`
           : board === "qbchart"
           ? "Charted from the play-by-play: where each throw was caught or thrown to. aDOT = average air yards per attempt; Deep % = throws 20+ air yards; YAC/cmp = yards after the catch per completion; Pressured = dropbacks where the QB was hurried or sacked (as the play-by-play records it). QBs with 10+ charted throws per charted team game." + (noEpa ? " In 2025 ESPN only recorded throw spots from November on, so this covers roughly the last six games." : "")
+          : board === "coverage"
+          ? "From the play-by-play text. PBU = pass broken up; passes defended = PBUs + interceptions; QB hurries as the play text names the rusher. Tackles after catch = completions where he made the tackle (a stand-in for coverage plays: the text doesn't name the covering defender on every throw), with the yards gained and the yards after the catch on those plays. Lower yards are better."
           : board === "rcvchart"
           ? "Charted from the play-by-play. aDOT = average air yards per target; Deep tgt % = targets 20+ air yards; YAC = yards after the catch. Players with 4+ targets per charted team game." + (noEpa ? " In 2025 ESPN only recorded throw spots from November on, so this covers roughly the last six games." : "")
           : `The top 300 FBS players by ${B.l.toLowerCase()} ${B.sort === "tot" ? "tackles" : "yards"}. Click a column to re-sort them. EPA columns are per play.`}

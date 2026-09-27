@@ -10,7 +10,8 @@ export default function PlayerCharting({ ch, name, season }: { ch: PlayerChart; 
   const qb = ch.pass && ch.pass.att >= 10 ? ch.pass : null;
   const rc = ch.recv && ch.recv.att >= 5 ? ch.recv : null;
   const rs = ch.rush && Object.values(ch.rush).reduce((a, x) => a + x[0], 0) >= 10 ? ch.rush : null;
-  if (!qb && !rc && !rs) return null;
+  const df = ch.def && (ch.def.pd + ch.def.hur + ch.def.tac) >= 2 ? ch.def : null;
+  if (!qb && !rc && !rs && !df) return null;
   return (
     <section style={{ padding: season ? "8px 0" : "28px 0 8px" }} id={season ? `charting-${season}` : "charting"}>
       {season ? (
@@ -54,6 +55,21 @@ export default function PlayerCharting({ ch, name, season }: { ch: PlayerChart; 
         </>
       )}
       {rs && <div className={c.wrap}><RunDir r={rs} title="Run direction" /></div>}
+      {df && (
+        <>
+          <div className={c.tiles} style={{ marginTop: qb || rc || rs ? 18 : 0 }}>
+            <Tile k="Passes defended" v={df.pd} sub={`${df.pbu} broken up · ${df.int} intercepted`} />
+            <Tile k="QB hurries" v={df.hur} sub="as the play text names the rusher" />
+            <Tile k="Tackles after a catch" v={df.tac} sub={df.tacPer != null ? `${df.tacPer} yds per catch on those` : "completions he tackled"} />
+            {df.yacPer != null && <Tile k="YAC on those catches" v={df.yacPer.toFixed(1)} sub="yds after the catch before his tackle" />}
+            <Tile k="Coverage plays" v={df.cov} sub="PBUs + INTs + tackles after a catch" />
+          </div>
+          <p className="note" style={{ marginTop: 0 }}>
+            The play-by-play names the defender on breakups, interceptions and tackles, but not the man in coverage on every throw, so
+            true times-targeted isn&apos;t in the text. Coverage plays is the closest stand-in; exact targets come from hand charting.
+          </p>
+        </>
+      )}
     </section>
   );
 }

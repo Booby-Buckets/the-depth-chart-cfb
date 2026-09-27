@@ -19,7 +19,7 @@ export type ChartData = {
   launch?: Pt; target?: Pt; platform?: string; pressure?: string; pSrc?: string; pa?: boolean; rpo?: boolean;
   screen?: boolean; motion?: boolean; route?: string; cov?: string; drop?: boolean; contested?: boolean;
   throwaway?: boolean; batted?: boolean; bt?: number; poa?: Pt; contact?: Pt; concept?: string; gap?: string;
-  box?: string; window?: string; notes?: string;
+  box?: string; window?: string; covBy?: string; notes?: string;
 };
 type Game = { id: string; season: number; status?: string; teams: { id: string; name: string; abbr: string; logo: string; home: boolean }[]; plays: Play[]; saved: Record<string, Saved> };
 type SchedRow = { id: string; date: string; week: string; oppName: string; site: string; completed: boolean; res?: string; pf?: number; pa?: number };
@@ -62,6 +62,7 @@ export default function ChartTool({ teams }: { teams: TeamOpt[] }) {
   const [tid, setTid] = useState("");
   const [sched, setSched] = useState<SchedRow[]>([]);
   const [game, setGame] = useState<Game | null>(null);
+  const [defenders, setDefenders] = useState<Record<string, { id: string; name: string; no: string | null; pos: string | null }[]>>({});
   const [loadErr, setLoadErr] = useState("");
   const [side, setSide] = useState<"team" | "both">("team");
   const [cur, setCur] = useState(0);
@@ -102,6 +103,18 @@ export default function ChartTool({ teams }: { teams: TeamOpt[] }) {
     if (!r.ok) { setLoadErr(`Couldn't load the game (${r.status}).`); setStatus(""); return; }
     const g = (await r.json()) as Game;
     setGame(g);
+    // both teams' pass defenders, for the "primary coverage defender" pick
+    const DEF = new Set(["CB", "S", "FS", "SS", "DB", "SAF", "LB", "OLB", "ILB", "MLB", "NB", "STAR", "EDGE", "DE"]);
+    Promise.all(g.teams.map((tm) => fetch(`/data/players/${tm.id}.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null))).then((files) => {
+      const out: typeof defenders = {};
+      files.forEach((f, i) => {
+        if (!f) return;
+        out[g.teams[i].id] = (f.players as { id: string; name: string; no: string | null; pos: string | null; onRoster?: boolean }[])
+          .filter((p) => DEF.has(p.pos || "") && p.onRoster !== false)
+          .sort((a, b) => Number(a.no ?? 999) - Number(b.no ?? 999));
+      });
+      setDefenders(out);
+    });
     const first = g.plays.findIndex((p) => (p.off === tid) && !g.saved[p.seq]);
     openPlay(g, Math.max(0, first));
     setStatus("");
@@ -327,6 +340,16 @@ export default function ChartTool({ teams }: { teams: TeamOpt[] }) {
                   <Group title="Throw window" opts={OPTS.window} v={draft.window} on={(v) => toggle("window", v)} />
                   <Group title="Target's route" opts={OPTS.route} v={draft.route} on={(v) => toggle("route", v)} />
                   <Group title="Coverage" opts={OPTS.cov} v={draft.cov} on={(v) => toggle("cov", v)} />
+                  {kind === "pass" && play.def && (defenders[play.def] || []).length > 0 && (
+                    <div className={t.grp}>
+                      <h4>Primary coverage defender</h4>
+                      <select value={draft.covBy || ""} onChange={(e) => set({ covBy: e.target.value || undefined })} aria-label="Primary coverage defender"
+                        style={{ padding: "6px 8px", borderRadius: 8, border: "1px solid var(--border2)", background: "var(--bg)", color: "var(--text)", fontSize: 13, maxWidth: "100%" }}>
+                        <option value="">Not charted</option>
+                        {defenders[play.def].map((p) => <option key={p.id} value={p.id}>#{p.no ?? "?"} {p.name} ({p.pos})</option>)}
+                      </select>
+                    </div>
+                  )}
                   <div className={t.grp}><h4>Result</h4><div className={t.chips}>
                     <Flag l="Drop" on={!!draft.drop} f={() => flag("drop")} />
                     <Flag l="Contested catch" on={!!draft.contested} f={() => flag("contested")} />

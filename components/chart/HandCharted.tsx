@@ -118,13 +118,21 @@ const Head = ({ sub }: { sub: string }) => (
 );
 
 export function PlayerHandCharted({ h }: { h: PlayerHand }) {
-  if (!h.pass && !h.recv && !h.rush) return null;
+  if (!h.pass && !h.recv && !h.rush && !h.cover) return null;
   return (
     <section id="hand" style={{ padding: "28px 0 8px" }}>
       <Head sub="Charted by hand from the game film: exact spots, pressure, play action, routes and coverage. Only the plays charted so far count" />
       {h.pass && <PassBlock h={h.pass} who="qb" />}
       {h.recv && <PassBlock h={h.recv} who="recv" />}
       {h.rush && <RushBlock h={h.rush} />}
+      {h.cover && (
+        <div className={c.tiles}>
+          <Tile k="Times targeted" v={h.cover.tgt} sub="as the primary coverage defender" />
+          <Tile k="Completions allowed" v={`${h.cover.comp}/${h.cover.tgt}`} sub={`${Math.round(h.cover.compPct * 100)}% · ${h.cover.ypt} yds per target`} />
+          <Tile k="TD – INT allowed" v={`${h.cover.td}–${h.cover.int}`} sub={`${h.cover.pbu} broken up`} />
+          {Object.keys(h.cover.window).length > 0 && <Tile k="Throw windows" v={top(h.cover.window, 3).map(([k, v]) => `${k} ${v}`).join(" · ")} />}
+        </div>
+      )}
     </section>
   );
 }

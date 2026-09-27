@@ -293,6 +293,14 @@ def write_leaders(outdir, season, teams, have_stats, team_games=None):
                                          "pct": round(c.get("cComp", c["comp"]) / n(c), 3) if n(c) else None,
                                          "adot": c["adot"], "yacPer": c["yacPer"], "yac": c["yac"], "airYds": c["airYds"], "deep": c["deep"]}
                               for p in sorted(q, key=lambda p: -(ch(p, "recv")["yacPer"] or 0)) for c in [ch(p, "recv")]]
+    # coverage & pressure from the play text: breakups, INTs, hurries, tackles right after a catch
+    q = [p for p in have_stats if (p.get("chart") or {}).get("def")]
+    if q:
+        def dv(p):
+            return p["chart"]["def"]
+        boards["coverage"] = [base(p) | {"pbu": d["pbu"], "int": d["int"], "pd": d["pd"], "hur": d["hur"],
+                                         "sacks": st(p, "defensive", "SACKS") or 0, "tac": d["tac"], "tacPer": d["tacPer"], "yacPer": d["yacPer"]}
+                              for p in sorted(q, key=lambda p: (-dv(p)["pd"], -dv(p)["hur"]))[:300] for d in [dv(p)]]
     with open(os.path.join(outdir, "leaders.json"), "w") as f:
         json.dump({"season": season, "groupMin": GROUP_MIN, "chartMin": CHART_MIN, "boards": boards}, f, separators=(",", ":"))
 

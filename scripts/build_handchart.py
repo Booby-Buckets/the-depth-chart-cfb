@@ -23,7 +23,11 @@ def fetch_export(season):
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.load(r).get("plays") or []
     except Exception as e:
-        print(f"handchart: export unavailable ({e}); skipping")
+        for pid, cv in COV.items():
+        if cv["tgt"] >= 3:
+            player_hand[pid]["cover"] = {**cv, "window": dict(cv["window"]),
+                                         "ypt": round(cv["yds"] / cv["tgt"], 1), "compPct": round(cv["comp"] / cv["tgt"], 3)}
+    print(f"handchart: export unavailable ({e}); skipping")
         return []
 
 
@@ -113,6 +117,7 @@ def build_handchart(season, plays):
     if not rows:
         return {}, {}
     by_seq = {gid: {str(p.get("sequenceNumber")): p for p in items or []} for gid, items in plays.items()}
+    COV = defaultdict(lambda: {"n": 0, "tgt": 0, "comp": 0, "yds": 0, "td": 0, "int": 0, "pbu": 0, "window": Counter()})
     T = defaultdict(lambda: {"off": {"pass": _new_pass(), "rush": _new_rush()}, "def": {"pass": _new_pass(), "rush": _new_rush()}})
     QB, WR, RB = defaultdict(_new_pass), defaultdict(_new_pass), defaultdict(_new_rush)
     joined = 0
@@ -135,6 +140,15 @@ def build_handchart(season, plays):
             tg = _pid(p, "receiver")
             if tg and kind == "pass":
                 _add_pass(WR[tg], d, res, yds)
+            if d.get("covBy") and res in ("C", "X", "I"):      # true targets on the charted defender
+                cv = COV[str(d["covBy"])]
+                cv["n"] += 1; cv["tgt"] += 1
+                cv["comp"] += res == "C"; cv["yds"] += yds if res == "C" else 0
+                cv["int"] += res == "I"
+                cv["td"] += res == "C" and "TOUCHDOWN" in (p.get("text") or "").upper()
+                cv["pbu"] += res == "X" and "broken up" in (p.get("text") or "")
+                if d.get("window"):
+                    cv["window"][d["window"]] += 1
         elif kind == "run":
             for side, tid in (("off", r.get("off_tid")), ("def", r.get("def_tid"))):
                 if tid:
@@ -153,5 +167,9 @@ def build_handchart(season, plays):
             f = _finish(a)
             if f:
                 player_hand[pid][key] = f
+    for pid, cv in COV.items():
+        if cv["tgt"] >= 3:
+            player_hand[pid]["cover"] = {**cv, "window": dict(cv["window"]),
+                                         "ypt": round(cv["yds"] / cv["tgt"], 1), "compPct": round(cv["comp"] / cv["tgt"], 3)}
     print(f"handchart: {len(rows)} charted plays ({joined} matched to play-by-play); {len(team_hand)} teams, {len(player_hand)} players")
     return team_hand, dict(player_hand)

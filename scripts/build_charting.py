@@ -234,6 +234,105 @@ def _finish_pass(a):
     return out
 
 
+RE_HURRY = re.compile(r"hurried by (#\d+ [A-Z][\w.'’\- ]+?)(?: and (#\d+ [A-Z][\w.'’\- ]+?))?(?=,| broken| PENALTY| End|$)")
+RE_INTBY = re.compile(r"intercepted by (#\d+ [A-Z][\w.'’\- ]+?) at ")
+
+
+def _roster_index():
+    """{tid: {jersey: [(pid, name)]}} from the last published player files (jersey + name matching
+    for defenders the play text names but ESPN doesn't tag: QB hurries, some interceptions)."""
+    import glob, json, os
+    idx = {}
+    d = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public", "data", "players")
+    for f in glob.glob(os.path.join(d, "*.json")):
+        tid = os.path.basename(f)[:-5]
+        if not tid.isdigit():
+            continue
+        try:
+            for p in json.load(open(f)).get("players", []):
+                if p.get("no") not in (None, ""):
+                    idx.setdefault(tid, {}).setdefault(str(p["no"]), []).append((p["id"], p.get("name") or ""))
+        except (OSError, ValueError):
+            pass
+    return idx
+
+
+def _who(tag, tid, idx):
+    """'#58 L.Westfall' on team tid -> player id (jersey, then first initial + last name to break ties)."""
+    m = re.match(r"#(\d+) ([A-Z])\.?\s*(.+)", tag.strip())
+    if not m:
+        return None
+    cands = (idx.get(tid) or {}).get(m.group(1), [])
+    if len(cands) == 1:
+        return cands[0][0]
+    last = m.group(3).split()[-1].lower()
+    hits = [pid for pid, nm in cands if nm.split() and nm.split()[-1].lower() == last and nm[:1] == m.group(2)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def defense_chart(games, plays):
+    """Per defender: pass breakups, interceptions, QB hurries, and tackles made right after a catch
+    (with the yards and YAC on those catches) — a stand-in for coverage plays; the text doesn't name
+    the covering defender on every target."""
+    idx = _roster_index()
+    D = defaultdict(lambda: {"pbu": 0, "int": 0, "hur": 0, "tac": 0, "tacYds": 0, "yacN": 0, "yac": 0})
+    for g in games:
+        items = plays.get(g["id"]) if g.get("completed") else None
+        if not items:
+            continue
+        owner = _learn_spots(items)
+        for p in items:
+            t = (p.get("type") or {}).get("text", "")
+            text = p.get("text") or ""
+            if "NO PLAY" in text or t == "Penalty":
+                continue
+            off, dfn = _sides(p)
+            roles = [(x.get("type"), (x.get("athlete") or {}).get("$ref", "").rsplit("/", 1)[-1].split("?", 1)[0]) for x in p.get("participants") or []]
+            if t == "Pass Incompletion":
+                for r, pid in roles:
+                    if r == "passDefender" and pid:
+                        D[pid]["pbu"] += 1
+            elif "Interception" in t:
+                pid = next((pid for r, pid in roles if r == "passDefender" and pid), None)
+                if not pid:
+                    m = RE_INTBY.search(text)
+                    pid = _who(m.group(1), dfn, idx) if m and dfn else None
+                if pid:
+                    D[pid]["int"] += 1
+            elif t in ("Pass Reception", "Passing Touchdown"):
+                yds = p.get("statYardage") or 0
+                air = None
+                m = RE_CATCH.search(text)
+                ytg = (p.get("start") or {}).get("yardsToEndzone")
+                if m and ytg is not None and off:
+                    sy = _spot_ytg(m.group(1), int(m.group(2)), owner, off)
+                    if sy is not None and -15 <= ytg - sy <= 75:
+                        air = ytg - sy
+                tacklers = [pid for r, pid in roles if r in ("tackler", "assistedBy") and pid]
+                for pid in tacklers:
+                    d = D[pid]
+                    d["tac"] += 1
+                    d["tacYds"] += yds
+                    if air is not None:
+                        d["yacN"] += 1
+                        d["yac"] += yds - air
+            if "hurried by" in text and dfn:
+                m = RE_HURRY.search(text)
+                if m:
+                    for tag in (m.group(1), m.group(2)):
+                        pid = _who(tag, dfn, idx) if tag else None
+                        if pid:
+                            D[pid]["hur"] += 1
+    out = {}
+    for pid, d in D.items():
+        if d["pbu"] + d["int"] + d["hur"] + d["tac"] == 0:
+            continue
+        out[pid] = {**d, "pd": d["pbu"] + d["int"], "cov": d["pbu"] + d["int"] + d["tac"],
+                    "tacPer": round(d["tacYds"] / d["tac"], 1) if d["tac"] else None,
+                    "yacPer": round(d["yac"] / d["yacN"], 1) if d["yacN"] else None}
+    return out
+
+
 def chart_all(games, plays, teams):
     """(team_chart, player_chart) for every FBS team and player from this season's play-by-play."""
     recs = []
@@ -313,6 +412,8 @@ def chart_all(games, plays, teams):
     for pid, d in RB.items():
         if sum(c[0] for c in d.values()) >= 5:
             player_chart.setdefault(pid, {})["rush"] = d
+    for pid, d in defense_chart(games, plays).items():
+        player_chart.setdefault(pid, {})["def"] = d
     print(f"charting: {passes} passes ({spotted} with a throw/catch spot = {spotted / max(passes, 1):.0%}), "
           f"{sum(1 for r in recs if r['kind'] == 'rush')} runs; {len(team_chart)} teams, {len(player_chart)} players")
     return team_chart, player_chart
