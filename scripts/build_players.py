@@ -18,12 +18,14 @@ CFBD calls: 4 bulk feeds, each at most once per build_hub.CFBD_MAX_AGE. If CFBD 
 reached, player stat blocks are carried over from the last published files instead of
 being dropped.
 """
-import json, os, re
+import json, os, re, time
 from build_pbp import build_plays_involved
 from build_starters import build_starters, OL_POS
 from build_advanced import player_advanced, rank_players
 from build_recruiting import build_recruiting
 import snap_model
+
+CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 
 # ranked stats: (category, stat, label, min per team game to qualify, higher is better)
 RANKED = [
@@ -441,6 +443,14 @@ def build_player_files(ctx):
                         "tp": team_plays.get((gid, tid), 0), **c})
         log.sort(key=lambda x: x["date"])
         p["pi"] = {k: rec[k] for k in ("off", "qb", "def", "st", "pen")} | {"g": len(log), "log": log}
+
+    # --- per-game box-score lines (ESPN): the player page's game log ---
+    from box import load_box, game_logs
+    cutoff = time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime(time.time() - 3 * 86400))
+    box = load_box(get, CACHE, games_list, refresh={g["id"] for g in games_list if g["date"] >= cutoff})
+    for pid, gl in game_logs(box, lambda pid, tid: pid in P and P[pid]["tid"] == tid).items():
+        P[pid]["gl"] = gl
+    print(f"game logs: {sum(1 for p in P.values() if p.get('gl'))} players with box-score lines")
 
     # --- who started each game (ESPN per-game rosters): the only trace offensive linemen leave ---
     def log_row(p, gid):

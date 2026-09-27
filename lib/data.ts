@@ -141,6 +141,7 @@ export type PlayerAdv = {
   def?: { tkl: number; tfl: number; sacks: number; pd: number; ints: number; ff: number; stops: number; havoc: number } & Rk;
 };
 export type PlayerFull = PlayerLite & {
+  gl?: Record<string, Record<string, Record<string, number>>>;   // game id -> box-score line (scripts/box.py)
   adv?: PlayerAdv;
   chart?: PlayerChart;
   hand?: PlayerHand;
@@ -207,8 +208,8 @@ export const getSeasonHub = (y: number) => readJson<Hub & { final?: boolean; def
 export const getSeasonTeam = (y: number, id: string) => readJson<TeamFile>(`seasons/${y}/teams/${id}.json`);
 export const getSeasonLeaders = (y: number) => readJson<Leaders>(`seasons/${y}/players/leaders.json`);
 
-/** A past season's player file: season totals, advanced, estimated snaps (no per-game logs). */
-export type SeasonPlayer = PlayerLite & { tid: string; g: number; es?: number | null; esTP?: number | null; adv?: PlayerAdv; chart?: PlayerChart };
+/** A past season's player file: season totals, advanced, estimated snaps, box-score game logs. */
+export type SeasonPlayer = PlayerLite & { tid: string; g: number; gl?: PlayerFull["gl"]; es?: number | null; esTP?: number | null; adv?: PlayerAdv; chart?: PlayerChart };
 export const getSeasonPlayers = (y: number, tid: string) => readJson<{ season: number; tid: string; players: SeasonPlayer[] }>(`seasons/${y}/players/${tid}.json`);
 
 /** {player id: [[season, team id], ...]} across every built season plus the current one. */

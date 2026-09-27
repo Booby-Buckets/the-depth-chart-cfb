@@ -34,59 +34,11 @@ from build_players import estimate_snaps, write_leaders
 
 ROOT = H.ROOT
 CACHE = H.CACHE
-SUMMARY = "https://site.web.api.espn.com/apis/site/v2/sports/football/college-football/summary?event="
-
-# box-score label -> our stat key, per category; "c/a" splits made/attempted
-LABELS = {
-    "passing": {"C/ATT": ("COMPLETIONS", "ATT"), "YDS": "YDS", "TD": "TD", "INT": "INT"},
-    "rushing": {"CAR": "CAR", "YDS": "YDS", "TD": "TD", "LONG": "LONG"},
-    "receiving": {"REC": "REC", "YDS": "YDS", "TD": "TD", "LONG": "LONG"},
-    "fumbles": {"FUM": "FUM", "LOST": "LOST", "REC": "REC"},
-    "defensive": {"TOT": "TOT", "SOLO": "SOLO", "SACKS": "SACKS", "TFL": "TFL", "PD": "PD", "QB HUR": "QB HUR", "TD": "TD"},
-    "interceptions": {"INT": "INT", "YDS": "YDS", "TD": "TD"},
-    "kickReturns": {"NO": "NO", "YDS": "YDS", "TD": "TD", "LONG": "LONG"},
-    "puntReturns": {"NO": "NO", "YDS": "YDS", "TD": "TD", "LONG": "LONG"},
-    "kicking": {"FG": ("FGM", "FGA"), "LONG": "LONG", "XP": ("XPM", "XPA"), "PTS": "PTS"},
-    "punting": {"NO": "NO", "YDS": "YDS", "TB": "TB", "In 20": "In 20", "LONG": "LONG"},
-}
-MAXED = {"LONG"}
-
-
-def _num(v):
-    try:
-        return float(str(v).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
+from box import LABELS, MAXED, _num, load_box as _load_box, game_logs
 
 
 def load_box(games):
-    """{game_id: [(team_id, category, labels, athlete{id,name,jersey}, stats[])]} from ESPN box
-    scores, trimmed to the players block and cached forever (box_<id>.json)."""
-    def fetch(g):
-        gid = g["id"]
-        path = os.path.join(CACHE, f"box_{gid}.json")
-        if os.path.exists(path):
-            with open(path) as f:
-                return gid, json.load(f)
-        try:
-            d = H.get(SUMMARY + gid)
-        except Exception as e:
-            print(f"box: game {gid} unavailable ({e})")
-            return gid, []
-        rows = []
-        for t in (d.get("boxscore") or {}).get("players", []):
-            tid = str((t.get("team") or {}).get("id"))
-            for cat in t.get("statistics", []):
-                for a in cat.get("athletes", []):
-                    at = a.get("athlete") or {}
-                    if at.get("id"):
-                        rows.append([tid, cat.get("name"), cat.get("labels"), {"id": str(at["id"]), "name": at.get("displayName"), "no": at.get("jersey")}, a.get("stats")])
-        with open(path, "w") as f:
-            json.dump(rows, f, separators=(",", ":"))
-        return gid, rows
-
-    with ThreadPoolExecutor(8) as ex:
-        return dict(ex.map(fetch, [g for g in games if g["completed"]]))
+    return _load_box(H.get, CACHE, games)
 
 
 def role_from_stats(st):
@@ -307,7 +259,9 @@ def build_season(season, current_pos, careers):
         "team_adv": team_adv, "history_roster": roster, "team_chart": team_chart,
     })
 
-    # compact player files: season totals, advanced, estimated snaps (no per-game logs)
+    # compact player files: season totals, advanced, estimated snaps, box-score game logs
+    for pid, gl in game_logs(box, lambda pid, tid: pid in P and P[pid]["tid"] == tid).items():
+        P[pid]["gl"] = gl
     by_team = {}
     for p in P.values():
         pi_ = p.pop("pi", None) or {}

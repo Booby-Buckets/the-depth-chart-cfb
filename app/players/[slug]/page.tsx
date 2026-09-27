@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
-import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, getCareers, getSeasonPlayers, getSeasonTeamIndex, type HubTeam, type PlayerFull, type PlayersFile } from "@/lib/data";
+import { getTeamIndex, getTeam, getPlayersFile, getPlayerTeam, getCareers, getSeasonPlayers, getSeasonTeam, getSeasonTeamIndex, type HubTeam, type SchedGame, type PlayerFull, type PlayersFile } from "@/lib/data";
 import PlayerCharting from "@/components/chart/PlayerCharting";
 import PastCharting from "@/components/chart/PastCharting";
 import { PlayerHandCharted } from "@/components/chart/HandCharted";
 import Career, { type CareerRow } from "@/components/player/Career";
+import GameLog, { type GameLogSeason } from "@/components/player/GameLog";
 import { fmt, ord } from "@/lib/format";
 import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
 import { teamColors } from "@/lib/teamColor";
@@ -33,7 +34,8 @@ async function load(slug: string) {
   if (!P) notFound();
   if (slug !== playerSlug(P.name, pid)) permanentRedirect(playerHref(P.name, pid)); // bare id or a renamed slug -> canonical URL
   const career = await careerRows(pid, { season: idx.hub.season, tid, P, team: idx.hub.teams.find((t) => t.id === tid) ?? null, teamSlug: idx.slugOf.get(tid) ?? null });
-  return { kind: "current" as const, P, PL, TM, teamSlug: idx.slugOf.get(tid)!, career };
+  const logs = await gameLogs(career, TM.schedule);
+  return { kind: "current" as const, P, PL, TM, teamSlug: idx.slugOf.get(tid)!, career, logs };
 }
 
 /** Every season we have for a player, newest first (the current season from the live files). */
@@ -57,10 +59,30 @@ async function careerRows(pid: string, cur: { season: number; tid: string; P: Pl
   return rows;
 }
 
+/** Game logs for every season with box-score lines, newest first: the team's completed games
+ *  joined to the player's line in each (null = on the roster, no stat that game). */
+async function gameLogs(career: CareerRow[], curSchedule: SchedGame[] | null): Promise<GameLogSeason[]> {
+  const out: GameLogSeason[] = [];
+  const idx = await getTeamIndex();
+  for (const r of career) {
+    const gl = r.p.gl;
+    if (!gl || !r.team) continue;
+    let sched: SchedGame[] = [];
+    try { sched = r.current && curSchedule ? curSchedule : (await getSeasonTeam(r.season, r.team.id)).schedule; } catch { continue; }
+    const slugs = r.current ? idx.slugOf : (await getSeasonTeamIndex(r.season)).slugOf;
+    const rows = sched.filter((g) => g.completed).map((g) => ({
+      id: g.id, date: g.date, wk: g.week, site: g.site, opp: g.opp, oppName: g.oppName, oppLogo: g.oppLogo || null,
+      oppSlug: g.oppFbs ? slugs.get(g.opp) ?? null : null, res: g.res ?? null, pf: g.pf ?? null, pa: g.pa ?? null, line: gl[g.id] ?? null,
+    }));
+    if (rows.some((x) => x.line)) out.push({ season: r.season, team: r.team.name, rows });
+  }
+  return out;
+}
+
 async function loadCareerOnly(pid: string) {
   const rows = await careerRows(pid, null);
   if (!rows.length) return null;
-  return { name: rows[0].p.name, pos: rows[0].p.pos, career: rows };
+  return { name: rows[0].p.name, pos: rows[0].p.pos, career: rows, logs: await gameLogs(rows, null) };
 }
 
 export async function generateMetadata({ params }: PageProps<"/players/[slug]">): Promise<Metadata> {
@@ -89,8 +111,8 @@ const n0 = (v: number | null | undefined) => (v == null ? "—" : v % 1 ? v.toFi
 export default async function PlayerPage({ params }: PageProps<"/players/[slug]">) {
   const { slug } = await params;
   const L = await load(slug);
-  if (L.kind === "past") return <PastPlayer name={L.name} pos={L.pos} career={L.career} />;
-  const { P, PL, TM, teamSlug, career } = L;
+  if (L.kind === "past") return <PastPlayer name={L.name} pos={L.pos} career={L.career} logs={L.logs} />;
+  const { P, PL, TM, teamSlug, career, logs } = L;
   const M = TM.meta, R = TM.rating;
   const group = Object.keys(GROUPS).find((g) => GROUPS[g].includes(P.pos || ""));
   const st = (c: string, k: string) => P.stats[c]?.[k];
@@ -169,6 +191,8 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
       <PastCharting rows={career} name={P.name} />
 
       {career.length > 1 && <Career rows={career} name={P.name} />}
+
+      <GameLog seasons={logs} name={P.name} />
 
       <section className={s.section}>
         <div className="sec-h"><h2>{PL.season} Season Stats</h2><p>FBS rank among qualifying players</p></div>
@@ -402,7 +426,7 @@ function AdvancedTables({ P }: { P: PlayerFull }) {
 }
 
 /* ---------- a player who's no longer on an FBS roster: their career from past seasons ---------- */
-function PastPlayer({ name, pos, career }: { name: string; pos: string | null; career: CareerRow[] }) {
+function PastPlayer({ name, pos, career, logs }: { name: string; pos: string | null; career: CareerRow[]; logs: GameLogSeason[] }) {
   const last = career[0], first = career[career.length - 1];
   const schools = [...new Map(career.filter((r) => r.team).map((r) => [r.team!.id, r.team!.name])).values()];
   return (
@@ -413,6 +437,7 @@ function PastPlayer({ name, pos, career }: { name: string; pos: string | null; c
         <p className="page-sub">{[pos, schools.join(" → ")].filter(Boolean).join(" · ")}. Not on a current FBS roster; here is every season we have.</p>
       </header>
       <Career rows={career} name={name} />
+      <GameLog seasons={logs} name={name} />
       <PastCharting rows={career} name={name} open />
     </div>
   );
