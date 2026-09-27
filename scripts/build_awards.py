@@ -93,6 +93,9 @@ def heisman(hub, teams, outlook, players):
         cands.append(p)
     rnd = random.Random(7)
     sims = np.zeros(len(cands))
+    conf_of = np.array([teams[p["tid"]].get("conf") or "" for p in cands])
+    confs = sorted(set(conf_of))
+    opoy = {c: np.zeros(len(cands)) for c in confs}           # times each is his conference's top offensive player
     rem_of = {tid: (outlook.get(tid) or {}).get("remaining", 0) for tid in teams}
     # early in the season the race is mostly narrative still to come: flatten the odds by the share
     # of the regular season left (temperature 1 at the end, ~2 with two-thirds to go)
@@ -129,17 +132,21 @@ def heisman(hub, teams, outlook, players):
             x["played"] = min(1.0, (g + played_rest) / max(1, team_g[tid] + rem))
             X.append([x[f] for f in F])
         Z = (np.array(X) - mu) / sd
-        z = (Z @ beta) / temp
+        raw = Z @ beta
+        for c in confs:
+            idx = np.where(conf_of == c)[0]
+            if len(idx):
+                opoy[c][idx[np.argmax(raw[idx])]] += 1
+        z = raw / temp
         e = np.exp(z - z.max())
         sims += e / e.sum()
     prob = sims / N_SIMS
-    return prob, cands
+    return prob, cands, {c: v / N_SIMS for c, v in opoy.items()}
 
 
-def heisman_odds(hub, teams, outlook, players):
-    prob, cands = heisman(hub, teams, outlook, players)
-    order = np.argsort(-prob)[:TOP]
-    return [base(cands[i], teams) | {"p": round(float(prob[i]), 4)} for i in order]
+def top_list(prob, pool, teams, k):
+    order = [i for i in np.argsort(-prob)[:k] if prob[i] > 0]
+    return [base(pool[i], teams) | {"p": round(float(prob[i]), 4)} for i in order]
 
 
 # ---------------- position awards ----------------
@@ -149,62 +156,149 @@ def z(vals):
     return (a - a.mean()) / s if s > 0 else a * 0
 
 
+# (weight, per-game feature, scales with the rest of the season?) — rates like Y/A or FG% don't
+C_, R_ = True, False
 AWARDS = [
-    # key, name, what it's for, position filter, min games, [(weight, per-game feature)]
+    # key, name, what it's for, position filter, min games, terms
     ("obrien", "Davey O'Brien Award", "Best quarterback", lambda p: p.get("pos") == "QB", 3,
-     [(1.0, lambda p, g: S(p, "passing", "YDS") / g), (1.2, lambda p, g: S(p, "passing", "TD") / g),
-      (-0.9, lambda p, g: S(p, "passing", "INT") / g), (0.5, lambda p, g: S(p, "rushing", "YDS") / g),
-      (0.6, lambda p, g: S(p, "passing", "YPA"))]),
+     [(1.0, lambda p, g: S(p, "passing", "YDS") / g, C_), (1.2, lambda p, g: S(p, "passing", "TD") / g, C_),
+      (-0.9, lambda p, g: S(p, "passing", "INT") / g, C_), (0.5, lambda p, g: S(p, "rushing", "YDS") / g, C_),
+      (0.6, lambda p, g: S(p, "passing", "YPA"), R_)]),
     ("walker", "Doak Walker Award", "Best running back", lambda p: p.get("pos") in ("RB", "FB"), 3,
-     [(1.3, lambda p, g: S(p, "rushing", "YDS") / g), (0.8, lambda p, g: S(p, "rushing", "TD") / g),
-      (0.5, lambda p, g: S(p, "rushing", "YPC") if S(p, "rushing", "CAR") >= 30 else 0), (0.4, lambda p, g: S(p, "receiving", "YDS") / g)]),
+     [(1.3, lambda p, g: S(p, "rushing", "YDS") / g, C_), (0.8, lambda p, g: S(p, "rushing", "TD") / g, C_),
+      (0.5, lambda p, g: S(p, "rushing", "YPC") if S(p, "rushing", "CAR") >= 30 else 0, R_), (0.4, lambda p, g: S(p, "receiving", "YDS") / g, C_)]),
     ("biletnikoff", "Biletnikoff Award", "Best receiver", lambda p: p.get("pos") == "WR", 3,
-     [(1.3, lambda p, g: S(p, "receiving", "YDS") / g), (0.8, lambda p, g: S(p, "receiving", "TD") / g),
-      (0.6, lambda p, g: S(p, "receiving", "REC") / g)]),
+     [(1.3, lambda p, g: S(p, "receiving", "YDS") / g, C_), (0.8, lambda p, g: S(p, "receiving", "TD") / g, C_),
+      (0.6, lambda p, g: S(p, "receiving", "REC") / g, C_)]),
     ("mackey", "John Mackey Award", "Best tight end", lambda p: p.get("pos") == "TE", 3,
-     [(1.2, lambda p, g: S(p, "receiving", "YDS") / g), (0.8, lambda p, g: S(p, "receiving", "TD") / g),
-      (0.6, lambda p, g: S(p, "receiving", "REC") / g)]),
+     [(1.2, lambda p, g: S(p, "receiving", "YDS") / g, C_), (0.8, lambda p, g: S(p, "receiving", "TD") / g, C_),
+      (0.6, lambda p, g: S(p, "receiving", "REC") / g, C_)]),
     ("butkus", "Butkus Award", "Best linebacker", lambda p: p.get("pos") in ("LB", "OLB", "ILB", "MLB"), 3,
-     [(1.0, lambda p, g: S(p, "defensive", "TOT") / g), (1.0, lambda p, g: S(p, "defensive", "TFL") / g),
-      (0.8, lambda p, g: S(p, "defensive", "SACKS") / g), (0.6, lambda p, g: (S(p, "defensive", "PD") + S(p, "interceptions", "INT")) / g)]),
+     [(1.0, lambda p, g: S(p, "defensive", "TOT") / g, C_), (1.0, lambda p, g: S(p, "defensive", "TFL") / g, C_),
+      (0.8, lambda p, g: S(p, "defensive", "SACKS") / g, C_), (0.6, lambda p, g: (S(p, "defensive", "PD") + S(p, "interceptions", "INT")) / g, C_)]),
     ("thorpe", "Jim Thorpe Award", "Best defensive back", lambda p: p.get("pos") in ("CB", "S", "FS", "SS", "DB"), 3,
-     [(1.3, lambda p, g: (S(p, "defensive", "PD") + 1.5 * S(p, "interceptions", "INT")) / g),
-      (0.5, lambda p, g: S(p, "defensive", "TOT") / g), (0.3, lambda p, g: S(p, "defensive", "TFL") / g)]),
-    ("nagurski", "Bronko Nagurski Trophy", "Best defensive player", lambda p: p.get("pos") in
-     ("DL", "DE", "DT", "NT", "EDGE", "LB", "OLB", "ILB", "MLB", "CB", "S", "FS", "SS", "DB"), 3,
-     [(1.2, lambda p, g: S(p, "defensive", "SACKS") / g), (1.0, lambda p, g: S(p, "defensive", "TFL") / g),
-      (0.9, lambda p, g: (S(p, "defensive", "PD") + 1.5 * S(p, "interceptions", "INT")) / g),
-      (0.5, lambda p, g: S(p, "defensive", "TOT") / g), (0.4, lambda p, g: S(p, "defensive", "QB HUR") / g)]),
+     [(1.3, lambda p, g: (S(p, "defensive", "PD") + 1.5 * S(p, "interceptions", "INT")) / g, C_),
+      (0.5, lambda p, g: S(p, "defensive", "TOT") / g, C_), (0.3, lambda p, g: S(p, "defensive", "TFL") / g, C_)]),
+    ("nagurski", "Bronko Nagurski Trophy", "Best defensive player", lambda p: p.get("pos") in DEF_POS, 3, None),
     ("groza", "Lou Groza Award", "Best place-kicker", lambda p: p.get("pos") in ("PK", "K") and S(p, "kicking", "FGA") >= 3, 3,
-     [(1.2, lambda p, g: S(p, "kicking", "FGM") / g), (1.0, lambda p, g: S(p, "kicking", "PCT")),
-      (0.6, lambda p, g: S(p, "kicking", "LONG"))]),
+     [(1.2, lambda p, g: S(p, "kicking", "FGM") / g, C_), (1.0, lambda p, g: S(p, "kicking", "PCT"), R_),
+      (0.6, lambda p, g: S(p, "kicking", "LONG"), R_)]),
     ("guy", "Ray Guy Award", "Best punter", lambda p: p.get("pos") == "P" and S(p, "punting", "NO") >= 8, 3,
-     [(1.4, lambda p, g: S(p, "punting", "YPP")), (0.6, lambda p, g: S(p, "punting", "In 20") / max(1, S(p, "punting", "NO")))]),
+     [(1.4, lambda p, g: S(p, "punting", "YPP"), R_), (0.6, lambda p, g: S(p, "punting", "In 20") / max(1, S(p, "punting", "NO")), R_)]),
 ]
+DEF_POS = ("DL", "DE", "DT", "NT", "EDGE", "LB", "OLB", "ILB", "MLB", "CB", "S", "FS", "SS", "DB")
+DEFENSE = [(1.2, lambda p, g: S(p, "defensive", "SACKS") / g, C_), (1.0, lambda p, g: S(p, "defensive", "TFL") / g, C_),
+           (0.9, lambda p, g: (S(p, "defensive", "PD") + 1.5 * S(p, "interceptions", "INT")) / g, C_),
+           (0.5, lambda p, g: S(p, "defensive", "TOT") / g, C_), (0.4, lambda p, g: S(p, "defensive", "QB HUR") / g, C_)]
+OFFENSE = [(1.0, lambda p, g: (S(p, "passing", "YDS") * 0.6 + S(p, "rushing", "YDS") + S(p, "receiving", "YDS")) / g, C_),
+           (1.0, lambda p, g: (S(p, "passing", "TD") + S(p, "rushing", "TD") + S(p, "receiving", "TD")) / g, C_),
+           (-0.5, lambda p, g: S(p, "passing", "INT") / g, C_)]
 
 
-def position_awards(teams, players):
+# How hard a player's start regresses (his pace so far counts like K games of "average") and one
+# game's spread around his level (in SDs of the award score). Defensive counting stats (sacks, TFL,
+# INTs) are far noisier week to week than passing/rushing/receiving production, so they regress more.
+NOISE = {"off": (6.0, 2.5), "def": (10.0, 4.5), "fr": (8.0, 3.5)}
+K_REGRESS, PER_GAME_SD = NOISE["off"]
+
+
+def composite(pool, terms, teams, team_w=0.35):
+    """Standardized award score now: each term z-scored across the pool, plus a small winning-team term."""
+    total = 0
+    for w, f, _ in terms:
+        v = np.array([f(p, games_of(p)) for p in pool], float)
+        total = total + w * (v - v.mean()) / (v.std() or 1.0)
+    tz = np.array([-math.log(max(1, teams.get(p["tid"], {}).get("rank", 130))) for p in pool])
+    c = total + team_w * (tz - tz.mean()) / (tz.std() or 1)
+    return (c - c.mean()) / (c.std() or 1)
+
+
+def sim_from(c, pool, outlook, seed, kind="off"):
+    """[n, sims] end-of-season scores from the standardized score now: remaining games drawn around
+    his level regressed toward average (K_REGRESS), per-game noise averaged over them, a small chance
+    he misses the rest; final = games-weighted blend of now and the rest."""
+    rnd = np.random.default_rng(seed)
+    K, SD = NOISE[kind]
+    c = (c - c.mean()) / (c.std() or 1)
+    g = np.array([games_of(p) for p in pool], float)
+    rem = np.array([float((outlook.get(p["tid"]) or {}).get("remaining", 0)) for p in pool])
+    fut = rnd.normal((c * g / (g + K))[:, None], SD / np.sqrt(np.maximum(rem, 1))[:, None], (len(pool), N_SIMS))
+    miss = rnd.random((len(pool), N_SIMS)) < (0.04 * rem / 8)[:, None]
+    played = np.where(miss, 0.0, rem[:, None])
+    final = (c[:, None] * g[:, None] + fut * played) / np.maximum(1, g[:, None] + played)
+    return np.where(miss, final - 1.0 * (rem / np.maximum(1, g + rem))[:, None], final)
+
+
+def sim_scores(pool, terms, teams, outlook, seed, team_w=0.35, kind="off"):
+    return sim_from(composite(pool, terms, teams, team_w), pool, outlook, seed, kind)
+
+
+def win_share(scores, groups=None):
+    """Share of simulations each player finishes first (within his group if given)."""
+    n, S_ = scores.shape
+    out = np.zeros(n)
+    if groups is None:
+        for j in np.argmax(scores, 0):
+            out[j] += 1
+        return out / S_
+    for gname in set(groups):
+        idx = np.where(np.array(groups) == gname)[0]
+        for j in np.argmax(scores[idx], 0):
+            out[idx[j]] += 1
+    return out / S_
+
+
+def position_awards(teams, outlook, players):
     out = []
-    for key, name, what, flt, gmin, terms in AWARDS:
+    for i, (key, name, what, flt, gmin, terms) in enumerate(AWARDS):
         pool = [p for p in players if flt(p) and games_of(p) >= gmin]
         if len(pool) < 5:
             continue
-        cols = [z([f(p, games_of(p)) for p in pool]) for _, f in terms]
-        score = sum(w * c for (w, _), c in zip(terms, cols))
-        team = z([-math.log(max(1, teams.get(p["tid"], {}).get("rank", 130))) for p in pool])
-        score = score + 0.35 * team                                     # voters notice winning teams
-        order = np.argsort(-score)[:8]
-        top = score[order]
-        rel = (top - top.min()) / (top.max() - top.min() or 1)
-        out.append({"key": key, "name": name, "for": what,
-                    "list": [base(pool[i], teams) | {"score": round(float(score[i]), 2), "rel": round(float(r), 3)} for i, r in zip(order, rel)]})
+        kind = "def" if key in ("butkus", "thorpe", "nagurski") else "off"
+        sc = sim_scores(pool, terms or DEFENSE, teams, outlook, 100 + i, kind=kind)
+        out.append({"key": key, "name": name, "for": what, "list": top_list(win_share(sc), pool, teams, 8)})
+    return out
+
+
+def heisman_now(pool, teams):
+    """The Heisman model's linear score for each player on his production so far."""
+    import heisman_model as HM
+    C = json.load(open(os.path.join(ROOT, "scripts", "heisman_coefs.json")))
+    X = []
+    for p in pool:
+        t = teams[p["tid"]]
+        x = HM.features(p, games_of(p), t["w"] / max(1, t["w"] + t["l"]), t["rank"], t["w"] + t["l"], t.get("conf"), p["tid"])
+        X.append([x[f] for f in C["feats"]])
+    return ((np.array(X) - np.array(C["mu"])) / np.array(C["sd"])) @ np.array(C["beta"])
+
+
+def conference_awards(teams, outlook, players, opoy, heis_pool):
+    """Per conference: Offensive POY (the Heisman model's score, simulated), Defensive POY and
+    Freshman of the Year (composites, simulated)."""
+    confs = sorted({t.get("conf") for t in teams.values() if t.get("conf")})
+    conf = lambda p: teams.get(p["tid"], {}).get("conf")
+    d_pool = [p for p in players if p.get("pos") in DEF_POS and games_of(p) >= 2]
+    d_prob = win_share(sim_scores(d_pool, DEFENSE, teams, outlook, 31, kind="def"), [conf(p) for p in d_pool])
+    f_pool = [p for p in players if (p.get("cls") or "").upper().startswith("FR") and games_of(p) >= 2
+              and (p.get("pos") in DEF_POS or S(p, "passing", "YDS") + S(p, "rushing", "YDS") + S(p, "receiving", "YDS") > 0)]
+    f_now = np.maximum(composite(f_pool, OFFENSE, teams, 0.2), composite(f_pool, DEFENSE, teams, 0.2))
+    f_sc = sim_from(f_now, f_pool, outlook, 47, "fr")
+    f_prob = win_share(f_sc, [conf(p) for p in f_pool])
+    o_prob = win_share(sim_from(heisman_now(heis_pool, teams), heis_pool, outlook, 29), [conf(p) for p in heis_pool])
+    out = {}
+    for c in confs:
+        pick = lambda pool, prob: top_list(np.where(np.array([conf(p) == c for p in pool]), prob, 0), pool, teams, 5)
+        out[c] = {"opoy": pick(heis_pool, o_prob),
+                  "dpoy": pick(d_pool, d_prob), "fr": pick(f_pool, f_prob)}
     return out
 
 
 def main():
     hub, teams, outlook, players = load()
+    hprob, hpool, opoy = heisman(hub, teams, outlook, players)
     out = {"season": hub["season"], "built": hub["built"], "gamesPlayed": hub["gamesPlayed"],
-           "heisman": heisman_odds(hub, teams, outlook, players), "awards": position_awards(teams, players)}
+           "heisman": top_list(hprob, hpool, teams, TOP), "awards": position_awards(teams, outlook, players),
+           "conferences": conference_awards(teams, outlook, players, opoy, hpool)}
     json.dump(out, open(os.path.join(DATA, "awards.json"), "w"), separators=(",", ":"))
     h = out["heisman"][:5]
     print("awards: Heisman top 5 " + ", ".join(f"{x['name']} ({x['team']}) {x['p']:.0%}" for x in h))

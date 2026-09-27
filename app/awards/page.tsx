@@ -4,6 +4,7 @@ import { getAwards, getTeamIndex } from "@/lib/data";
 import { playerHref } from "@/lib/slug";
 import { logo } from "@/lib/logo";
 import s from "./awards.module.css";
+import ConferenceAwards from "@/components/awards/ConferenceAwards";
 
 export const metadata: Metadata = {
   title: "Award Projections",
@@ -59,22 +60,29 @@ export default async function AwardsPage() {
       <div className={s.grid}>
         {A.awards.map((a) => (
           <section key={a.key} className={s.card}>
-            <h3>{a.name}<span>{a.for}</span></h3>
+            <h3>{a.name}<span>{a.for} · chance to win</span></h3>
             {a.list.map((x, i) => (
               <div key={x.id} className={s.row}>
                 <span className={s.rk}>{i + 1}</span>
                 {who(x)}
-                <span className={s.mini}><i style={{ width: `${Math.max(6, (x.rel || 0) * 100)}%` }} /></span>
+                <b className={s.pc}>{x.p != null ? `${Math.round(x.p * 100)}%` : ""}</b>
                 <span className={s.line2}>{x.line.replace(/^\d+ G · /, "")}</span>
               </div>
             ))}
           </section>
         ))}
       </div>
+      {A.conferences && (
+        <ConferenceAwards data={A.conferences} logos={logos} slugs={Object.fromEntries(idx.slugOf.entries())} initial="SEC" />
+      )}
+
       <p className="note">
-        The position awards have no voting history in our data, so they rank each position&apos;s leaders by a stat composite: per-game
-        production scored against everyone else at the position, plus a small bump for winning teams. The bar shows how close each
-        player is to the leader.
+        <b>How the other awards work.</b> The Heisman odds come from a model trained on real votes. We don&apos;t have voting history for
+        the position or conference awards, so those odds are simulated: each player gets a score for the award (per-game production
+        scored against everyone else at his position, plus a small bump for winning teams; conference Offensive Player of the Year uses
+        the Heisman model&apos;s score), and the rest of the season is played out 1,500 times. His remaining games are drawn around his
+        level so far, pulled partway back toward average because hot starts cool off, and harder for defensive stats like sacks and
+        interceptions, which swing more from week to week. The percentage is how often he finishes the season on top.
       </p>
     </div>
   );
