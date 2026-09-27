@@ -5,10 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { liveWinProb, secsLeft } from "@/lib/livewp";
 import { logo } from "@/lib/logo";
 import s from "./live.module.css";
+import GameFlow, { LineScore, type FlowTeam, type ScoringPlay, type Drive } from "./GameFlow";
 
-type Team = { id: string; home: boolean; name: string; abbr: string; score: number; logo: string };
+type Team = FlowTeam;
 type Play = { seq: string; type?: string; text?: string; q: number; clock?: string; hs: number; as: number; score: boolean; off: string | null; ytg: number | null; dd: string | null; yds: number };
-type Game = { id: string; state: "pre" | "in" | "post"; detail: string; period: number; clock: string; teams: Team[]; plays: Play[]; box: { id: string; stats: [string, string][] }[]; venue: string | null };
+type Game = { id: string; state: "pre" | "in" | "post"; detail: string; period: number; clock: string; teams: Team[]; plays: Play[]; box: { id: string; stats: [string, string][] }[]; venue: string | null;
+  scoring: ScoringPlay[]; drives: Drive[]; line: number | null; date: string | null; season: number | null; note: string | null };
 
 export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slugs }: {
   id: string; slateSpread: number | null; neutral: boolean; nets: Record<string, number>; hfa: number; slugs: Record<string, string>;
@@ -34,7 +36,7 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
   }, [id]);
 
   const home = g?.teams.find((t) => t.home), away = g?.teams.find((t) => !t.home);
-  const spread = slateSpread ?? (home && away && nets[home.id] != null && nets[away.id] != null ? nets[home.id] - nets[away.id] + (neutral ? 0 : hfa) : 0);
+  const spread = slateSpread ?? g?.line ?? (home && away && nets[home.id] != null && nets[away.id] != null ? nets[home.id] - nets[away.id] + (neutral ? 0 : hfa) : 0);
 
   // win probability after every play
   const series = useMemo(() => {
@@ -72,14 +74,17 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
         ))}
         <div className={s.status}>
           {g.state === "in" ? <b className={s.live}>LIVE · {g.detail}</b> : <b>{g.detail}</b>}
-          {g.venue && <span>{g.venue}</span>}
+          <span>{[g.note, g.date ? new Date(g.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" }) : null, g.venue].filter(Boolean).join(" · ")}</span>
         </div>
       </div>
+
+      {home && away && <LineScore home={home} away={away} live={g.state === "in"} />}
+      {home && away && <GameFlow home={home} away={away} scoring={g.scoring || []} drives={g.drives || []} state={g.state} period={g.period} clock={g.clock} />}
 
       <section className={s.card}>
         <div className={s.wph}>
           <h2>Win probability</h2>
-          <span><b>{now >= 0.5 ? home?.name : away?.name} {Math.round(Math.max(now, 1 - now) * 100)}%</b> · pregame line {spread >= 0 ? home?.name : away?.name} −{Math.abs(spread).toFixed(1)}</span>
+          <span><b>{now >= 0.5 ? home?.name : away?.name} {Math.round(Math.max(now, 1 - now) * 100)}%</b> · pregame line {spread >= 0 ? home?.name : away?.name} −{Math.abs(spread).toFixed(1)}{slateSpread == null && g.line != null ? " (closing line)" : ""}</span>
         </div>
         <svg viewBox={`0 0 ${W} ${TOP + H + 40}`} className={s.chart} role="img" aria-label={`Win probability chart; ${home?.name} now ${Math.round(now * 100)}%`}>
           {[0.25, 0.5, 0.75].map((p) => <line key={p} x1={0} x2={W} y1={Y(p)} y2={Y(p)} stroke="var(--border)" strokeDasharray={p === 0.5 ? "0" : "3 4"} />)}
@@ -96,7 +101,7 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
           ))}
         </svg>
         <p className="note" style={{ marginTop: 6 }}>
-          The TDC pregame line, blended with the score, clock and field position (calibrated on every 2024–25 FBS play). Gold dots mark the biggest swings; hover one.
+          The pregame line (TDC&apos;s for this week&apos;s games, the closing betting line for past ones), blended with the score, clock and field position (calibrated on every 2024–25 FBS play). Gold dots mark the biggest swings; hover one.
         </p>
       </section>
 
@@ -106,10 +111,6 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
           {swings.length ? swings.map((x) => (
             <div key={x.p!.seq} className={s.play}><b>{x.d > 0 ? home?.abbr : away?.abbr} +{Math.abs(Math.round(x.d * 100))}%</b> <span>Q{x.p!.q} {x.p!.clock}</span> {x.p!.text}</div>
           )) : <div className="note">Nothing yet.</div>}
-          <h2 style={{ marginTop: 16 }}>Scoring</h2>
-          {g.plays.filter((p) => p.score).map((p) => (
-            <div key={p.seq} className={s.play}><b>{p.as}–{p.hs}</b> <span>Q{p.q} {p.clock}</span> {p.text}</div>
-          ))}
         </section>
         <section className={s.card}>
           <h2>Team stats</h2>

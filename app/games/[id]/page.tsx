@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: PageProps<"/games/[id]">): Pr
   const hub = await getHub();
   const g = hub.slate.find((x) => x.id === id);
   return {
-    title: g ? `${g.awayName} at ${g.homeName} · Live` : "Live game",
-    description: "Live score, win probability from the TDC model, play-by-play, scoring plays and team stats.",
+    title: g ? `${g.awayName} at ${g.homeName} · Game tracker` : "Game tracker",
+    description: "Game tracker: line score, the lead over time, lead changes, every score and drive, win probability from the TDC model, team stats and play-by-play.",
     alternates: { canonical: `/games/${id}` },
   };
 }

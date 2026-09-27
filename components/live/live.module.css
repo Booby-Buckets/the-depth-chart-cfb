@@ -20,3 +20,26 @@
 .play i { font-style: normal; color: var(--text3); }
 .scored { background: color-mix(in oklab, var(--turf) 10%, var(--bg)); }
 @media (max-width: 640px) { .board { grid-template-columns: 1fr; } .score { font-size: 30px; } }
+
+/* game tracker (GameFlow.tsx) */
+.ftiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 6px 0 4px; }
+.ftile { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg2); }
+.fk { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-weight: 700; }
+.fv { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.fv b { font-weight: 800; }
+.ftile .fv span { font-size: 15px; }
+.fs { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.qhead { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; color: var(--text3); margin: 12px 0 4px; }
+.srow { display: grid; grid-template-columns: 44px 24px 1fr auto; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border-bottom: 1px solid var(--border); border-left: 4px solid transparent; font-size: 13px; }
+.srow img { width: 22px; height: 22px; object-fit: contain; }
+.sclock { color: var(--text3); font-variant-numeric: tabular-nums; }
+.stext { color: var(--text2); line-height: 1.4; min-width: 0; }
+.stext b { color: var(--text); margin-right: 4px; }
+.stext small { display: block; color: var(--text3); font-size: 11.5px; }
+.srun { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text2); }
+.dash { margin: 0 4px; color: var(--text3); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.rTD { color: var(--turf); font-weight: 700; }
+.rFG { color: var(--text); font-weight: 600; }
+.rTO { color: var(--red); }
+@media (max-width: 640px) { .srow { grid-template-columns: 38px 22px 1fr; } .srun { grid-column: 3; } }

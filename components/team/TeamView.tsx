@@ -190,7 +190,7 @@ function Schedule({ D, slugOf, netHeat, teamBase }: { D: TeamFile; slugOf: Map<s
               return (
                 <tr key={g.id}>
                   <td className="l dim">{wk}</td><td className="l dim">{date(g.date)}</td>{opp}
-                  <td className="l"><span className={g.res === "W" ? s.W : s.L}>{g.res}</span> {g.pf}–{g.pa}</td>
+                  <td className="l"><Link href={`/games/${g.id}`} className={s.gameLink} title="Game tracker: scoring, lead and drives"><span className={g.res === "W" ? s.W : s.L}>{g.res}</span> {g.pf}–{g.pa} <span className={s.muted}>›</span></Link></td>
                   <td className={`strong ${netHeat(g.score)}`}>{fmt(g.score, 1, true)}</td>
                   <td className="l dim">—</td><td className="l dim">{g.tv || ""}</td>
                 </tr>
