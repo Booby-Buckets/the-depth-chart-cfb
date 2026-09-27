@@ -12,8 +12,8 @@ type Play = { seq: string; type?: string; text?: string; q: number; clock?: stri
 type Game = { id: string; state: "pre" | "in" | "post"; detail: string; period: number; clock: string; teams: Team[]; plays: Play[]; box: { id: string; stats: [string, string][] }[]; venue: string | null;
   scoring: ScoringPlay[]; drives: Drive[]; line: number | null; date: string | null; season: number | null; note: string | null };
 
-export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slugs }: {
-  id: string; slateSpread: number | null; neutral: boolean; nets: Record<string, number>; hfa: number; slugs: Record<string, string>;
+export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slugs, season }: {
+  id: string; slateSpread: number | null; season: number; neutral: boolean; nets: Record<string, number>; hfa: number; slugs: Record<string, string>;
 }) {
   const [g, setG] = useState<Game | null>(null);
   const [err, setErr] = useState("");
@@ -36,7 +36,8 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
   }, [id]);
 
   const home = g?.teams.find((t) => t.home), away = g?.teams.find((t) => !t.home);
-  const spread = slateSpread ?? g?.line ?? (home && away && nets[home.id] != null && nets[away.id] != null ? nets[home.id] - nets[away.id] + (neutral ? 0 : hfa) : 0);
+  const pastNoLine = slateSpread == null && g?.line == null && g?.season != null && g.season !== season;   // current ratings would be wrong for an old game
+  const spread = slateSpread ?? g?.line ?? (pastNoLine ? 0 : null) ?? (home && away && nets[home.id] != null && nets[away.id] != null ? nets[home.id] - nets[away.id] + (neutral ? 0 : hfa) : 0);
 
   // win probability after every play
   const series = useMemo(() => {
@@ -84,7 +85,7 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
       <section className={s.card}>
         <div className={s.wph}>
           <h2>Win probability</h2>
-          <span><b>{now >= 0.5 ? home?.name : away?.name} {Math.round(Math.max(now, 1 - now) * 100)}%</b> · pregame line {spread >= 0 ? home?.name : away?.name} −{Math.abs(spread).toFixed(1)}{slateSpread == null && g.line != null ? " (closing line)" : ""}</span>
+          <span><b>{now >= 0.5 ? home?.name : away?.name} {Math.round(Math.max(now, 1 - now) * 100)}%</b> · {pastNoLine ? "no pregame line on file, so it starts at 50–50" : <>pregame line {spread >= 0 ? home?.name : away?.name} −{Math.abs(spread).toFixed(1)}{slateSpread == null && g.line != null ? " (closing line)" : ""}</>}</span>
         </div>
         <svg viewBox={`0 0 ${W} ${TOP + H + 40}`} className={s.chart} role="img" aria-label={`Win probability chart; ${home?.name} now ${Math.round(now * 100)}%`}>
           {[0.25, 0.5, 0.75].map((p) => <line key={p} x1={0} x2={W} y1={Y(p)} y2={Y(p)} stroke="var(--border)" strokeDasharray={p === 0.5 ? "0" : "3 4"} />)}

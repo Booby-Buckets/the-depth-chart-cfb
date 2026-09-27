@@ -28,7 +28,7 @@ export default async function GamePage({ params }: PageProps<"/games/[id]">) {
   const slugs = Object.fromEntries([...idx.slugOf.entries()]);
   return (
     <div className="col">
-      <LiveGameView id={id} slateSpread={g ? g.spread : null} neutral={g?.neutral ?? false} nets={nets} hfa={hub.hfa} slugs={slugs} />
+      <LiveGameView id={id} slateSpread={g ? g.spread : null} neutral={g?.neutral ?? false} nets={nets} hfa={hub.hfa} slugs={slugs} season={hub.season} />
     </div>
   );
 }
