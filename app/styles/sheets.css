@@ -175,22 +175,23 @@
    banding and stays opaque on a frozen column instead of replacing them.
    A page's existing percentile buckets can drive it with no logic change:
    c0 bottom · c1 below median · c2 above median · c3 strong · c4 elite. */
-.sheet td.c0{ background-image:linear-gradient(hsla(0,70%,48%,.34),hsla(0,70%,48%,.34)); }
-.sheet td.c1{ background-image:linear-gradient(hsla(30,70%,48%,.15),hsla(30,70%,48%,.15)); }
-.sheet td.c2{ background-image:linear-gradient(hsla(95,70%,48%,.15),hsla(95,70%,48%,.15)); }
-.sheet td.c3{ background-image:linear-gradient(hsla(115,70%,48%,.26),hsla(115,70%,48%,.26)); }
-.sheet td.c4{ background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40)); }
-.sheet td.c0,.sheet td.c3,.sheet td.c4{ font-weight:700; color:var(--text); }
-[data-theme="dark"] .sheet td.c0{ background-image:linear-gradient(hsla(0,70%,46%,.36),hsla(0,70%,46%,.36)); }
-[data-theme="dark"] .sheet td.c4{ background-image:linear-gradient(hsla(125,70%,46%,.42),hsla(125,70%,46%,.42)); }
+/* heat classes are written as .sheet tbody tr td.cN so they outrank the even-row stripe (same specificity, later wins) */
+.sheet tbody tr td.c0{ background-image:linear-gradient(hsla(0,70%,48%,.34),hsla(0,70%,48%,.34)); }
+.sheet tbody tr td.c1{ background-image:linear-gradient(hsla(30,70%,48%,.15),hsla(30,70%,48%,.15)); }
+.sheet tbody tr td.c2{ background-image:linear-gradient(hsla(95,70%,48%,.15),hsla(95,70%,48%,.15)); }
+.sheet tbody tr td.c3{ background-image:linear-gradient(hsla(115,70%,48%,.26),hsla(115,70%,48%,.26)); }
+.sheet tbody tr td.c4{ background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40)); }
+.sheet tbody tr td.c0,.sheet tbody tr td.c3,.sheet tbody tr td.c4{ font-weight:700; color:var(--text); }
+[data-theme="dark"] .sheet tbody tr td.c0{ background-image:linear-gradient(hsla(0,70%,46%,.36),hsla(0,70%,46%,.36)); }
+[data-theme="dark"] .sheet tbody tr td.c4{ background-image:linear-gradient(hsla(125,70%,46%,.42),hsla(125,70%,46%,.42)); }
 /* the same scale for the retrofitted page tables */
-.roster-table td.c0,.proj-table td.c0{ background-image:linear-gradient(hsla(0,70%,48%,.34),hsla(0,70%,48%,.34)); }
-.roster-table td.c1,.proj-table td.c1{ background-image:linear-gradient(hsla(30,70%,48%,.15),hsla(30,70%,48%,.15)); }
-.roster-table td.c2,.proj-table td.c2{ background-image:linear-gradient(hsla(95,70%,48%,.15),hsla(95,70%,48%,.15)); }
-.roster-table td.c3,.proj-table td.c3{ background-image:linear-gradient(hsla(115,70%,48%,.26),hsla(115,70%,48%,.26)); }
-.roster-table td.c4,.proj-table td.c4{ background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40)); }
-.roster-table td.c0,.roster-table td.c3,.roster-table td.c4,
-.proj-table td.c0,.proj-table td.c3,.proj-table td.c4{ font-weight:700; color:var(--text); }
+.roster-table tbody tr td.c0,.proj-table tbody tr td.c0{ background-image:linear-gradient(hsla(0,70%,48%,.34),hsla(0,70%,48%,.34)); }
+.roster-table tbody tr td.c1,.proj-table tbody tr td.c1{ background-image:linear-gradient(hsla(30,70%,48%,.15),hsla(30,70%,48%,.15)); }
+.roster-table tbody tr td.c2,.proj-table tbody tr td.c2{ background-image:linear-gradient(hsla(95,70%,48%,.15),hsla(95,70%,48%,.15)); }
+.roster-table tbody tr td.c3,.proj-table tbody tr td.c3{ background-image:linear-gradient(hsla(115,70%,48%,.26),hsla(115,70%,48%,.26)); }
+.roster-table tbody tr td.c4,.proj-table tbody tr td.c4{ background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40)); }
+.roster-table tbody tr td.c0,.roster-table tbody tr td.c3,.roster-table tbody tr td.c4,
+.proj-table tbody tr td.c0,.proj-table tbody tr td.c3,.proj-table tbody tr td.c4{ font-weight:700; color:var(--text); }
 /* NOTE: no global body.no-color off-switch here on purpose. Two pages already use
    that body class for their OWN narrower toggles (roster.html's Stat Colors, and
    team-stats.html's per-team drawer, which defaults to off) — a blanket rule here
