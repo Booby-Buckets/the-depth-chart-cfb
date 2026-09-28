@@ -28,9 +28,12 @@ def season(y):
     """FBS teams + every D-I game of the season (FBS-involved and FCS-vs-FCS), deduped."""
     if y in _season_cache:
         return _season_cache[y]
+    import datetime
+    today = datetime.date.today()
+    done = y < (today.year if today.month >= 7 else today.year - 1)   # the live season is still being played
     teams = fbs_teams(y)
-    g80, _ = season_games(y, finished_season=True)
-    g81, _ = season_games(y, finished_season=True, group=81)
+    g80, _ = season_games(y, finished_season=done)
+    g81, _ = season_games(y, finished_season=done, group=81)
     seen, games = set(), []
     for g in g80 + g81:
         if g["id"] in seen or not g["completed"] or g["hs"] is None:

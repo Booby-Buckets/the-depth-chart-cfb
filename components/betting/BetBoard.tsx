@@ -14,25 +14,28 @@ function favLine(sp: number | null, home: string, away: string) {
   if (Math.abs(sp) < 0.25) return "Pick";
   return sp > 0 ? `${home} −${sp.toFixed(1)}` : `${away} −${Math.abs(sp).toFixed(1)}`;
 }
-/** The side the model prefers at the market number. */
-function lean(r: BetBoardRow, home: string, away: string) {
-  if (r.edge == null || r.line == null || Math.abs(r.edge) < 0.5) return null;
-  const n = r.edge > 0 ? -r.line : r.line;            // the spread for the side the model likes
-  return `${r.edge > 0 ? home : away} ${n > 0 ? "+" : n < 0 ? "−" : ""}${n === 0 ? "PK" : Math.abs(n).toFixed(1)}`;
+/** The side the model prefers at a given market number (home-perspective line, gap = model − line). */
+function side(gap: number | null, line: number | null, home: string, away: string) {
+  if (gap == null || line == null || Math.abs(gap) < 0.5) return null;
+  const n = gap > 0 ? -line : line;
+  return `${gap > 0 ? home : away} ${n > 0 ? "+" : n < 0 ? "−" : ""}${n === 0 ? "PK" : Math.abs(n).toFixed(1)}`;
 }
+const sg = (v: number) => (v > 0 ? "+" : "") + v.toFixed(1);
 
 export default function BetBoard({ rows, teams, totBias }: { rows: BetBoardRow[]; teams: Record<string, TeamInfo>; totBias: number }) {
-  const [sort, setSort] = useState<"gap" | "time" | "tgap">("gap");
+  const [sort, setSort] = useState<"ogap" | "gap" | "tgap" | "time">("ogap");
   const [minGap, setMinGap] = useState(0);
   const ab = (id: string, name: string) => teams[id]?.abbr || name;
+  const key = (x: BetBoardRow) => x.ogap ?? x.edge ?? 0;
   const shown = useMemo(() => {
-    const r = rows.filter((x) => x.line != null && Math.abs(x.edge ?? 0) >= minGap);
-    return r.sort((a, b) => sort === "time" ? a.date.localeCompare(b.date) : sort === "gap" ? Math.abs(b.edge ?? 0) - Math.abs(a.edge ?? 0) : Math.abs(b.tedge ?? 0) - Math.abs(a.tedge ?? 0));
+    const r = rows.filter((x) => (x.open ?? x.line) != null && Math.abs(key(x)) >= minGap);
+    return r.sort((a, b) => sort === "time" ? a.date.localeCompare(b.date) : sort === "ogap" ? Math.abs(key(b)) - Math.abs(key(a))
+      : sort === "gap" ? Math.abs(b.edge ?? 0) - Math.abs(a.edge ?? 0) : Math.abs(b.otgap ?? b.tedge ?? 0) - Math.abs(a.otgap ?? a.tedge ?? 0));
   }, [rows, sort, minGap]);
-  const noLine = rows.filter((x) => x.line == null).length;
+  const noLine = rows.filter((x) => x.line == null && x.open == null).length;
   if (!rows.length) return <div className="note">No games left on this week&apos;s slate. The next week&apos;s board appears after the weekend&apos;s games.</div>;
   const when = (d: string) => new Date(d).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
-  const side = (t: TeamInfo | undefined, id: string, name: string) => (
+  const team = (t: TeamInfo | undefined, id: string, name: string) => (
     <span className={s.tm}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={logo(t?.logo || `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png`, 20)} alt="" width={18} height={18} loading="lazy" />
@@ -43,7 +46,7 @@ export default function BetBoard({ rows, teams, totBias }: { rows: BetBoardRow[]
     <>
       <div className="controls">
         <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {([["gap", "Biggest spread gap"], ["tgap", "Biggest total gap"], ["time", "Kickoff"]] as const).map(([k, l]) => (
+          {([["ogap", "Gap vs. opener"], ["gap", "Gap vs. current line"], ["tgap", "Total gap"], ["time", "Kickoff"]] as const).map(([k, l]) => (
             <button key={k} className={`chip ${sort === k ? "on" : ""}`} onClick={() => setSort(k)}>{l}</button>
           ))}
         </span>
@@ -57,26 +60,36 @@ export default function BetBoard({ rows, teams, totBias }: { rows: BetBoardRow[]
           <thead>
             <tr>
               <th className="l">Kickoff (ET)</th><th className="l">Matchup</th>
-              <th className="l">Market</th><th className="l">TDC line</th><th title="TDC line minus the market line, in points">Gap</th><th className="l">TDC side at the market number</th>
-              <th title="How often the model has covered at this size of gap, 2015 on">Model at this gap</th>
-              <th>Total</th><th>TDC total</th><th className="l">Lean</th><th>TDC win %</th><th />
+              <th className="l">Opened</th><th className="l">Now</th><th className="l">TDC line</th>
+              <th title="TDC line minus the opening line. 4+ points has been the model's winning zone since 2023">Gap vs. open</th>
+              <th className="l">TDC side at the opener</th>
+              <th className="l" title="Has the line moved toward our number since it opened?">Market since open</th>
+              <th title="TDC line minus the current line">Gap now</th>
+              <th>Open total</th><th>TDC total</th><th className="l">Total lean</th><th>TDC win %</th><th />
             </tr>
           </thead>
           <tbody>
             {shown.map((r) => {
               const H = ab(r.home, r.homeName), A = ab(r.away, r.awayName);
-              const g = r.edge ?? 0, tg = r.tedge ?? 0;
+              const og = r.ogap, g = r.edge;
+              const move = r.open != null && r.line != null ? r.line - r.open : null;
+              const toward = move != null && og != null && move !== 0 ? (move > 0) === (og > 0) : null;
+              const zone = og != null && Math.abs(og) >= 4 && !r.bowl;
+              const tg = r.otgap ?? r.tedge, tl = r.otgap != null ? r.otot : r.ltot;
               return (
-                <tr key={r.id}>
+                <tr key={r.id} className={zone ? s.zone : undefined}>
                   <td className="l dim">{when(r.date)}</td>
-                  <td className="l">{side(teams[r.away], r.away, r.awayName)} <span className="dim">{r.neutral ? "vs" : "@"}</span> {side(teams[r.home], r.home, r.homeName)}</td>
+                  <td className="l">{team(teams[r.away], r.away, r.awayName)} <span className="dim">{r.neutral ? "vs" : "@"}</span> {team(teams[r.home], r.home, r.homeName)}</td>
+                  <td className="l">{favLine(r.open, H, A)}</td>
                   <td className="l strong">{favLine(r.line, H, A)}</td>
                   <td className="l">{favLine(r.model, H, A)}</td>
-                  <td className={`strong ${Math.abs(g) >= 7 ? s.big : Math.abs(g) >= 3 ? s.mid : ""}`}>{g > 0 ? "+" : ""}{g.toFixed(1)}</td>
-                  <td className="l">{lean(r, H, A) ?? <span className="dim">agrees</span>}</td>
-                  <td className="dim">{r.hist != null ? (r.hist * 100).toFixed(0) + "%" : "—"}</td>
-                  <td>{r.ltot ?? "—"}</td><td>{r.mtot.toFixed(1)}</td>
-                  <td className="l">{r.ltot != null && Math.abs(tg) >= 1.5 ? (tg > 0 ? `Over ${r.ltot}` : `Under ${r.ltot}`) : <span className="dim">—</span>}</td>
+                  <td className={`strong ${og != null && Math.abs(og) >= 7 ? s.big : og != null && Math.abs(og) >= 4 ? s.mid : ""}`}>{og != null ? sg(og) : "—"}</td>
+                  <td className="l">{side(og, r.open, H, A) ?? <span className="dim">agrees</span>}</td>
+                  <td className="l">{move == null || move === 0 ? <span className="dim">no move</span>
+                    : <span className={toward ? s.up : s.down}>{toward ? "▲ toward us" : "▼ away"} {Math.abs(move).toFixed(1)}</span>}</td>
+                  <td className="dim">{g != null ? sg(g) : "—"}</td>
+                  <td>{r.otot ?? r.ltot ?? "—"}</td><td>{r.mtot.toFixed(1)}</td>
+                  <td className="l">{tl != null && tg != null && Math.abs(tg) >= 1.5 ? (tg > 0 ? `Over ${tl}` : `Under ${tl}`) : <span className="dim">—</span>}</td>
                   <td>{Math.round(Math.max(r.homeWin, 1 - r.homeWin) * 100)}% <span className="dim">{r.homeWin >= 0.5 ? H : A}</span></td>
                   <td><Link href={`/games/${r.id}`} className={s.go}>Game →</Link></td>
                 </tr>
@@ -86,10 +99,9 @@ export default function BetBoard({ rows, teams, totBias }: { rows: BetBoardRow[]
         </table>
       </div>
       <p className="note">
-        Gap = our line minus the market&apos;s (positive: we rate the home side higher). &ldquo;Model at this gap&rdquo; is how often the model&apos;s side
-        has covered when it disagreed with the closing line by that much since 2015; anything under 52.4% loses money at −110.
-        Our totals have run {Math.abs(totBias).toFixed(1)} points {totBias >= 0 ? "above" : "below"} the market this season, so the total lean is
-        called only when the gap is 1.5+ points beyond that. Lines move all week; the market column is the latest consensus when the site last rebuilt.
+        Highlighted rows: our line is 4+ points off the opener (regular season), the zone where the model has won since 2023. Once the line
+        moves to our number the value is gone, so &ldquo;Gap now&rdquo; matters too. Total leans are against the opening total and net of our totals
+        running {Math.abs(totBias).toFixed(1)} points {totBias >= 0 ? "high" : "low"} this season. Lines update with every site rebuild (daily, more on Saturdays).
       </p>
     </>
   );

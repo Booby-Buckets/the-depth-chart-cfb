@@ -20,3 +20,8 @@
 .cout span { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
 .cout b { font-size: 18px; font-weight: 800; }
 @media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+.zone td { background-color: color-mix(in srgb, var(--accent) 9%, transparent); }
+.up { color: var(--turf, #1a8c3a); font-weight: 700; white-space: nowrap; }
+.down { color: var(--red, #c0392b); white-space: nowrap; }
+.hi { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); }
+.h3 { font-size: 15px; margin: 14px 0 8px; }

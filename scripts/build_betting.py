@@ -43,6 +43,9 @@ def odds(gid, cache=True):
                 d = json.load(r)
             items = [it for it in d.get("items", []) if "live" not in ((it.get("provider") or {}).get("name") or "").lower()]
             out["books"] = sorted({(it.get("provider") or {}).get("name") or "?" for it in items})
+            op = _opening(items)
+            if op:
+                json.dump(op, open(os.path.join(CACHE, f"open_{gid}.json"), "w"))
             sp = [-float(it["spread"]) for it in items if it.get("spread") is not None]
             tot = [float(it["overUnder"]) for it in items if it.get("overUnder")]
             if sp:
@@ -57,6 +60,37 @@ def odds(gid, cache=True):
     if cache and out:
         json.dump(out, open(path, "w"))
     return out
+
+
+def _num(v):
+    try:
+        return float(str(v).replace("+", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+def _opening(items):
+    """Opening spread (home expected margin) and total, median across books. ESPN has these from ~2023."""
+    sp, tt = [], []
+    for it in items:
+        o = (it.get("homeTeamOdds") or {}).get("open") or {}
+        v = _num((o.get("pointSpread") or {}).get("american"))
+        if v is not None:
+            sp.append(-v)                              # "+5.5" for the home side = home expected margin −5.5
+        t = _num((((it.get("open") or {}).get("total")) or {}).get("american"))
+        if t:
+            tt.append(t)
+    out = {}
+    if sp:
+        out["open"] = statistics.median(sp)
+    if tt:
+        out["otot"] = statistics.median(tt)
+    return out
+
+
+def opening(gid):
+    p = os.path.join(CACHE, f"open_{gid}.json")
+    return json.load(open(p)) if os.path.exists(p) else {}
 
 
 def predictions(y):
@@ -76,6 +110,11 @@ def predictions(y):
         lines = list(ex.map(lambda r: odds(r["id"]), rows))
     for r, l in zip(rows, lines):
         r["line"], r["ltot"] = l.get("spread"), l.get("total")
+        if y >= 2023:                                  # opening lines exist from about 2023
+            if not os.path.exists(os.path.join(CACHE, f"open_{r['id']}.json")) and r["line"] is not None:
+                odds(r["id"], cache=False)
+            o = opening(r["id"])
+            r["open"], r["otot"] = o.get("open"), o.get("otot")
     return rows
 
 
@@ -118,6 +157,33 @@ def record(rows):
             "all": {"ats": wl([g["ats"] for _, g in G if "ats" in g]), "ou": wl([g["ou"] for _, g in G if "ou" in g])}}
 
 
+def record_open(rows, bias_by_season):
+    """The model against the OPENING line (2023 on), regular season: the number you'd bet early in
+    the week. Plus closing line value: how often the line moved toward the model after it opened."""
+    G = [r for r in rows if r.get("open") is not None and r["fbs"][0] and r["fbs"][1] and r["type"] == 2]
+    def side(r):
+        g = r["pred"] - r["open"]
+        c = (r["hs"] - r["as"]) - r["open"]
+        return None if g == 0 or c == 0 else int((c > 0) == (g > 0)), abs(g)
+    def tot(r):
+        if r.get("otot") is None:
+            return None, 0
+        g = r["ptot"] - r["otot"] - bias_by_season.get(r["season"], 0)
+        d = r["hs"] + r["as"] - r["otot"]
+        return None if g == 0 or d == 0 else int((d > 0) == (g > 0)), abs(g)
+    buckets = []
+    for lo, hi in BUCKETS:
+        a = [x for x, e in map(side, G) if x is not None and lo <= e < hi]
+        o = [x for x, e in map(tot, G) if x is not None and lo <= e < hi]
+        buckets.append({"lo": lo, "hi": hi, "ats": wl(a), "ou": wl(o)})
+    plus4 = {y: wl([x for x, e in map(side, [r for r in G if r["season"] == y]) if x is not None and e >= 4]) for y in sorted({r["season"] for r in G})}
+    mv = [(r["pred"] - r["open"], r["line"] - r["open"]) for r in G if r["line"] is not None and r["line"] != r["open"] and r["pred"] != r["open"]]
+    toward = sum(1 for g, m in mv if (m > 0) == (g > 0))
+    return {"buckets": buckets, "plus4": plus4, "clv": [toward, len(mv) - toward, round(toward / len(mv), 3) if mv else None],
+            "ats4": wl([x for x, e in map(side, G) if x is not None and e >= 4]), "ou4": wl([x for x, e in map(tot, G) if x is not None and e >= 4]),
+            "since": min((r["season"] for r in G), default=None), "n": len(G)}
+
+
 def team_ats(rows, names):
     T = defaultdict(lambda: defaultdict(lambda: {"ats": [0, 0, 0], "ou": [0, 0, 0], "fav": [0, 0, 0], "dog": [0, 0, 0],
                                                   "home": [0, 0, 0], "away": [0, 0, 0], "cover": [], "n": 0}))
@@ -153,17 +219,22 @@ def board(hub, rec, bias):
     todo = [g for g in hub["slate"] if not g["completed"]]
     with ThreadPoolExecutor(12) as ex:
         lines = list(ex.map(lambda g: odds(g["id"], cache=False), todo))
+    opens = [opening(g["id"]) for g in todo]
     cover_at = {b["lo"]: b["ats"][2] for b in rec["buckets"]}
     rows = []
-    for g, l in zip(todo, lines):
+    for g, l, o in zip(todo, lines, opens):
         sp, tot = l.get("spread"), l.get("total")
+        op, otot = o.get("open"), o.get("otot")
         edge = round(g["spread"] - sp, 1) if sp is not None else None
         b = next((b for b in rec["buckets"] if edge is not None and b["lo"] <= abs(edge) < b["hi"]), None)
         rows.append({"id": g["id"], "date": g["date"], "home": g["home"], "away": g["away"], "homeName": g["homeName"], "awayName": g["awayName"],
                      "neutral": g["neutral"], "tv": g.get("tv"),
                      "model": g["spread"], "mtot": g["total"], "homeWin": g["homeWin"], "line": sp, "ltot": tot,
                      "books": l.get("books", []), "edge": edge, "tedge": round(g["total"] - tot - bias, 1) if tot is not None else None,
-                     "hist": cover_at.get(b["lo"]) if b else None})
+                     "hist": cover_at.get(b["lo"]) if b else None,
+                     "open": op, "otot": otot, "ogap": round(g["spread"] - op, 1) if op is not None else None,
+                     "otgap": round(g["total"] - otot - bias, 1) if otot is not None else None,
+                     "bowl": g.get("type") == 3 if "type" in g else False})
     return rows
 
 
@@ -187,11 +258,18 @@ def main(history=False):
         tb = [r["ptot"] - r["ltot"] for r in past if r["season"] == cur - 1 and r["ltot"] is not None]
     bias = round(statistics.mean(tb), 1) if tb else 0.0
     ats = team_ats([r for r in rows if r["season"] >= cur - 2], names)
+    bias_by = {}
+    for y in {r["season"] for r in rows if r.get("otot") is not None}:
+        prev = [r["ptot"] - r["ltot"] for r in rows if r["season"] == y - 1 and r["ltot"] is not None]
+        bias_by[y] = round(statistics.mean(prev), 1) if prev else 0.0   # last season's bias: no look-ahead
+    ropen = record_open(rows, bias_by)
     out = {"season": cur, "built": time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), "slateLabel": hub.get("slateLabel"),
-           "record": rec, "board": board(hub, rec, bias), "totBias": bias, "teams": ats,
+           "record": rec, "open": ropen, "board": board(hub, rec, bias), "totBias": bias, "teams": ats,
            "recent": [r for r in now if r["line"] is not None and r["fbs"][0] and r["fbs"][1]][-200:]}
     json.dump(out, open(OUT, "w"), separators=(",", ":"))
     a = rec["all"]["ats"]
+    o4 = ropen["ats4"]
+    print(f"betting: vs the opener (4+ pt gap, {ropen['since']}+) {o4[0]}-{o4[1]} ({(o4[2] or 0):.1%}); line moved toward the model {ropen['clv'][2]}")
     print(f"betting: model ATS since {FIRST} {a[0]}-{a[1]} ({a[2]:.1%}); {len(out['board'])} games on this week's board, "
           f"{sum(1 for b in out['board'] if b['line'] is not None)} with a market line")
 

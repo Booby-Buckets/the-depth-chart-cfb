@@ -243,6 +243,7 @@ export type BetBoardRow = {
   id: string; date: string; home: string; away: string; homeName: string; awayName: string; neutral: boolean; tv: string | null;
   model: number; mtot: number; homeWin: number; line: number | null; ltot: number | null; books: string[];
   edge: number | null; tedge: number | null; hist: number | null;
+  open: number | null; otot: number | null; ogap: number | null; otgap: number | null; bowl?: boolean;
 };
 export type TeamAts = { ats: [number, number, number]; ou: [number, number, number]; fav: [number, number, number]; dog: [number, number, number];
   home: [number, number, number]; away: [number, number, number]; n: number; avgCover: number };
@@ -254,6 +255,7 @@ export type Betting = {
     seasons: Record<string, { ats: WL; ats3: WL; ou: WL; mae: number; maeLine: number | null; n: number }>;
   };
   board: BetBoardRow[]; totBias: number;
+  open: { buckets: { lo: number; hi: number; ats: WL; ou: WL }[]; plus4: Record<string, WL>; clv: WL; ats4: WL; ou4: WL; since: number | null; n: number };
   teams: Record<string, Record<string, TeamAts>>;
 };
 export const getBetting = () => readJson<Betting>("betting.json");

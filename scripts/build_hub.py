@@ -111,9 +111,15 @@ def season_games(season, finished_season, group=80):
         end = datetime.datetime.fromisoformat(w["end"].replace("Z", "+00:00"))
         done = finished_season or end < now - datetime.timedelta(days=2)
         soon = start < now + datetime.timedelta(days=8)
-        # finished weeks never change; this week's scores refresh fast; far-future schedules twice a day
-        d = get(f"{ESPN}/scoreboard?groups={group}&seasontype={w['type']}&week={w['week']}&dates={season}&limit=400",
-                f"sb{'' if group == 80 else group}_{season}_{w['type']}_{w['week']}.json", max_age=None if done else 1800 if soon else 12 * 3600)
+        # finished weeks never change; this week's scores refresh fast; far-future schedules twice a day.
+        # A finished week is only trusted from a file saved after it ended: one fetched mid-week
+        # (scores missing) would otherwise be frozen forever and silently drop those games.
+        name = f"sb{'' if group == 80 else group}_{season}_{w['type']}_{w['week']}.json"
+        age = None if done else 1800 if soon else 12 * 3600
+        cached = os.path.join(CACHE, name)
+        if done and os.path.exists(cached) and os.path.getmtime(cached) < (end + datetime.timedelta(days=1)).timestamp():
+            age = 0
+        d = get(f"{ESPN}/scoreboard?groups={group}&seasontype={w['type']}&week={w['week']}&dates={season}&limit=400", name, max_age=age)
         for ev in d.get("events", []):
             if not ev.get("id") or not ev.get("competitions"):
                 continue  # ESPN occasionally returns an empty placeholder event (2014 week 1)
