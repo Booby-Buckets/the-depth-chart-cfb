@@ -98,8 +98,10 @@ def predictions(y):
     from model_backtest import walk_forward, season
     from spread_model import PARAMS
     teams, _ = season(y)
+    fixed = os.path.join(HERE, f"model_prior_{y}.json")        # the prior the live site published with
+    prior = json.load(open(fixed))["prior"] if os.path.exists(fixed) else None
     rows = []
-    for g, pred in walk_forward(y, PARAMS):
+    for g, pred in walk_forward(y, PARAMS, prior):
         if not g.get("completed") or g.get("hs") is None:
             continue
         rows.append({"id": g["id"], "season": y, "date": g["date"], "wk": g.get("week"), "type": g.get("type"),

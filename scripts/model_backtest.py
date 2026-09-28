@@ -146,10 +146,12 @@ def make_prior_simple(y, P, live=False):
     return prior
 
 
-def walk_forward(y, P):
-    """Predict every game of season y using only games before its week. Yields (game, pred)."""
+def walk_forward(y, P, prior=None):
+    """Predict every game of season y using only games before its week. Yields (game, pred).
+    prior: the preseason prior to start from (default: rebuilt by make_prior; the live season
+    passes the committed model_prior_<y>.json the site actually used)."""
     teams, games = season(y)
-    prior = make_prior(y, P)
+    prior = prior if prior is not None else make_prior(y, P)
     fbs_games = [g for g in games if g["home"] in teams or g["away"] in teams]
     pool = games if P["fcs"] else fbs_games
     weeks = sorted({(g["type"], g["week"]) for g in fbs_games})
