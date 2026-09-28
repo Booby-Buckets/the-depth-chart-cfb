@@ -25,3 +25,8 @@
 .down { color: var(--red, #c0392b); white-space: nowrap; }
 .hi { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); }
 .h3 { font-size: 15px; margin: 14px 0 8px; }
+.stepb { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-weight: 800; cursor: pointer; line-height: 1; }
+.bk { margin-left: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--accent); }
+.spark { display: inline-flex; align-items: flex-end; gap: 2px; height: 24px; }
+.spark i { display: block; width: 7px; border-radius: 2px 2px 0 0; }
+.tabs { display: flex; gap: 6px; margin: 4px 0 6px; }

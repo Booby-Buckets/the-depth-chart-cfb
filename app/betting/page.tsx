@@ -30,6 +30,7 @@ export default async function BettingPage() {
       <header className="page-header">
         <div className="page-eyebrow">{B.season} Season{B.slateLabel ? ` · ${B.slateLabel}` : ""}</div>
         <h1 className="page-h1">Betting: Model vs. the Line</h1>
+        <div className={s.tabs}><span className="chip on">Game lines</span><Link className="chip" href="/betting/props">Player props</Link></div>
         <p className="page-sub">
           Our power-rating model&apos;s spread and total for every game next to the market&apos;s, graded honestly. The short version:
           against the <b>closing</b> line (the number at kickoff) the model is a coin flip, but against the <b>opening</b> line it has won when it

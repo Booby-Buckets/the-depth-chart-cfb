@@ -445,6 +445,11 @@ def main():
         build_betting.main()
     except Exception as e:
         print(f"betting: skipped ({e})")
+    try:   # player prop projections (+ book lines from fetch_prop_lines.py when connected)
+        import build_props
+        build_props.main()
+    except Exception as e:
+        print(f"props: skipped ({e})")
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
     # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).
     site = "https://www.thedepthchartcfb.com"
@@ -455,7 +460,7 @@ def main():
             sl = f"{sl}-{r['id']}"
         seen.add(sl)
         tslug[r["id"]] = sl
-    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting", f"{site}/awards", f"{site}/plays", f"{site}/betting"] \
+    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting", f"{site}/awards", f"{site}/plays", f"{site}/betting", f"{site}/betting/props"] \
         + [f"{site}/teams/{tslug[r['id']]}" for r in rows] + [f"{site}/depth/{tslug[r['id']]}" for r in rows]
     # past seasons (scripts/build_history.py): rankings, leaderboards, every team's season
     seasons_dir = os.path.join(ROOT, "public", "data", "seasons")

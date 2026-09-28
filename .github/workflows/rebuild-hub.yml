@@ -44,6 +44,13 @@ jobs:
           key: feeds-${{ github.run_id }}
           restore-keys: feeds-
 
+      # sportsbook player prop lines (The Odds API). No-op until the ODDS_API_KEY secret exists;
+      # at most one pull per 12 hours, only with games in the next 4 days. Never fails the run.
+      - name: Player prop lines
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python3 scripts/fetch_prop_lines.py || echo "prop lines skipped"
+
       - name: Build ratings
         env:
           CFBD_KEY: ${{ secrets.CFBD_KEY }}

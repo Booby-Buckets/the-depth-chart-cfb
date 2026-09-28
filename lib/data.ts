@@ -259,3 +259,14 @@ export type Betting = {
   teams: Record<string, Record<string, TeamAts>>;
 };
 export const getBetting = () => readJson<Betting>("betting.json");
+
+/** Player prop projections (scripts/build_props.py). */
+export type PropMarket = { proj: number; sd?: number; log: number[]; avg?: number };
+export type PropPlayer = { id: string; name: string; pos: string | null; tid: string; opp: string; game: string; home: boolean; m: Record<string, PropMarket> };
+export type Props = {
+  season: number; built: string; slateLabel: string | null; markets: Record<string, string>;
+  games: { id: string; date: string; home: string; away: string; homeName: string; awayName: string; spread: number; total: number }[];
+  players: PropPlayer[];
+  lines: Record<string, { line: number; over?: number; under?: number; book?: string }>;   // key `${pid}|${market}`
+};
+export const getProps = () => readJson<Props>("props.json");
