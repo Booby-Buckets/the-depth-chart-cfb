@@ -236,3 +236,24 @@ export type Awards = {
   conferences?: Record<string, { opoy: AwardRow[]; dpoy: AwardRow[]; fr: AwardRow[] }>;
 };
 export const getAwards = () => readJson<Awards>("awards.json");
+
+/** Betting page (scripts/build_betting.py): model vs the closing consensus line. WL = [wins, losses, win rate]. */
+export type WL = [number, number, number | null];
+export type BetBoardRow = {
+  id: string; date: string; home: string; away: string; homeName: string; awayName: string; neutral: boolean; tv: string | null;
+  model: number; mtot: number; homeWin: number; line: number | null; ltot: number | null; books: string[];
+  edge: number | null; tedge: number | null; hist: number | null;
+};
+export type TeamAts = { ats: [number, number, number]; ou: [number, number, number]; fav: [number, number, number]; dog: [number, number, number];
+  home: [number, number, number]; away: [number, number, number]; n: number; avgCover: number };
+export type Betting = {
+  season: number; built: string; slateLabel: string | null;
+  record: {
+    all: { ats: WL; ou: WL };
+    buckets: { lo: number; hi: number; ats: WL; ou: WL }[];
+    seasons: Record<string, { ats: WL; ats3: WL; ou: WL; mae: number; maeLine: number | null; n: number }>;
+  };
+  board: BetBoardRow[]; totBias: number;
+  teams: Record<string, Record<string, TeamAts>>;
+};
+export const getBetting = () => readJson<Betting>("betting.json");

@@ -434,6 +434,11 @@ def main():
         build_plays.enrich_leaders(season, True)
     except Exception as e:
         print(f"plays: skipped ({e})")
+    try:   # the betting page: this week's board vs the market, the model's record, team ATS
+        import build_betting
+        build_betting.main()
+    except Exception as e:
+        print(f"betting: skipped ({e})")
     # sitemap: home, directories, every team + depth-chart page, every player with stats.
     # Slugs follow lib/slug.ts exactly (the Next.js pages 404 on anything else).
     site = "https://www.thedepthchartcfb.com"
@@ -444,7 +449,7 @@ def main():
             sl = f"{sl}-{r['id']}"
         seen.add(sl)
         tslug[r["id"]] = sl
-    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting", f"{site}/awards"] \
+    urls = [f"{site}/", f"{site}/teams", f"{site}/depth", f"{site}/players", f"{site}/recruiting", f"{site}/awards", f"{site}/plays", f"{site}/betting"] \
         + [f"{site}/teams/{tslug[r['id']]}" for r in rows] + [f"{site}/depth/{tslug[r['id']]}" for r in rows]
     # past seasons (scripts/build_history.py): rankings, leaderboards, every team's season
     seasons_dir = os.path.join(ROOT, "public", "data", "seasons")

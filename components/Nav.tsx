@@ -12,6 +12,7 @@ const LINKS: { href: string; label: string; match: (p: string) => boolean }[] = 
   { href: "/players", label: "Players", match: (p) => p.startsWith("/players") },
   { href: "/plays", label: "Plays", match: (p) => p.startsWith("/plays") },
   { href: "/recruiting", label: "Recruiting", match: (p) => p.startsWith("/recruiting") },
+  { href: "/betting", label: "Betting", match: (p) => p.startsWith("/betting") },
   { href: "/awards", label: "Awards", match: (p) => p.startsWith("/awards") },
   { href: "/seasons", label: "Past Seasons", match: (p) => p.startsWith("/seasons") },
 ];
