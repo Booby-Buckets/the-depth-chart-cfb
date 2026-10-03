@@ -5,16 +5,21 @@ name: Rebuild power rankings
 # the live site refreshes on its own.
 #
 # Schedule (UTC, Aug–Jan only):
-#   • every morning ~6 AM ET: catches weeknight games and rolls the slate to the new week
-#   • Saturday afternoon → Sunday early morning every 2h: finals land as game day plays out
+#   • every morning ~6 AM ET: rolls the slate to the new week
+#   • Saturday noon ET → Sunday ~4 AM ET every 20 minutes: finals, records, ratings land as game day plays out
+#   • Tuesday–Friday nights (~7 PM – 2 AM ET) every 30 minutes: weeknight games
+# Between runs the site also patches W-L records in the browser the moment ESPN marks a game final
+# (components/live/useLiveScores.ts → useLiveRecords), so records never wait on this job.
 # CFBD_KEY is optional. Add it as a repo secret (Settings → Secrets and variables →
 # Actions) and the EPA / success-rate columns switch on; without it the job still runs.
 
 on:
   schedule:
     - cron: '0 10 * 1,8-12 *'            # daily, ~6 AM ET
-    - cron: '30 16-23 * 1,8-12 6'        # Saturday: every hour, ~12:30 PM – 7:30 PM ET (finals, standings, ratings)
-    - cron: '30 0-7 * 1,8-12 0'          # Saturday night into Sunday: every hour to ~3:30 AM ET
+    - cron: '*/20 16-23 * 1,8-12 6'      # Saturday ~12 PM – 8 PM ET, every 20 min
+    - cron: '*/20 0-8 * 1,8-12 0'        # Saturday night into Sunday, to ~4 AM ET
+    - cron: '*/30 23 * 1,8-12 2-5'       # Tue–Fri ~7 PM ET
+    - cron: '*/30 0-6 * 1,8-12 3-6'      # Tue–Fri nights to ~2 AM ET (UTC Wed–Sat mornings)
   workflow_dispatch: {}                  # manual run from the Actions tab
 
 permissions:

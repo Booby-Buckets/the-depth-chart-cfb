@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { HubTeam } from "@/lib/data";
+import type { HubTeam, SlateGame } from "@/lib/data";
+import { useLiveRecords } from "@/components/live/useLiveScores";
 import { fmt } from "@/lib/format";
 import { logo } from "@/lib/logo";
 
@@ -11,7 +12,8 @@ type Col = {
   f: (t: Row) => React.ReactNode; sv?: (t: Row) => number | string | null;
   heat?: boolean; inv?: boolean; str?: boolean;
 };
-type Row = HubTeam & { delta: number | null };
+type Row = HubTeam & { delta: number | null; liveRec?: boolean };
+const NO_GAMES: SlateGame[] = [];
 
 const pctCell = (v?: number) => (v == null ? "—" : (v * 100).toFixed(1) + "%");
 
@@ -22,7 +24,7 @@ function columns(hasAdvanced: boolean, slugs: Record<string, string>, teamBase: 
       // eslint-disable-next-line @next/next/no-img-element
       f: (t) => <Link href={`${teamBase}/${slugs[t.id]}`}><img src={logo(t.logo, 20)} alt="" loading="lazy" />{t.name}</Link> },
     { k: "conf", l: "Conf", cls: "l dim", str: true, f: (t) => t.conf },
-    { k: "w", l: "W-L", cls: "c", f: (t) => `${t.w}-${t.l}`, sv: (t) => t.w - t.l + t.w * 0.01 },
+    { k: "w", l: "W-L", cls: "c", f: (t) => t.liveRec ? <span title="Includes a game that just went final">{t.w}-{t.l}<sup style={{ color: "var(--red)", marginLeft: 2 }}>●</sup></span> : `${t.w}-${t.l}`, sv: (t) => t.w - t.l + t.w * 0.01 },
     { k: "cw", l: "Conf", cls: "c dim", f: (t) => (t.confAbbr === "ind" ? "—" : `${t.cw}-${t.cl}`), sv: (t) => t.cw - t.cl },
     { k: "net", l: "Rating", cls: "big", heat: true, tip: "Points better than an average FBS team, neutral field", f: (t) => fmt(t.net, 1, true) },
     { k: "off", l: "Off", heat: true, tip: "Points scored above average vs average defense", f: (t) => fmt(t.off, 1, true) },
@@ -41,8 +43,16 @@ function columns(hasAdvanced: boolean, slugs: Record<string, string>, teamBase: 
   return cols;
 }
 
-export default function Rankings({ teams, hasAdvanced, slugs, teamBase = "/teams" }: { teams: HubTeam[]; hasAdvanced: boolean; slugs: Record<string, string>; teamBase?: string }) {
-  const rows: Row[] = useMemo(() => teams.map((t) => ({ ...t, delta: t.prior == null ? null : +(t.net - t.prior).toFixed(1) })), [teams]);
+export default function Rankings({ teams, hasAdvanced, slugs, teamBase = "/teams", slate = NO_GAMES }: { teams: HubTeam[]; hasAdvanced: boolean; slugs: Record<string, string>; teamBase?: string; slate?: SlateGame[] }) {
+  // records update the moment ESPN marks a game final, before the next data build counts it
+  const deltas = useLiveRecords(slate);
+  const dkey = JSON.stringify(deltas);
+  const rows: Row[] = useMemo(() => teams.map((t) => {
+    const d = deltas[t.id];
+    const base = { ...t, delta: t.prior == null ? null : +(t.net - t.prior).toFixed(1) };
+    return d ? { ...base, w: t.w + d.w, l: t.l + d.l, cw: t.cw + d.cw, cl: t.cl + d.cl, liveRec: true } : base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [teams, dkey]);
   const cols = useMemo(() => columns(hasAdvanced, slugs, teamBase), [hasAdvanced, slugs, teamBase]);
   const confs = useMemo(() => [...new Set(teams.map((t) => t.conf))].sort(), [teams]);
   const [conf, setConf] = useState("");

@@ -48,7 +48,7 @@ export default async function Home() {
 
       <section id="rankings" className={styles.section}>
         <div className="sec-h"><h2>Rankings</h2><p>Click a column to sort</p></div>
-        <Rankings teams={hub.teams} hasAdvanced={hub.hasAdvanced} slugs={slugs} />
+        <Rankings teams={hub.teams} hasAdvanced={hub.hasAdvanced} slugs={slugs} slate={hub.slate} />
         <p className="note">
           <b>How the rating works.</b> Each game&apos;s points are modelled as offense against the opposing defense, with{" "}
           {fmt(hub.hfa, 1)} points of home field solved from the data. A game counts 70% on the final score and 30% on the

@@ -20,7 +20,7 @@ export type HubTeam = {
 export type SlateGame = {
   id: string; date: string; neutral: boolean; completed: boolean; detail: string; tv: string | null;
   home: string; away: string; homeName: string; awayName: string; homeRank?: number; awayRank?: number;
-  hs: number | null; as: number | null; spread: number; homeWin: number; total: number;
+  hs: number | null; as: number | null; spread: number; homeWin: number; total: number; conf?: boolean;
 };
 export type Hub = {
   season: number; built: string; gamesPlayed: number; hfa: number; ptsAvg: number; hasAdvanced: boolean;

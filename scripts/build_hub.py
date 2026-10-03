@@ -391,7 +391,7 @@ def main():
                 "id": g["id"], "date": g["date"], "neutral": g["neutral"], "completed": g["completed"], "detail": g["detail"],
                 "tv": g["tv"], "home": g["home"], "away": g["away"], "homeName": g["homeName"], "awayName": g["awayName"],
                 "homeRank": rank_of.get(g["home"]), "awayRank": rank_of.get(g["away"]),
-                "hs": g["hs"], "as": g["as"],
+                "hs": g["hs"], "as": g["as"], "conf": bool(g.get("conf")),
                 "spread": round(spread, 1), "homeWin": round(win_prob(spread, game_sd(rat, hk, ak)), 3),
                 "total": round(2 * mu + h["off"] - a["def"] + a["off"] - h["def"], 1),
             })

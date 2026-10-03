@@ -6,6 +6,7 @@ import { fmt, pct, ord, etStamp } from "@/lib/format";
 import { teamColors } from "@/lib/teamColor";
 import { playerHref } from "@/lib/slug";
 import { logo } from "@/lib/logo";
+import LiveRecord from "./LiveRecord";
 import TeamSwitcher from "./TeamSwitcher";
 import { RatingChart, RecordOdds } from "./Charts";
 import Roster from "./Roster";
@@ -42,8 +43,7 @@ export default function TeamView({ D, players, hubTeams, hubBuilt, slugOf, slug,
               : [M.coach ? `Head coach ${M.coach}` : null, M.venue].filter(Boolean).join(" · ")}</div>
           </div>
           <div className={s.rec}>
-            <b>{R.w}-{R.l}</b>
-            <span>{M.confAbbr === "ind" ? (past ? "Final record" : "Overall record") : `${R.cw}-${R.cl} in conference`}</span>
+            <LiveRecord tid={M.id} w={R.w} l={R.l} cw={R.cw} cl={R.cl} ind={M.confAbbr === "ind"} past={!!past} schedule={D.schedule} />
             <div><TeamSwitcher current={slug} options={teamOptions} className={s.switch} basePath={teamBase} /></div>
           </div>
         </div>
