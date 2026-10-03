@@ -7,6 +7,7 @@ import { teamColors } from "@/lib/teamColor";
 import { playerHref } from "@/lib/slug";
 import { logo } from "@/lib/logo";
 import LiveRecord from "./LiveRecord";
+import { LiveTeamBanner } from "@/components/live/LiveLines";
 import TeamSwitcher from "./TeamSwitcher";
 import { RatingChart, RecordOdds } from "./Charts";
 import Roster from "./Roster";
@@ -58,6 +59,7 @@ export default function TeamView({ D, players, hubTeams, hubBuilt, slugOf, slug,
             : <Tile k="Projected" v={`${o.expW.toFixed(1)}-${o.expL.toFixed(1)}`} sub={<>bowl-eligible <b>{pct(o.bowlP)}</b></>} />}
         </div>
       </div>
+      {!past && <LiveTeamBanner schedule={D.schedule} />}
       <nav className={s.jump} aria-label="On this page">
         <a className="chip" href="#outlook">{past ? "Season" : "Outlook"}</a>
         {players && <a className="chip" href="#leaders">Leaders</a>}

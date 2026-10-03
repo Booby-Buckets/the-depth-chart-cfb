@@ -6,6 +6,7 @@ import PlayerCharting from "@/components/chart/PlayerCharting";
 import PastCharting from "@/components/chart/PastCharting";
 import { PlayerHandCharted } from "@/components/chart/HandCharted";
 import Career, { type CareerRow } from "@/components/player/Career";
+import { LivePlayerLine } from "@/components/live/LiveLines";
 import GameLog, { type GameLogSeason } from "@/components/player/GameLog";
 import { fmt, ord } from "@/lib/format";
 import { playerHref, playerIdFromSlug, playerSlug } from "@/lib/slug";
@@ -173,6 +174,9 @@ export default async function PlayerPage({ params }: PageProps<"/players/[slug]"
           </div>
         )}
       </div>
+
+      {/* the player's line in today's game, while it's on (or just finished) */}
+      <LivePlayerLine pid={P.id} schedule={TM.schedule} />
 
       {P.ppa && group && G && (
         <section className={s.section}>
