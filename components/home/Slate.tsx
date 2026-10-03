@@ -78,7 +78,9 @@ function GameCard({ g, logos, slugs, live }: { g: SlateGame; logos: Record<strin
     );
   };
   return (
-    <div className={styles.game}>
+    <div className={`${styles.game} ${isLive ? styles.liveGame : ""}`}>
+      {/* the whole card opens the game page (team names above it still go to the team pages) */}
+      <Link href={`/games/${g.id}`} className={styles.cover} aria-label={`${g.awayName} at ${g.homeName}: ${isLive ? "watch live" : isFinal ? "game recap" : "game preview"}`} />
       <div className={styles.top}>
         <span>
           {isLive ? <b className={styles.live}>LIVE · {live!.detail}</b> : isFinal ? (live?.detail || "Final") : `${etDay(g.date)} ${etTime(g.date)} ET`}
@@ -101,7 +103,7 @@ function GameCard({ g, logos, slugs, live }: { g: SlateGame; logos: Record<strin
         ) : (
           <span>TDC line: <b>{favName} −{Math.abs(g.spread).toFixed(1)}</b></span>
         )}
-        {isLive || isFinal ? <Link href={`/games/${g.id}`} className={styles.tl}>{isLive ? "Live →" : "Game →"}</Link> : <span>Total {g.total.toFixed(1)}</span>}
+        {isLive ? <span className={styles.watch}>Watch live →</span> : isFinal ? <span className={styles.go}>Recap →</span> : <span>Total {g.total.toFixed(1)}</span>}
       </div>
     </div>
   );
