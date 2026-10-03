@@ -22,12 +22,18 @@ const mmss = (t: number) => `${Math.floor(t / 60)}:${String(Math.round(t % 60)).
 
 function hex(c: string) { const n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
 function dist(a: string, b: string) { const x = hex(a), y = hex(b); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); }
-/** Two colours that can be told apart: the home colour, and the away colour (or its alternate if they clash). */
-function teamColors(home: FlowTeam, away: FlowTeam): [string, string] {
-  const h = home.color || "#2d7a3e";
-  let a = away.color || "#b45309";
-  if (dist(h, a) < 110 && away.alt && dist(h, away.alt) > dist(h, a)) a = away.alt;
-  if (dist(h, a) < 60) a = "#9ca3af";
+/** Relative luminance (WCAG), 0 = black, 1 = white. */
+function lum(c: string) { const [r, g, b] = hex(c).map((v) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+/** Usable as text and as a fill on both themes: not near-white, not near-black. */
+const readable = (c: string | null | undefined): c is string => !!c && /^#[0-9a-f]{6}$/i.test(c) && lum(c) < 0.6 && lum(c) > 0.012;
+const SPARE = ["#2563eb", "#d97706", "#0d9488", "#7c3aed"];
+/** Two colours that can be told apart and read on the page: each team's colour (or its alternate),
+ *  and a spare palette colour when both teams wear the same shade (Alabama vs. Mississippi State). */
+export function teamColors(home: FlowTeam, away: FlowTeam): [string, string] {
+  const h = [home.color, home.alt].find(readable) || "#2d7a3e";
+  const opts = [away.color, away.alt].filter(readable);
+  let a = opts.find((c) => dist(h, c) >= 110) || "";
+  if (!a) a = SPARE.slice().sort((x, y) => dist(h, y) - dist(h, x))[0];
   return [h, a];
 }
 
@@ -221,7 +227,7 @@ export default function GameFlow({ home, away, scoring, drives, state, period, c
       {drives.length > 0 && (
         <section className={s.card}>
           <div className={s.wph}>
-            <h2>Drives</h2>
+            <h2>Drives{state === "in" ? <span className="dim" style={{ fontSize: 12, fontWeight: 600, marginLeft: 8 }}>newest first</span> : null}</h2>
             <span>
               {[home, away].map((t) => {
                 const mine = drives.filter((x) => x.team === t.id);
@@ -234,7 +240,7 @@ export default function GameFlow({ home, away, scoring, drives, state, period, c
             <table className="sheet dense" style={{ width: "100%" }}>
               <thead><tr><th className="l">Q</th><th className="l">Start</th><th className="l">Team</th><th className="l">From</th><th>Plays</th><th>Yds</th><th>Time</th><th className="l">Result</th></tr></thead>
               <tbody>
-                {(allDrives ? drives : drives.slice(0, 12)).map((x, i) => (
+                {(() => { const list = state === "in" ? [...drives].reverse() : drives; return allDrives ? list : list.slice(0, 12); })().map((x, i) => (
                   <tr key={i}>
                     <td className="l dim">{qName(x.q)}</td><td className="l dim">{x.clock}</td>
                     <td className="l"><span className={s.dot} style={{ background: colorOf(x.team) }} />{abbrOf(x.team)}</td>

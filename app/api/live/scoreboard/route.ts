@@ -27,6 +27,6 @@ export async function GET() {
     };
   });
   return Response.json({ at: new Date().toISOString(), games }, {
-    headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" },
+    headers: { "Cache-Control": "public, s-maxage=5, stale-while-revalidate=15" },
   });
 }

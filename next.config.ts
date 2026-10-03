@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
     ];
   },
   outputFileTracingIncludes: {
+    "/api/live/game": ["./public/data/players/ids.json"],
+    "/games/*": ["./public/data/players/ids.json"],
     "/api/plays": ["./data/plays/**/*.gz", "./public/data/hub.json", "./public/data/players/ids.json", "./public/data/careers.json"],
     "/players/*": [
       "./public/data/hub.json", "./public/data/players/*.json", "./public/data/teams/*.json", "./public/data/careers.json",

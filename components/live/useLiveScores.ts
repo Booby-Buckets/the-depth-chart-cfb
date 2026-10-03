@@ -22,7 +22,7 @@ export function useLiveScores(startTimes: string[]): Record<string, LiveGame> {
           if (!stop) setLive(map);
         } catch { /* keep the last good data */ }
       }
-      timer = setTimeout(tick, active ? 20000 : 300000);
+      timer = setTimeout(tick, active ? 15000 : 300000);
     }
     const onVis = () => { if (document.visibilityState === "visible") { clearTimeout(timer); tick(); } };
     tick();
