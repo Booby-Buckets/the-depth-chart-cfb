@@ -16,6 +16,7 @@ export default async function Home() {
   const [{ hub, slugOf }, years] = await Promise.all([getTeamIndex(), getPastSeasons()]);
   const logos = Object.fromEntries(hub.teams.map((t) => [t.id, t.logo]));
   const slugs = Object.fromEntries(slugOf);
+  const abbrs = Object.fromEntries(hub.teams.map((t) => [t.id, t.abbr]));
   return (
     <div className="col">
       <header className="page-header">
@@ -40,9 +41,9 @@ export default async function Home() {
       <section id="slate" className={styles.section}>
         <div className="sec-h">
           <h2>{hub.slateLabel ? `This Week · ${hub.slateLabel}` : "This Week"}</h2>
-          <p>Projected spread and win probability from the TDC Rating</p>
+          <p>Live scores, results and our projected spread for every FBS game this week. Click a game for the live tracker</p>
         </div>
-        <Slate games={hub.slate} logos={logos} slugs={slugs} />
+        <Slate games={hub.slate} logos={logos} slugs={slugs} abbrs={abbrs} />
       </section>
 
       <section id="rankings" className={styles.section}>
