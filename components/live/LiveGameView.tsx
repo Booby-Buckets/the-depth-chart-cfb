@@ -86,14 +86,15 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
   return (
     <div className={s.wrap}>
       <div className={s.board}>
-        {[away, home].map((t) => t && (
-          <div key={t.id} className={s.team}>
+        {[away, home].map((t, i) => t && [
+          i === 1 ? <div key="vs" className={s.vs} aria-hidden>–</div> : null,
+          <div key={t.id} className={`${s.team} ${t.home ? s.home : ""} ${g.state === "post" && t.score < (t.home ? away?.score ?? 0 : home?.score ?? 0) ? s.lose : ""}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logo(t.logo, 56)} alt="" />
             <div className={s.tn}>{teamLink(t)}<small>{t.home ? (neutral ? "Neutral" : "Home") : "Away"}</small></div>
             <div className={s.score}>{g.state === "pre" ? "–" : t.score}</div>
-          </div>
-        ))}
+          </div>,
+        ])}
         <div className={s.status}>
           {g.state === "in" ? <b className={s.live}>LIVE · {g.detail}</b> : <b>{g.detail}</b>}
           <span>{[g.note, g.date ? new Date(g.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" }) : null, g.venue].filter(Boolean).join(" · ")}</span>
@@ -118,8 +119,8 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
           <text x={0} y={TOP + H + 34} fontSize={11} fontWeight={700} fill="var(--text2)">▼ {away?.name}</text>
           <path d={path} fill="none" stroke="var(--turf)" strokeWidth={2.5} strokeLinejoin="round" />
           {series.length > 0 && <circle cx={X(series[series.length - 1].t)} cy={Y(wpNow)} r={5} fill="var(--turf)" stroke="var(--bg)" strokeWidth={2} />}
-          {swings.map((x) => (
-            <circle key={x.p!.seq} cx={X(x.t)} cy={Y(x.wp)} r={4} fill="var(--accent)" stroke="var(--bg)" strokeWidth={1.5}>
+          {swings.map((x, i) => (
+            <circle key={`${x.p!.seq}-${i}`} cx={X(x.t)} cy={Y(x.wp)} r={4} fill="var(--accent)" stroke="var(--bg)" strokeWidth={1.5}>
               <title>{`${x.d > 0 ? home?.name : away?.name} +${Math.abs(Math.round(x.d * 100))}% win probability: ${x.p!.text || ""}`}</title>
             </circle>
           ))}
@@ -135,8 +136,8 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
       <div className={s.cols}>
         <section className={s.card}>
           <h2>Biggest plays</h2>
-          {swings.length ? swings.map((x) => (
-            <div key={x.p!.seq} className={s.play}><b>{x.d > 0 ? home?.abbr : away?.abbr} +{Math.abs(Math.round(x.d * 100))}%</b> <span>Q{x.p!.q} {x.p!.clock}</span> {x.p!.text}</div>
+          {swings.length ? swings.map((x, i) => (
+            <div key={`${x.p!.seq}-${i}`} className={s.play}><b>{x.d > 0 ? home?.abbr : away?.abbr} +{Math.abs(Math.round(x.d * 100))}%</b> <span>Q{x.p!.q} {x.p!.clock}</span> {x.p!.text}</div>
           )) : <div className="note">Nothing yet.</div>}
         </section>
         <section className={s.card}>
@@ -152,8 +153,8 @@ export default function LiveGameView({ id, slateSpread, neutral, nets, hfa, slug
 
       <section className={s.card}>
         <h2>Play by play</h2>
-        {(all ? feed : feed.slice(0, 25)).map((p) => (
-          <div key={p.seq} className={`${s.play} ${p.score ? s.scored : ""}`}>
+        {(all ? feed : feed.slice(0, 25)).map((p, i) => (
+          <div key={`${p.seq}-${i}`} className={`${s.play} ${p.score ? s.scored : ""}`}>
             <span>Q{p.q} {p.clock}</span>{p.dd ? <i> {p.dd}</i> : null} {p.text}
           </div>
         ))}

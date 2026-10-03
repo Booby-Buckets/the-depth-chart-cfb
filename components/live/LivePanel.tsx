@@ -106,7 +106,7 @@ export function CurrentDriveCard({ drive, teams, colors }: { drive: CurrentDrive
     <section className={s.card}>
       <div className={s.wph}><h2>Current drive{t ? `: ${t.name}` : ""}</h2><span>{drive.desc}{drive.start ? ` · started at ${drive.start}` : ""}</span></div>
       {drive.plays.map((p, i) => (
-        <div key={p.seq} className={`${s.dplay} ${i === 0 ? s.latest : ""}`} style={{ borderLeftColor: c }}>
+        <div key={`${p.seq}-${i}`} className={`${s.dplay} ${i === 0 ? s.latest : ""}`} style={{ borderLeftColor: c }}>
           <span className={s.ddsm}>{p.dd || p.type}</span>
           <span className={s.dtext}>{p.text}</span>
           <b className={p.yds > 0 ? s.gain : p.yds < 0 ? s.loss : ""}>{p.yds > 0 ? "+" : ""}{p.yds}</b>
