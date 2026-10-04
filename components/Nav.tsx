@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import ThemeToggle from "./ThemeToggle";
 
 const LINKS: { href: string; label: string; match: (p: string) => boolean }[] = [
@@ -20,6 +21,12 @@ const SOON = ["Portal"];
 
 export default function Nav() {
   const pathname = usePathname() || "/";
+  // phones: the link row scrolls sideways; keep the current page's link in view
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const a = row.current?.querySelector("a.active") as HTMLElement | null;
+    if (a && row.current && row.current.scrollWidth > row.current.clientWidth) row.current.scrollTo({ left: Math.max(0, a.offsetLeft - 16), behavior: "smooth" });
+  }, [pathname]);
   return (
     <div className="nav-wrap">
       <div className="col nav-top">
@@ -32,7 +39,7 @@ export default function Nav() {
         </div>
       </div>
       <div className="nav-sub">
-        <div className="col">
+        <div className="col" ref={row}>
           {LINKS.map((l) => (
             <Link key={l.label} href={l.href} className={l.match(pathname) ? "active" : undefined}>{l.label}</Link>
           ))}

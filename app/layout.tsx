@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import Script from "next/script";
 import Nav from "@/components/Nav";
 import "./styles/chrome.css";
 import "./styles/sheets.css";
@@ -33,6 +34,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             The Depth Chart CFB · Scores, schedules, rosters and play-by-play via ESPN · Player and advanced stats via CollegeFootballData.com
           </div>
         </footer>
+        {/* phones: one type scale / two families / three weights across every page (desktop untouched) */}
+        <Script src="/tdc-mobile.js?v=4" strategy="afterInteractive" />
       </body>
     </html>
   );
