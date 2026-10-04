@@ -53,3 +53,17 @@ section{padding:28px 0 8px;scroll-margin-top:90px;}
 .note{font-size:11.5px;color:var(--text3);line-height:1.6;margin:14px 0 40px;max-width:900px;}
 .loading{text-align:center;padding:80px;color:var(--text3);}
 footer{border-top:1px solid var(--border);padding:22px 0 40px;font-size:11px;color:var(--text3);}
+
+/* phones: one compact header (eyebrow + season picker, title, one shaded count cell) and no
+   explainer prose between the title and the data — Oct 2026 mobile pass, mirrors the CBB site */
+.hd-cell{display:none}
+@media (max-width:640px){
+  .home .page-header{display:grid;grid-template-columns:minmax(0,1fr) 76px;column-gap:12px;align-items:start;padding:14px 0 12px}
+  .home .page-header > *{grid-column:1}
+  .home .page-header .page-h1{font-size:28px;margin:4px 0 0}
+  .home .page-header .page-sub,.home .page-header .meta,.home .sec-h p,.home > section > .note{display:none!important}
+  .home .page-header > .hd-cell{display:flex;flex-direction:column;grid-column:2;grid-row:1 / span 2;align-self:stretch;border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+  .hd-cell span{font-size:11px;font-weight:800;letter-spacing:.07em;color:var(--text3);background:var(--bg2);border-bottom:1px solid var(--border2);text-align:center;padding:5px 0}
+  .hd-cell b{flex:1;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;min-height:50px;
+    background-image:linear-gradient(hsla(125,70%,48%,.40),hsla(125,70%,48%,.40))}
+}

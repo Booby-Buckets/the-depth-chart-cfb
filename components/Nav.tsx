@@ -31,7 +31,7 @@ export default function Nav() {
     <div className="nav-wrap">
       <div className="col nav-top">
         <Link className="nav-logo" href="/">
-          The <span>Depth</span> Chart<em>CFB</em>
+          The <span>Depth</span> Chart
         </Link>
         <div className="nav-actions">
           <a className="nav-x" href="https://www.thedepthchartcbb.com/">Basketball ↗</a>

@@ -18,7 +18,7 @@ export default async function Home() {
   const slugs = Object.fromEntries(slugOf);
   const abbrs = Object.fromEntries(hub.teams.map((t) => [t.id, t.abbr]));
   return (
-    <div className="col">
+    <div className="col home">
       <header className="page-header">
         <div className="page-eyebrow" style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <span>{hub.season} Season · {hub.slateLabel || "Final"}</span>
@@ -36,6 +36,7 @@ export default async function Home() {
           <div>Home field<b>{fmt(hub.hfa, 1)} pts</b></div>
           <div>Updated<b>{etStamp(hub.built)}</b></div>
         </div>
+        <div className="hd-cell" aria-hidden="true"><span>TEAMS</span><b>{hub.teams.length}</b></div>
       </header>
 
       <section id="slate" className={styles.section}>
