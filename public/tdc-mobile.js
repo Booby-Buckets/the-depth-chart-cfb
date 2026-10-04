@@ -6,7 +6,7 @@
  * text to the same small set as it renders (and as pages redraw, via a MutationObserver):
  *
  *   sizes    11 · 13 · 15 · 18 · 22 · 28 · 36   (nothing under 11px; a page's biggest hero numbers cap at 36)
- *   family   Inter everywhere; Playfair only for page titles and section headings (≥ 18px, not numbers)
+ *   family   Inter everywhere; Playfair for every page title (H1) and for section headings (H2/H3) that use it
  *   weight   500 · 600 · 700
  *   labels   UPPERCASE text gets one letter-spacing (.05em)
  *   inputs   16px (iOS zooms the page on any smaller form field)
@@ -41,8 +41,8 @@
     }
     if (el.classList && el.classList.contains('sheet-wrap')) flattenTable(el);
     if (!hasOwnText(el)) return;
+    // hidden text (closed tabs, menus) is styled too: it was being marked done unstyled and never revisited
     const cs = getComputedStyle(el);
-    if (cs.display === 'none') return;
     const size = parseFloat(cs.fontSize) || 15;
     const to = snapSize(size);
     if (Math.abs(to - size) > 0.2) el.style.setProperty('font-size', to + 'px', 'important');
@@ -52,7 +52,13 @@
     const fam = cs.fontFamily.split(',')[0].replace(/["']/g, '').trim().toLowerCase();
     const text = el.textContent.trim();
     const isSerif = SERIF.test(fam) || fam.includes('playfair');
-    const keepSerif = isSerif && to >= 18 && !NUMERIC.test(text) && (HEADING.test(tag) || to >= 22);
+    // serif = headings only: every page title (H1) is Playfair, section headings keep it if they had it,
+    // and nothing else is (tile values like "Duke" / "Elite Eight" were serif next to sans neighbours)
+    if (tag === 'H1' && !NUMERIC.test(text)) {
+      if (!fam.includes('playfair')) el.style.setProperty('font-family', "'Playfair Display', Georgia, serif", 'important');
+      return;
+    }
+    const keepSerif = isSerif && !NUMERIC.test(text) && HEADING.test(tag);
     if (!keepSerif && fam !== 'inter') {
       el.style.setProperty('font-family', "'Inter', system-ui, sans-serif", 'important');
       if (NUMERIC.test(text)) el.style.setProperty('font-variant-numeric', 'tabular-nums', 'important');
@@ -86,16 +92,53 @@
     for (let i = 0; i < all.length; i++) fix(all[i]);
   }
 
+  // Rows of pill buttons (seasons, "rank by", conference filters, difficulty...) that wrap onto 3+ lines
+  // on a phone become ONE swipe row with a right-edge fade, the selected pill scrolled into view.
+  // Rows holding dropdown menus are left alone (a scrolling row would clip the menu).
+  const pillRows = new WeakSet();
+  function pillRow(row) {
+    if (!row || pillRows.has(row) || row.closest('.tdn-wrap,.nav-wrap,[data-type-keep]')) return;
+    const cs = getComputedStyle(row);
+    if (cs.display !== 'flex' || cs.flexWrap !== 'wrap') return;
+    const vis = [...row.children].filter(k => k.getBoundingClientRect().width > 0);
+    // a plain text label leading the row ("Rank by", "Group") is fine; everything else must be a pill
+    const isLabel = k => /^(SPAN|B|SMALL|STRONG|EM)$/.test(k.tagName) && !k.querySelector('a,button');
+    const kids = vis.filter(k => !isLabel(k));
+    if (kids.length < 5 || vis.filter(isLabel).length > 1) return;
+    if (!kids.every(k => /^(A|BUTTON|LABEL)$/.test(k.tagName) && k.getBoundingClientRect().height <= 56)) return;
+    if (row.querySelector('[class*="menu"],select,input[type="text"],input[type="search"]')) return;
+    const lines = new Set(kids.map(k => Math.round(k.getBoundingClientRect().top))).size;
+    if (lines < 3) return;
+    pillRows.add(row);
+    const st = (k, v) => row.style.setProperty(k, v, 'important');
+    st('flex-wrap', 'nowrap'); st('overflow-x', 'auto'); st('scrollbar-width', 'none'); st('-webkit-overflow-scrolling', 'touch');
+    st('-webkit-mask-image', 'linear-gradient(90deg,#000 86%,transparent)'); st('mask-image', 'linear-gradient(90deg,#000 86%,transparent)');
+    st('padding-right', '28px');
+    kids.forEach(k => k.style.setProperty('flex-shrink', '0', 'important'));
+    // a full-width label line ("RANK BY") would push every pill off screen: sit it inline at the start
+    vis.filter(isLabel).forEach(l => { l.style.setProperty('flex', '0 0 auto', 'important'); l.style.setProperty('width', 'auto', 'important'); l.style.setProperty('margin-right', '4px', 'important'); });
+    const on = row.querySelector('.active,.on,.sel,.selected,[aria-selected="true"],[aria-pressed="true"]');
+    if (on) {   // only when the selected pill is actually off the right edge
+      const a = on.getBoundingClientRect(), b = row.getBoundingClientRect();
+      if (a.right > b.right - 28) row.scrollLeft += a.right - (b.right - 28) + 12;
+    }
+  }
+  function scanRows(root) {
+    const seen = new Set();
+    (root.querySelectorAll ? root.querySelectorAll('button,a') : []).forEach(b => { const p = b.parentElement; if (p && !seen.has(p)) { seen.add(p); pillRow(p); } });
+  }
+
   let pending = [], raf = 0;
   function flush() {
     raf = 0;
     const list = pending; pending = [];
-    for (const n of list) if (n.isConnected) walk(n);
+    for (const n of list) if (n.isConnected) { walk(n); scanRows(n.parentElement || n); }
   }
   function start() {
     if (!mq.matches) return;
     document.documentElement.classList.add('tdc-m');
     walk(document.body);
+    scanRows(document.body);
     new MutationObserver(muts => {
       for (const m of muts) {
         if (m.type === 'childList') {

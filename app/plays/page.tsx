@@ -22,7 +22,7 @@ export default async function PlaysPage({ searchParams }: PageProps<"/plays">) {
   return (
     <div className="col">
       <header className="page-header">
-        <div className="page-eyebrow">Every FBS play · {seasons.join(" & ")}</div>
+        <div className="page-eyebrow">Every FBS play · {seasons.length > 1 ? `${seasons[seasons.length - 1]}–${seasons[0]}` : seasons[0]}</div>
         <h1 className="page-h1">Play Finder</h1>
         <p className="page-sub">
           Search every play by team, player, week, down and field position, and sort by what it was worth. EPA (expected points

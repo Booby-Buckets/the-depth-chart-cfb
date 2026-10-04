@@ -35,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </footer>
         {/* phones: one type scale / two families / three weights across every page (desktop untouched) */}
-        <Script src="/tdc-mobile.js?v=4" strategy="afterInteractive" />
+        <Script src="/tdc-mobile.js?v=6" strategy="afterInteractive" />
       </body>
     </html>
   );
