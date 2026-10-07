@@ -57,7 +57,7 @@ def classify(games, plays):
         prev_h = prev_a = 0
         drive, last_off = 0, None
         for p in items:
-            ttype = (p.get("type") or {}).get("text", "")
+            ttype = ((p.get("type") or {}).get("text") or "")
             sides = {t.get("type"): t.get("id") for t in p.get("teamParticipants") or []}
             off, dfn = sides.get("offense"), sides.get("defense")
             text = p.get("text") or ""

@@ -123,7 +123,7 @@ def build_handchart(season, plays):
             continue
         joined += 1
         d = r.get("data") or {}
-        res = _result((p.get("type") or {}).get("text", ""))
+        res = _result(((p.get("type") or {}).get("text") or ""))
         yds = p.get("statYardage") or 0
         kind = r.get("kind")
         if kind in ("pass", "sack"):

@@ -108,7 +108,7 @@ def build_plays_involved(get, games, qb_ids, plays=None):
         current_qb = {}   # offense team id -> qb id
         pending = {}      # offense team id -> plays seen before any QB was identified
         for p in items:
-            ttype = (p.get("type") or {}).get("text", "")
+            ttype = ((p.get("type") or {}).get("text") or "")
             parts = [(x.get("type"), _ref_id(x["athlete"]["$ref"])) for x in p.get("participants") or [] if x.get("athlete")]
             sides = {t.get("type"): t.get("id") for t in p.get("teamParticipants") or []}
             off_team = sides.get("offense")

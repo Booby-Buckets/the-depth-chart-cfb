@@ -59,7 +59,7 @@ def _learn_spots(items):
     """{ABBR: 'off'|'def' votes per team}: which team each spot abbreviation in this game belongs to."""
     votes = defaultdict(lambda: defaultdict(int))
     for p in items:
-        t = (p.get("type") or {}).get("text", "")
+        t = ((p.get("type") or {}).get("text") or "")
         if t not in ("Rush", "Pass Reception"):
             continue
         off, dfn = _sides(p)
@@ -93,7 +93,7 @@ def parse_game(g, items):
     owner = _learn_spots(items)
     out = []
     for p in items:
-        t = (p.get("type") or {}).get("text", "")
+        t = ((p.get("type") or {}).get("text") or "")
         text = p.get("text") or ""
         if "NO PLAY" in text or not (t in PASS_T or t in RUSH_T or t == "Sack"):
             continue
@@ -282,7 +282,7 @@ def defense_chart(games, plays):
             continue
         owner = _learn_spots(items)
         for p in items:
-            t = (p.get("type") or {}).get("text", "")
+            t = ((p.get("type") or {}).get("text") or "")
             text = p.get("text") or ""
             if "NO PLAY" in text or t == "Penalty":
                 continue

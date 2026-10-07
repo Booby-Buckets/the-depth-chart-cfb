@@ -125,7 +125,7 @@ def pbp_defense(games, plays, teams):
             if "NO PLAY" in (p.get("text") or ""):
                 continue
             sides = {t.get("type"): t.get("id") for t in p.get("teamParticipants") or []}
-            ttype = (p.get("type") or {}).get("text", "")
+            ttype = ((p.get("type") or {}).get("text") or "")
             kick = ttype in KICK_TYPES  # ESPN lists the kicking team as the defense, so its tacklers count
             dfn = sides.get("defense")
             if dfn not in teams:
