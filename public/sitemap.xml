@@ -13,8 +13,8 @@
   <url><loc>https://www.thedepthchartcfb.com/teams/ohio-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/miami</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/indiana</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/teams/alabama</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/georgia</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/teams/alabama</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/utah</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/texas</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/oregon</loc></url>
@@ -25,6 +25,7 @@
   <url><loc>https://www.thedepthchartcfb.com/teams/nebraska</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/ole-miss</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/byu</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/teams/louisville</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/oklahoma</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/ucla</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/penn-state</loc></url>
@@ -32,7 +33,6 @@
   <url><loc>https://www.thedepthchartcfb.com/teams/missouri</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/texas-am</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/northwestern</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/teams/louisville</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/wisconsin</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/iowa</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/usc</loc></url>
@@ -41,15 +41,15 @@
   <url><loc>https://www.thedepthchartcfb.com/teams/virginia</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/kansas-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/pittsburgh</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/teams/florida-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/boise-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/houston</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/teams/wake-forest</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/baylor</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/kansas</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/kentucky</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/mississippi-state</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/teams/wake-forest</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/new-mexico</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/teams/florida-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/vanderbilt</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/michigan</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/virginia-tech</loc></url>
@@ -121,9 +121,9 @@
   <url><loc>https://www.thedepthchartcfb.com/teams/arkansas-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/colorado-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/marshall</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/teams/western-kentucky</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/nevada</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/rice</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/teams/western-kentucky</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/coastal-carolina</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/central-michigan</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/teams/new-mexico-state</loc></url>
@@ -151,8 +151,8 @@
   <url><loc>https://www.thedepthchartcfb.com/depth/ohio-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/miami</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/indiana</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/depth/alabama</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/georgia</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/depth/alabama</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/utah</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/texas</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/oregon</loc></url>
@@ -163,6 +163,7 @@
   <url><loc>https://www.thedepthchartcfb.com/depth/nebraska</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/ole-miss</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/byu</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/depth/louisville</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/oklahoma</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/ucla</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/penn-state</loc></url>
@@ -170,7 +171,6 @@
   <url><loc>https://www.thedepthchartcfb.com/depth/missouri</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/texas-am</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/northwestern</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/depth/louisville</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/wisconsin</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/iowa</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/usc</loc></url>
@@ -179,15 +179,15 @@
   <url><loc>https://www.thedepthchartcfb.com/depth/virginia</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/kansas-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/pittsburgh</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/depth/florida-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/boise-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/houston</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/depth/wake-forest</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/baylor</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/kansas</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/kentucky</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/mississippi-state</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/depth/wake-forest</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/new-mexico</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/depth/florida-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/vanderbilt</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/michigan</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/virginia-tech</loc></url>
@@ -259,9 +259,9 @@
   <url><loc>https://www.thedepthchartcfb.com/depth/arkansas-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/colorado-state</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/marshall</loc></url>
-  <url><loc>https://www.thedepthchartcfb.com/depth/western-kentucky</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/nevada</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/rice</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/depth/western-kentucky</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/coastal-carolina</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/central-michigan</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/depth/new-mexico-state</loc></url>
@@ -4515,6 +4515,7 @@
   <url><loc>https://www.thedepthchartcfb.com/players/ethan-minter-5139080</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/ethan-moczulski-4870578</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/ethan-oconnor-4919038</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/players/ethan-post-5294073</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/ethan-powell-5082592</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/ethan-pulliam-5218831</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/ethan-rossetti-5382526</loc></url>
@@ -5469,6 +5470,7 @@
   <url><loc>https://www.thedepthchartcfb.com/players/james-flanigan-5142596</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/james-giggey-5147330</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/james-gillespie-5082503</loc></url>
+  <url><loc>https://www.thedepthchartcfb.com/players/james-glover-tyson-5151026</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/james-jennette-4694500</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/james-johnson-5195681</loc></url>
   <url><loc>https://www.thedepthchartcfb.com/players/james-jones-5220253</loc></url>
